@@ -1,15 +1,5 @@
 // ------------------------------------------------------------
-// Home.jsx — Phase 3 Clean + Corrected Version
-//
-// Responsibilities:
-// - Login validation
-// - Banner + Navbar
-// - Ticker bar
-// - Category selector
-// - TabsLayout (only layout now)
-// - FeedStatusProvider + GlobalRefreshProvider
-// - Auto-load first feed on category change
-// - Feed health dashboard
+// Home.jsx — Phase 4.2 Full Width Arrow Navigation
 // ------------------------------------------------------------
 
 import React, { useEffect, useState, useContext } from "react";
@@ -24,8 +14,12 @@ import {
   CardActions,
   Typography,
   ToggleButton,
-  ToggleButtonGroup
+  ToggleButtonGroup,
+  IconButton
 } from "@mui/material";
+
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
 import { useNavigate } from "react-router-dom";
 
@@ -41,7 +35,63 @@ import { GlobalRefreshProvider, GlobalRefreshContext } from "../context/GlobalRe
 import { feedCategories } from "../data/feedCategories";
 
 // ------------------------------------------------------------
+// Category Scroller — Full Width Arrow Navigation
+// ------------------------------------------------------------
+function CategoryScroller({ categories, currentCategory, setCurrentCategory }) {
+  const keys = Object.keys(categories);
+  const [index, setIndex] = useState(0);
 
+  const visibleCount = 5;
+  const maxIndex = Math.max(0, keys.length - visibleCount);
+  const visibleKeys = keys.slice(index, index + visibleCount);
+
+  const scrollLeft = () => setIndex(i => Math.max(0, i - 1));
+  const scrollRight = () => setIndex(i => Math.min(maxIndex, i + 1));
+
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", mb: 2, width: "100%" }}>
+      <IconButton onClick={scrollLeft} disabled={index === 0}>
+        <ArrowBackIosIcon fontSize="small" />
+      </IconButton>
+
+      <Box sx={{ flexGrow: 1 }}>
+        <ToggleButtonGroup
+          value={currentCategory}
+          exclusive
+          onChange={(e, val) => val && setCurrentCategory(val)}
+          size="small"
+          sx={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${visibleCount}, 1fr)`,
+            gap: 1
+          }}
+        >
+          {visibleKeys.map(cat => (
+            <ToggleButton
+              key={cat}
+              value={cat}
+              sx={{
+                borderRadius: 2,
+                width: "100%",
+                justifyContent: "center"
+              }}
+            >
+              {cat}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Box>
+
+      <IconButton onClick={scrollRight} disabled={index >= maxIndex}>
+        <ArrowForwardIosIcon fontSize="small" />
+      </IconButton>
+    </Box>
+  );
+}
+
+// ------------------------------------------------------------
+// Home Component
+// ------------------------------------------------------------
 export default function Home() {
   const categories = feedCategories;
 
@@ -54,16 +104,10 @@ export default function Home() {
 
   const navigate = useNavigate();
 
-  // ------------------------------------------------------------
-  // ✅ Login validation
-  // ------------------------------------------------------------
   useEffect(() => {
     const loggedIn = localStorage.getItem("isLoggedIn");
     if (!loggedIn) {
-      console.log("User NOT logged in → redirecting to /login");
       navigate("/login");
-    } else {
-      console.log("User IS logged in");
     }
   }, [navigate]);
 
@@ -73,9 +117,7 @@ export default function Home() {
         <AutoLoadFirstFeed feeds={feeds} />
 
         <center>
-          {/* --------------------------------------------------------
-             Banner
-          --------------------------------------------------------- */}
+          {/* Banner */}
           <Toolbar
             sx={{
               justifyContent: "center",
@@ -96,9 +138,7 @@ export default function Home() {
           <Navbar />
           <TickerBar />
 
-          {/* --------------------------------------------------------
-             Main Content Box
-          --------------------------------------------------------- */}
+          {/* Main Content */}
           <Box
             sx={{
               justifyContent: "center",
@@ -130,27 +170,15 @@ export default function Home() {
                   <CardActionArea>
                     <CardMedia>
                       <CardContent>
-                        {/* --------------------------------------------------------
-                           Category Selector
-                        --------------------------------------------------------- */}
-                        <Box sx={{ mb: 2 }}>
-                          <ToggleButtonGroup
-                            value={currentCategory}
-                            exclusive
-                            onChange={(e, val) => val && setCurrentCategory(val)}
-                            size="small"
-                          >
-                            {Object.keys(categories).map((cat) => (
-                              <ToggleButton key={cat} value={cat}>
-                                {cat}
-                              </ToggleButton>
-                            ))}
-                          </ToggleButtonGroup>
-                        </Box>
 
-                        {/* --------------------------------------------------------
-                           Tabs Layout (Only Layout)
-                        --------------------------------------------------------- */}
+                        {/* Category Selector — Full Width Arrow Navigation */}
+                        <CategoryScroller
+                          categories={categories}
+                          currentCategory={currentCategory}
+                          setCurrentCategory={setCurrentCategory}
+                        />
+
+                        {/* Tabs Layout */}
                         <TabsLayout
                           feeds={feeds}
                           safeFeedIndex={safeFeedIndex}
@@ -163,9 +191,7 @@ export default function Home() {
                 </Card>
               </Grid>
 
-              {/* --------------------------------------------------------
-                 Feed Health Dashboard
-              --------------------------------------------------------- */}
+              {/* Feed Health Dashboard */}
               <Grid item xs={12} sx={{ mt: 2 }}>
                 <FeedHealthDashboard />
               </Grid>
@@ -178,16 +204,22 @@ export default function Home() {
 }
 
 // ------------------------------------------------------------
-// ✅ Auto-load first feed whenever feeds change
+// Auto-load first feed whenever feeds change (Phase 4 Stable)
 // ------------------------------------------------------------
 function AutoLoadFirstFeed({ feeds }) {
   const { loadFeed } = useContext(GlobalRefreshContext);
+  const [lastLoadedFeed, setLastLoadedFeed] = useState(null);
 
   useEffect(() => {
-    if (loadFeed && feeds.length > 0) {
-      loadFeed(feeds[0].name);
+    if (!feeds || feeds.length === 0) return;
+
+    const firstFeedName = feeds[0].name;
+
+    if (firstFeedName && firstFeedName !== lastLoadedFeed) {
+      loadFeed(firstFeedName);
+      setLastLoadedFeed(firstFeedName);
     }
-  }, [loadFeed, feeds]);
+  }, [feeds, lastLoadedFeed]);
 
   return null;
 }

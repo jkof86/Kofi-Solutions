@@ -1,14 +1,5 @@
 // ------------------------------------------------------------
-// FeedCard.jsx
-//
-// Responsibilities:
-// - Entire card clickable
-// - Favicon from domain
-// - Source + category chips
-// - Timestamp
-// - Main image (GIF-safe backend)
-// - HTML summary with expand/collapse
-// - Dark-mode friendly
+// FeedCard.jsx — Fixed for fallback feeds
 // ------------------------------------------------------------
 
 import React, { useState } from "react";
@@ -20,6 +11,15 @@ const getFavicon = (url) => {
     return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
   } catch {
     return null;
+  }
+};
+
+const getRootDomain = (url) => {
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.hostname}`;
+  } catch {
+    return url;
   }
 };
 
@@ -38,6 +38,13 @@ const FeedCard = ({ item, source, category }) => {
   const favicon = url ? getFavicon(url) : null;
   const htmlContent = content_html || summary || "";
 
+
+  // ✅ Correct fallback detection
+  const isFallback =
+    title?.includes("Unavailable") ||
+    summary?.toLowerCase?.().includes("unavailable") ||
+    !date_published;
+
   const shortContent =
     htmlContent.length > 500 && !expanded
       ? htmlContent.slice(0, 500) + "..."
@@ -45,11 +52,11 @@ const FeedCard = ({ item, source, category }) => {
 
   return (
     <a
-      href={url}
+      href={getRootDomain(url)}
       target="_blank"
       rel="noopener noreferrer"
       style={{ textDecoration: "none", color: "inherit" }}
-    >
+    > {/*Failed feeds open up the main website onClick */}
       <Box
         sx={{
           mb: 3,
@@ -133,8 +140,8 @@ const FeedCard = ({ item, source, category }) => {
           dangerouslySetInnerHTML={{ __html: shortContent }}
         />
 
-        {/* Expand/Collapse */}
-        {htmlContent.length > 500 && (
+        {/* Expand/Collapse — hidden for fallback feeds */}
+        {!isFallback && htmlContent.length > 500 && (
           <Button
             size="small"
             sx={{ mt: 1 }}

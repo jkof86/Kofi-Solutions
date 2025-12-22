@@ -57,8 +57,8 @@ const RSSFeed = ({ name, feedLabel, categoryLabel, onFeedLoaded }) => {
       setErrorMsg(null);
 
       try {
-        let proxy = process.env.RSS_FEED_PROXY;
-        const url = `https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator?source=${name}`;
+        const rssProxy = process.env.REACT_APP_RSS_FEED_PROXY;
+        const url = (`${rssProxy}?source=${name}`);
         const res = await fetch(url);
         const data = await res.json();
 
@@ -68,12 +68,21 @@ const RSSFeed = ({ name, feedLabel, categoryLabel, onFeedLoaded }) => {
           return;
         }
 
+        // If feed returned an error, but items exist (fallback), show both
         if (data.status !== "ok") {
           setErrorMsg(data.error || "Feed returned an error.");
-          setItems([]);
+
+          if (data.items && data.items.length > 0) {
+            // Render fallback items (e.g., Coinbase Blog Unavailable)
+            setItems(data.items);
+          } else {
+            setItems([]);
+          }
+
           return;
         }
 
+        // Normal success path
         if (!data.items || data.items.length === 0) {
           setErrorMsg("No articles found.");
           setItems([]);
@@ -81,6 +90,7 @@ const RSSFeed = ({ name, feedLabel, categoryLabel, onFeedLoaded }) => {
         }
 
         setItems(data.items);
+
         setVisibleCount(DEFAULT_FEED_CAP);
 
         if (onFeedLoaded) onFeedLoaded(name);
@@ -108,22 +118,19 @@ const RSSFeed = ({ name, feedLabel, categoryLabel, onFeedLoaded }) => {
         </Box>
       )}
 
-      {!loading && errorMsg && (
+      {!loading &&
+        items &&
+        items.length > 0 &&
+        items.slice(0, visibleCount).map((item, index) => (
+          <FeedCard key={index} item={item} source={name} category={categoryLabel} />
+        ))}
+
+      {/* displays error text for debugging */}
+      {/* {!loading && errorMsg && (
         <Typography color="error" sx={{ mb: 2 }}>
           {errorMsg}
         </Typography>
-      )}
-
-      {!loading &&
-        !errorMsg &&
-        items.slice(0, visibleCount).map((item, index) => (
-          <FeedCard
-            key={index}
-            item={item}
-            source={name}
-            category={categoryLabel}
-          />
-        ))}
+      )} */}
 
       {!loading && !errorMsg && visibleCount < items.length && (
         <Box sx={{ textAlign: "center", mt: 2 }}>
