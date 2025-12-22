@@ -167,8 +167,8 @@ export default function Home() {
                     textAlign: "center"
                   }}
                 >
-                  <CardActionArea>
-                    <CardMedia>
+                  <Box
+                  >                    <CardMedia>
                       <CardContent>
 
                         {/* Category Selector — Full Width Arrow Navigation */}
@@ -187,7 +187,7 @@ export default function Home() {
                       </CardContent>
                       <CardActions />
                     </CardMedia>
-                  </CardActionArea>
+                  </Box>
                 </Card>
               </Grid>
 
