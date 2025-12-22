@@ -36,6 +36,40 @@ export default function TabsLayout({ feeds, safeFeedIndex, currentCategory }) {
   const activeFeed = feeds[safeIndex];
 
   // ------------------------------------------------------------
+  // ✅ Phase 4 RSS - JSON handling
+  // ------------------------------------------------------------
+
+  const cryptoFeeds = [
+  // CoinTelegraph — crypto news + analysis
+  { name: "ct", label: "CoinTelegraph" },
+
+  // Coinbase Blog — fallback-only (Cloudflare protected)
+  { name: "cb", label: "Coinbase Blog" },
+
+  // Decrypt — crypto news + guides
+  { name: "decrypt", label: "Decrypt" },
+
+  // CryptoPanic — massive crypto aggregator (RSS)
+  { name: "cryptopanic", label: "CryptoPanic" },
+
+  // Binance Blog — official exchange blog (RSS)
+  { name: "binance_blog", label: "Binance Blog" },
+
+  // Kraken Blog — official exchange blog (RSS)
+  { name: "kraken_blog", label: "Kraken Blog" },
+
+  // Robinhood Crypto — reliable JSON feed
+  { name: "rh_crypto", label: "Robinhood Crypto" },
+
+  // Yahoo Finance Crypto — reliable JSON feed
+  { name: "yf_crypto", label: "Yahoo Crypto" },
+
+  // CoinGecko Crypto — reliable JSON feed
+  { name: "cg_crypto", label: "CoinGecko" }
+];
+
+
+  // ------------------------------------------------------------
   // ✅ Tab switching
   // ------------------------------------------------------------
   const handleTabChange = (_, newValue) => {
