@@ -1,227 +1,106 @@
 // ------------------------------------------------------------
-// FeedCard.jsx — Enhanced with:
-// - Tooltip showing root domain
-// - Visit Site badge for fallback feeds
-// - Per-feed custom root URLs
-// - Last updated timestamp
-// - Retry Feed button for fallback feeds
+// FeedCard.jsx — Single feed item card
 // ------------------------------------------------------------
 
-import React, { useState, useContext } from "react";
-import { Box, Typography, Chip, Button, Tooltip } from "@mui/material";
-import { GlobalRefreshContext } from "../context/GlobalRefreshContext";
+import {
+  Card,
+  CardContent,
+  CardMedia,
+  Box,
+  Typography,
+  Button,
+  Chip,
+  Stack,
+  Avatar
+} from "@mui/material";
 
-// ------------------------------------------------------------
-// Custom root URLs per feed
-// ------------------------------------------------------------
-const ROOT_OVERRIDES = {
-  ct: "https://cointelegraph.com",
-  cb: "https://blog.coinbase.com",
-  mw: "https://www.marketwatch.com",
-  inv: "https://www.investopedia.com",
-  sa: "https://seekingalpha.com"
-};
+export default function FeedCard({ item, feedMeta }) {
 
-// ------------------------------------------------------------
-// Helpers
-// ------------------------------------------------------------
-const getRootDomain = (url) => {
-  try {
-    const u = new URL(url);
-    return `${u.protocol}//${u.hostname}`;
-  } catch {
-    return url;
-  }
-};
+  const FALLBACK_IMAGES = {
+    cb: "https://www.coinbase.com/favicon.ico",
+    binance_blog: "https://www.binance.com/favicon.ico",
+    kraken_blog: "https://www.kraken.com/favicon.ico",
+    rh_crypto: "https://robinhood.com/favicon.ico",
+    cryptopanic_crypto: "https://cryptopanic.com/favicon.ico"
+  };
 
-const getFavicon = (url) => {
-  try {
-    const { hostname } = new URL(url);
-    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
-  } catch {
-    return null;
-  }
-};
+  const imageSrc =
+    item.image ||
+    FALLBACK_IMAGES[feedMeta?.id] ||
+    "https://via.placeholder.com/320x180.png?text=No+Image";
 
-const FeedCard = ({ item, source, category }) => {
-  const { loadFeed } = useContext(GlobalRefreshContext);
-
-  const {
-    title,
-    url,
-    summary,
-    content_html,
-    date_published,
-    image
-  } = item;
-
-  const [expanded, setExpanded] = useState(false);
-
-  // ------------------------------------------------------------
-  // Fallback detection
-  // ------------------------------------------------------------
-  const isFallback =
-    title?.includes("Unavailable") ||
-    summary?.toLowerCase?.().includes("unavailable") ||
-    !date_published;
-
-  // ------------------------------------------------------------
-  // Determine final link target
-  // ------------------------------------------------------------
-  const rootDomain =
-    ROOT_OVERRIDES[source] || getRootDomain(url);
-
-  const favicon = getFavicon(rootDomain);
-  const htmlContent = content_html || summary || "";
-
-  const shortContent =
-    htmlContent.length > 500 && !expanded
-      ? htmlContent.slice(0, 500) + "..."
-      : htmlContent;
-
-  // ------------------------------------------------------------
-  // Last updated timestamp
-  // ------------------------------------------------------------
-  const lastUpdated = isFallback
-    ? "Last updated: Just now (fallback)"
-    : date_published
-      ? `Last updated: ${date_published}`
-      : null;
+  const initials = feedMeta?.label
+    ? feedMeta.label
+      .split(" ")
+      .map(w => w[0])
+      .join("")
+      .toUpperCase()
+    : "FD";
 
   return (
-    <Tooltip title={rootDomain} arrow placement="top">
-      <a
-        href={rootDomain}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ textDecoration: "none", color: "inherit" }}
-      >
-        <Box
-          sx={{
-            mb: 3,
-            p: 2,
-            borderRadius: 2,
-            backgroundColor: "background.paper",
-            boxShadow: 1,
-            transition: "0.2s",
-            cursor: "pointer",
-            "&:hover": { boxShadow: 4 }
-          }}
+    <Card
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        width: "100%",
+        boxShadow: 2,
+        borderRadius: 2,
+        overflow: "hidden"
+      }}
+    >
+      <CardMedia
+        component="img"
+        image={imageSrc}
+        alt={item.title}
+        sx={{ width: 220, objectFit: "cover" }}
+        onError={e => {
+          e.target.src =
+            "https://via.placeholder.com/320x180.png?text=No+Image";
+        }}
+      />
+
+      <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          sx={{ mb: 1 }}
         >
-          {/* Title + favicon */}
-          <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
-            {favicon && (
-              <img
-                src={favicon}
-                alt=""
-                style={{ width: 20, height: 20, borderRadius: 4 }}
-              />
-            )}
+          <Avatar sx={{ width: 24, height: 24, fontSize: 12 }}>
+            {initials}
+          </Avatar>
+          <Chip
+            size="small"
+            label={feedMeta?.label || "Feed"}
+            color={feedMeta?.legacy ? "warning" : "primary"}
+            variant={feedMeta?.legacy ? "outlined" : "filled"}
+          />
+        </Stack>
 
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {title}
-            </Typography>
+        <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+          {item.title}
+        </Typography>
 
-            {/* Visit Site badge for fallback feeds */}
-            {isFallback && (
-              <Chip
-                label="Visit Site"
-                size="small"
-                color="secondary"
-                sx={{ ml: 1, fontSize: "0.65rem", fontWeight: 600 }}
-              />
-            )}
-          </Box>
-
-          {/* Metadata */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-            {source && (
-              <Chip
-                label={source.toUpperCase()}
-                size="small"
-                sx={{ fontSize: "0.65rem", fontWeight: 600, opacity: 0.8 }}
-              />
-            )}
-
-            {category && (
-              <Chip
-                label={category}
-                size="small"
-                color="primary"
-                sx={{ fontSize: "0.65rem", fontWeight: 600 }}
-              />
-            )}
-          </Box>
-
-          {/* Last updated timestamp */}
-          {lastUpdated && (
-            <Typography variant="caption" sx={{ opacity: 0.7, display: "block", mb: 1 }}>
-              {lastUpdated}
-            </Typography>
-          )}
-
-          {/* Main image */}
-          {image && (
-            <Box sx={{ my: 1 }}>
-              <img
-                src={image}
-                alt=""
-                style={{
-                  maxWidth: "100%",
-                  height: "auto",
-                  borderRadius: 6,
-                  display: "block"
-                }}
-              />
-            </Box>
-          )}
-
-          {/* Summary */}
+        {item.summary && (
           <Typography
             variant="body2"
-            sx={{
-              whiteSpace: "normal",
-              wordBreak: "break-word",
-              overflowWrap: "anywhere",
-              lineHeight: 1.5,
-              "& p": { mb: 1 },
-              "& img": { maxWidth: "100%", borderRadius: 4 }
-            }}
-            dangerouslySetInnerHTML={{ __html: shortContent }}
+            color="text.secondary"
+            sx={{ mb: 1 }}
+            dangerouslySetInnerHTML={{ __html: item.summary }}
           />
+        )}
 
-          {/* Expand/Collapse — disabled for fallback feeds */}
-          {!isFallback && htmlContent.length > 500 && (
-            <Button
-              size="small"
-              sx={{ mt: 1 }}
-              onClick={(e) => {
-                e.preventDefault();
-                setExpanded(prev => !prev);
-              }}
-            >
-              {expanded ? "Show Less" : "Read More"}
-            </Button>
-          )}
-
-          {/* Retry Feed button — only for fallback feeds */}
-          {isFallback && (
-            <Button
-              variant="outlined"
-              size="small"
-              sx={{ mt: 1 }}
-              onClick={(e) => {
-                e.preventDefault();
-                loadFeed(source);
-              }}
-            >
-              Retry Feed
-            </Button>
-          )}
+        <Box sx={{ mt: "auto" }}>
+          <Button
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            size="small"
+          >
+            Visit site
+          </Button>
         </Box>
-      </a>
-    </Tooltip>
+      </CardContent>
+    </Card>
   );
-};
-
-export default FeedCard;
+}

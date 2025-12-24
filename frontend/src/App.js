@@ -1,21 +1,22 @@
 import { Routes, Route } from "react-router";
 import Home from "./components/Home";
-import About from "./components/About";
-import Account from "./components/Account";
-import Settings from "./components/Settings";
-import Calculator from "./components/Calculator";
-import Fitness from "./components/Fitness";
-import Professional from "./components/Professional";
-import Gaming from "./components/Gaming";
-import ContactFitness from "./components/ContactFitness";
-import ContactProfessional from "./components/ContactProfessional";
-import ContactGaming from "./components/ContactGaming";
+import About from "./components/portfolio/About";
+import Account from "./components/portfolio/Account";
+import Settings from "./components/portfolio/Settings";
+import Calculator from "./components/portfolio/Calculator";
+import Fitness from "./components/portfolio/Fitness";
+import Professional from "./components/portfolio/Professional";
+import Gaming from "./components/portfolio/Gaming";
+import ContactFitness from "./components/portfolio/ContactFitness";
+import ContactProfessional from "./components/portfolio/ContactProfessional";
+import ContactGaming from "./components/portfolio/ContactGaming";
 import LoginComponent from "./components/LoginComponent";
 import RegisterComponent from "./components/RegisterComponent";
 
 export default function App() {
 
   return (<>
+  
     <Routes>
       <Route path="/" element={<LoginComponent />} />
       <Route path="/professional/about" element={<About />} />

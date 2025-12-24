@@ -18,7 +18,7 @@ import React, {
 } from "react";
 
 import { FeedStatusContext } from "./FeedStatusContext";
-import { feedCategories } from "../data/feedCategories";
+import { feedCategories } from "../lambda/feedCategories";
 
 export const GlobalRefreshContext = createContext({
   refreshVersion: 0,

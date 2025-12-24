@@ -1,225 +1,134 @@
-// ------------------------------------------------------------
-// Home.jsx — Phase 4.2 Full Width Arrow Navigation
-// ------------------------------------------------------------
-
-import React, { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import {
-  Box,
-  Toolbar,
-  Grid,
-  Card,
-  CardActionArea,
-  CardMedia,
-  CardContent,
-  CardActions,
+  Container,
   Typography,
-  ToggleButton,
-  ToggleButtonGroup,
-  IconButton
+  Box,
+  CircularProgress,
+  Chip
 } from "@mui/material";
-
-import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-
-import { useNavigate } from "react-router-dom";
-
-import banner from "../images/bg/ksBanner08.jpeg";
-import Navbar from "./navigation/Navbar";
-
+import RssFeedIcon from "@mui/icons-material/RssFeed";
 import TabsLayout from "./layouts/TabsLayout";
-import TickerBar from "./layouts/TickerBar";
 import FeedHealthDashboard from "./FeedHealthDashboard";
+import { useNavigate } from "react-router-dom";
+import MainContainer from "./layouts/MainContainer";
+import HeaderShell from "./layouts/HeaderShell";
 
-import { FeedStatusProvider } from "../context/FeedStatusContext";
-import { GlobalRefreshProvider, GlobalRefreshContext } from "../context/GlobalRefreshContext";
-import { feedCategories } from "../data/feedCategories";
-
-// ------------------------------------------------------------
-// Category Scroller — Full Width Arrow Navigation
-// ------------------------------------------------------------
-function CategoryScroller({ categories, currentCategory, setCurrentCategory }) {
-  const keys = Object.keys(categories);
-  const [index, setIndex] = useState(0);
-
-  const visibleCount = 5;
-  const maxIndex = Math.max(0, keys.length - visibleCount);
-  const visibleKeys = keys.slice(index, index + visibleCount);
-
-  const scrollLeft = () => setIndex(i => Math.max(0, i - 1));
-  const scrollRight = () => setIndex(i => Math.min(maxIndex, i + 1));
-
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", mb: 2, width: "100%" }}>
-      <IconButton onClick={scrollLeft} disabled={index === 0}>
-        <ArrowBackIosIcon fontSize="small" />
-      </IconButton>
-
-      <Box sx={{ flexGrow: 1 }}>
-        <ToggleButtonGroup
-          value={currentCategory}
-          exclusive
-          onChange={(e, val) => val && setCurrentCategory(val)}
-          size="small"
-          sx={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${visibleCount}, 1fr)`,
-            gap: 1
-          }}
-        >
-          {visibleKeys.map(cat => (
-            <ToggleButton
-              key={cat}
-              value={cat}
-              sx={{
-                borderRadius: 2,
-                width: "100%",
-                justifyContent: "center"
-              }}
-            >
-              {cat}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Box>
-
-      <IconButton onClick={scrollRight} disabled={index >= maxIndex}>
-        <ArrowForwardIosIcon fontSize="small" />
-      </IconButton>
-    </Box>
-  );
-}
-
-// ------------------------------------------------------------
-// Home Component
-// ------------------------------------------------------------
 export default function Home() {
-  const categories = feedCategories;
+  const [feedHealth, setFeedHealth] = useState(null);
+  const [loadingHealth, setLoadingHealth] = useState(true);
+  const [healthError, setHealthError] = useState(null);
+  const [headerHeight, setHeaderHeight] = useState(null);
 
-  const [currentCategory, setCurrentCategory] = useState(
-    Object.keys(categories)[0] || ""
-  );
+  // ------------------------------------------------------------
+  // Fetch feed health
+  // ------------------------------------------------------------
+  useEffect(() => {
+    async function fetchHealth() {
+      try {
+        const res = await fetch(
+          "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator?mode=health"
+        );
+        const json = await res.json();
 
-  const feeds = categories[currentCategory] || [];
-  const safeFeedIndex = 0;
+        if (json.status === "ok") {
+          setFeedHealth(json.feeds || {});
+        } else {
+          setHealthError(json.error || "Health error");
+        }
+      } catch (err) {
+        setHealthError(err.message);
+      } finally {
+        setLoadingHealth(false);
+      }
+    }
 
+    fetchHealth();
+  }, []);
+
+  // ------------------------------------------------------------
+  // Login validation
+  // ------------------------------------------------------------
   const navigate = useNavigate();
 
   useEffect(() => {
     const loggedIn = localStorage.getItem("isLoggedIn");
     if (!loggedIn) {
+      console.log("User NOT logged in → redirecting to /login");
       navigate("/login");
+    } else {
+      console.log("User IS logged in");
     }
   }, [navigate]);
 
   return (
-    <FeedStatusProvider>
-      <GlobalRefreshProvider>
-        <AutoLoadFirstFeed feeds={feeds} />
+    <>
+      <HeaderShell onHeightChange={setHeaderHeight} />
 
-        <center>
-          {/* Banner */}
-          <Toolbar
-            sx={{
-              justifyContent: "center",
-              backgroundImage: `url(${banner})`,
-              backgroundSize: "cover",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center",
-              backgroundColor: "white",
-              borderRadius: "25px",
-              border: "1px solid black",
-              boxShadow: "0px 0px 8px 5px white",
-              height: "300px",
-              width: "800px",
-              mt: 2
-            }}
-          />
-
-          <Navbar />
-          <TickerBar />
-
-          {/* Main Content */}
+      <MainContainer headerHeight={headerHeight}>
+        <Container maxWidth="xl" sx={{ mt: 2, mb: 6 }}>
           <Box
             sx={{
-              justifyContent: "center",
-              backgroundColor: "white",
-              borderRadius: "25px",
-              border: "1px solid black",
-              boxShadow: "0px 0px 2px 2px white",
-              padding: "10px",
-              margin: "20px",
-              width: "75vw"
+              backgroundColor: "#fff",
+              borderRadius: 2,
+              boxShadow: 3,
+              p: 3
             }}
           >
-            <Grid container spacing={0}>
-              <Grid item xs={12}>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                  RSS Feeds
+            {/* Banner */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                backgroundColor: "#1976d2",
+                color: "#fff",
+                px: 3,
+                py: 2,
+                borderRadius: 2,
+                boxShadow: 3,
+                mb: 3
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <RssFeedIcon fontSize="large" />
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                  News Feeds (RSS)
                 </Typography>
+              </Box>
 
-                <Card
-                  sx={{
-                    border: "2px solid black",
-                    maxWidth: "100%",
-                    borderRadius: "25px",
-                    margin: "10px",
-                    padding: "10px",
-                    textAlign: "center"
-                  }}
-                >
-                  <Box
-                  >                    <CardMedia>
-                      <CardContent>
+              <Chip
+                label="v1.141"
+                size="small"
+                sx={{
+                  backgroundColor: "#fff",
+                  color: "#1976d2",
+                  fontWeight: 600
+                }}
+              />
+            </Box>
 
-                        {/* Category Selector — Full Width Arrow Navigation */}
-                        <CategoryScroller
-                          categories={categories}
-                          currentCategory={currentCategory}
-                          setCurrentCategory={setCurrentCategory}
-                        />
+            {/* Tabs */}
+            <TabsLayout />
 
-                        {/* Tabs Layout */}
-                        <TabsLayout
-                          feeds={feeds}
-                          safeFeedIndex={safeFeedIndex}
-                          currentCategory={currentCategory}
-                        />
-                      </CardContent>
-                      <CardActions />
-                    </CardMedia>
-                  </Box>
-                </Card>
-              </Grid>
+            {/* Feed Health */}
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="h5" sx={{ mb: 2 }}>
+                Feed Health
+              </Typography>
 
-              {/* Feed Health Dashboard */}
-              <Grid item xs={12} sx={{ mt: 2 }}>
-                <FeedHealthDashboard />
-              </Grid>
-            </Grid>
+              {loadingHealth ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                  <CircularProgress />
+                </Box>
+              ) : healthError ? (
+                <Typography color="error">{healthError}</Typography>
+              ) : (
+                <FeedHealthDashboard healthMap={feedHealth} />
+              )}
+            </Box>
           </Box>
-        </center>
-      </GlobalRefreshProvider>
-    </FeedStatusProvider>
+        </Container>
+      </MainContainer>
+    </>
   );
-}
-
-// ------------------------------------------------------------
-// Auto-load first feed whenever feeds change (Phase 4 Stable)
-// ------------------------------------------------------------
-function AutoLoadFirstFeed({ feeds }) {
-  const { loadFeed } = useContext(GlobalRefreshContext);
-  const [lastLoadedFeed, setLastLoadedFeed] = useState(null);
-
-  useEffect(() => {
-    if (!feeds || feeds.length === 0) return;
-
-    const firstFeedName = feeds[0].name;
-
-    if (firstFeedName && firstFeedName !== lastLoadedFeed) {
-      loadFeed(firstFeedName);
-      setLastLoadedFeed(firstFeedName);
-    }
-  }, [feeds, lastLoadedFeed]);
-
-  return null;
 }

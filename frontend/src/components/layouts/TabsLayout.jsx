@@ -1,185 +1,127 @@
 // ------------------------------------------------------------
-// TabsLayout.jsx — Phase 3 Version
-//
-// Responsibilities:
-// - Renders feed tabs with real-time error badges
-// - Switches between feeds instantly
-// - Supports per-feed refresh via loadFeed()
-// - Supports global refresh via refreshAll()
-// - Displays feed + optional market chart side-by-side
-// - Fully reactive with FeedStatusContext + GlobalRefreshContext
+// TabsLayout.jsx — Category + Feed tabs + layout
 // ------------------------------------------------------------
 
-import React, { useState, useContext } from "react";
-import { Box, Tabs, Tab, Button, Typography } from "@mui/material";
-
+import React, { useState, useMemo } from "react";
+import { Tabs, Tab, Box, Typography, Stack, Chip, Avatar } from "@mui/material";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import { FEED_CATEGORIES } from "../../data/feedCategories";
+import { FEEDS, getFeedsForCategory, getLegacyCryptoFeeds } from "../../data/feedsMap";
 import RSSFeed from "../RSSFeed";
 import MarketChart from "../MarketChart";
 
-import { GlobalRefreshContext } from "../../context/GlobalRefreshContext";
-import { FeedStatusContext } from "../../context/FeedStatusContext";
+function CategoryTabLabel({ icon: IconComponent, label }) {
+  return (
+    <Stack direction="row" spacing={1} alignItems="center">
+      {IconComponent && <IconComponent fontSize="small" />}
+      <Typography variant="body2">{label}</Typography>
+    </Stack>
+  );
+}
 
-export default function TabsLayout({ feeds, safeFeedIndex, currentCategory }) {
-  // ------------------------------------------------------------
-  // ✅ Track which tab is active
-  // ------------------------------------------------------------
-  const [tabIndex, setTabIndex] = useState(safeFeedIndex || 0);
-
-  // ------------------------------------------------------------
-  // ✅ Phase 3 Context Hooks
-  // ------------------------------------------------------------
-  const { loadFeed, refreshAll } = useContext(GlobalRefreshContext);
-  const { status } = useContext(FeedStatusContext);
-
-  // Ensure index is always valid
-  const safeIndex = Math.min(tabIndex, feeds.length - 1);
-  const activeFeed = feeds[safeIndex];
-
-  // ------------------------------------------------------------
-  // ✅ Phase 4 RSS - JSON handling
-  // ------------------------------------------------------------
-
-  const cryptoFeeds = [
-  // CoinTelegraph — crypto news + analysis
-  { name: "ct", label: "CoinTelegraph" },
-
-  // Coinbase Blog — fallback-only (Cloudflare protected)
-  { name: "cb", label: "Coinbase Blog" },
-
-  // Decrypt — crypto news + guides
-  { name: "decrypt", label: "Decrypt" },
-
-  // CryptoPanic — massive crypto aggregator (RSS)
-  { name: "cryptopanic", label: "CryptoPanic" },
-
-  // Binance Blog — official exchange blog (RSS)
-  { name: "binance_blog", label: "Binance Blog" },
-
-  // Kraken Blog — official exchange blog (RSS)
-  { name: "kraken_blog", label: "Kraken Blog" },
-
-  // Robinhood Crypto — reliable JSON feed
-  { name: "rh_crypto", label: "Robinhood Crypto" },
-
-  // Yahoo Finance Crypto — reliable JSON feed
-  { name: "yf_crypto", label: "Yahoo Crypto" },
-
-  // CoinGecko Crypto — reliable JSON feed
-  { name: "cg_crypto", label: "CoinGecko" }
-];
-
-
-  // ------------------------------------------------------------
-  // ✅ Tab switching
-  // ------------------------------------------------------------
-  const handleTabChange = (_, newValue) => {
-    setTabIndex(newValue);
-
-    // ✅ Immediately load the newly selected feed
-    const selected = feeds[newValue];
-    if (selected) {
-      loadFeed(selected.name);
-    }
-  };
-
-  // ------------------------------------------------------------
-  // ✅ Per-feed refresh (Phase 3)
-  // ------------------------------------------------------------
-  const handleFeedRefresh = () => {
-    if (activeFeed) {
-      loadFeed(activeFeed.name);
-    }
-  };
-
-  // ------------------------------------------------------------
-  // ✅ Global refresh (Phase 3)
-  // Streams updates one-by-one
-  // ------------------------------------------------------------
-  const handleGlobalRefresh = () => {
-    refreshAll();
-  };
+function FeedTabLabel({ feed }) {
+  const initials = feed.label
+    .split(" ")
+    .map(w => w[0])
+    .join("")
+    .toUpperCase();
 
   return (
-    <Box>
-      {/* --------------------------------------------------------
-         Tabs Row
-      --------------------------------------------------------- */}
+    <Stack direction="row" spacing={1} alignItems="center">
+      <Avatar sx={{ width: 20, height: 20, fontSize: 10 }}>{initials}</Avatar>
+      <Typography variant="body2">{feed.label}</Typography>
+      {feed.legacy && (
+        <WarningAmberIcon fontSize="small" color="warning" />
+      )}
+    </Stack>
+  );
+}
+
+export default function TabsLayout() {
+  const [categoryIndex, setCategoryIndex] = useState(0);
+  const [feedIndex, setFeedIndex] = useState(0);
+
+  const activeCategory = FEED_CATEGORIES[categoryIndex];
+
+  const feedsForActiveCategory = useMemo(() => {
+    if (!activeCategory) return [];
+    return activeCategory.id === "legacy_crypto"
+      ? getLegacyCryptoFeeds()
+      : getFeedsForCategory(activeCategory.id);
+  }, [activeCategory]);
+
+  const activeFeed =
+    feedsForActiveCategory[feedIndex] || feedsForActiveCategory[0];
+  const activeSymbol = activeFeed?.symbol || "btc";
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+      {/* Category tabs */}
+      <Tabs
+        value={categoryIndex}
+        onChange={(_, idx) => {
+          setCategoryIndex(idx);
+          setFeedIndex(0);
+        }}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}
+      >
+        {FEED_CATEGORIES.map((cat, idx) => (
+          <Tab
+            key={cat.id}
+            value={idx}
+            label={<CategoryTabLabel icon={cat.icon} label={cat.label} />}
+          />
+        ))}
+      </Tabs>
+
+      {/* White content panel */}
       <Box
         sx={{
-          display: "flex",
-          alignItems: "center",
-          mb: 2,
-          gap: 2
+          backgroundColor: "#fff",
+          borderRadius: 2,
+          boxShadow: 2,
+          p: 3,
+          mt: 1
         }}
       >
+        {/* Feed tabs */}
         <Tabs
-          value={tabIndex}
-          onChange={handleTabChange}
+          value={feedIndex}
+          onChange={(_, idx) => setFeedIndex(idx)}
           variant="scrollable"
           scrollButtons="auto"
-          sx={{ flexGrow: 1 }}
+          sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}
         >
-          {feeds.map((feed, idx) => {
-            const feedState = status[feed.name];
-            const isError = feedState && feedState !== "ok";
-
-            return (
-              <Tab
-                key={feed.name}
-                value={idx}
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    {feed.label}
-
-                    {/* ✅ Real-time error badge */}
-                    {isError && (
-                      <Typography
-                        component="span"
-                        sx={{
-                          color: "error.main",
-                          fontWeight: 700,
-                          fontSize: "0.9rem"
-                        }}
-                      >
-                        !
-                      </Typography>
-                    )}
-                  </Box>
-                }
-              />
-            );
-          })}
+          {feedsForActiveCategory.map((feed, idx) => (
+            <Tab
+              key={feed.id}
+              value={idx}
+              label={<FeedTabLabel feed={feed} />}
+            />
+          ))}
         </Tabs>
 
-        {/* ✅ Per-feed refresh */}
-        <Button variant="outlined" onClick={handleFeedRefresh}>
-          Refresh Feed
-        </Button>
-
-        {/* ✅ Global refresh */}
-        <Button variant="contained" onClick={handleGlobalRefresh}>
-          Global Refresh
-        </Button>
-      </Box>
-
-      {/* --------------------------------------------------------
-         Main Layout: Feed + Chart
-      --------------------------------------------------------- */}
-      <Box sx={{ display: "flex", gap: 2 }}>
-        {/* Left column: Feed */}
-        <Box sx={{ flex: 3 }}>
-          <RSSFeed
-            name={activeFeed.name}
-            feedLabel={activeFeed.label}
-            categoryLabel={currentCategory}
-          />
-        </Box>
-
-        {/* Right column: Market Chart */}
-        <Box sx={{ flex: 2 }}>
-          {activeFeed?.symbol && (
-            <MarketChart symbol={activeFeed.symbol} />
-          )}
+        {/* Feed + chart */}
+        <Box sx={{ display: "flex", flexDirection: "row", gap: 3, mt: 1 }}>
+          <Box
+            sx={{
+              flex: 2,
+              maxWidth: "800px",
+              overflowY: "auto",
+              maxHeight: "70vh"
+            }}
+          >
+            {activeFeed ? (
+              <RSSFeed name={activeFeed.id} />
+            ) : (
+              <Typography>No feed selected.</Typography>
+            )}
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <MarketChart symbol={activeSymbol} />
+          </Box>
         </Box>
       </Box>
     </Box>

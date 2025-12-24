@@ -5,7 +5,6 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 import AppProvider from './components/providers/AppContext'
-import Navbar2 from './components/navigation/Navbar2';
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -18,8 +17,6 @@ root.render(
       {/* we wrap the Router and AppProvider around the entire app */}
       <AppProvider>
         <BrowserRouter>
-          <Navbar2 />
-          <br />
           <App />
         </BrowserRouter>
       </AppProvider>

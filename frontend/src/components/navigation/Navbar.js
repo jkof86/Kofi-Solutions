@@ -1,10 +1,10 @@
 import { Toolbar, Button, IconButton, Box } from "@mui/material";
-import { Link as RouterLink } from "../../../node_modules/react-router-dom/dist/index";
+import { Link as RouterLink } from "react-router-dom";
 import { Link as MuiLink } from "@mui/material"
 
 // export default function Navbar({ loggedIn, setLoggedIn }) {
 
-export default function Navbar() {
+export default function NavBar() {
 
     return (<>
 
