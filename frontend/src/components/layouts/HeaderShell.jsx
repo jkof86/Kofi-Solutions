@@ -270,7 +270,7 @@ export default function HeaderShell({ onHeightChange }) {
           </Stack>
 
           <Chip
-            label="v1.141"
+            label="v1.142"
             size="small"
             sx={{
               backgroundColor: "#fff",
