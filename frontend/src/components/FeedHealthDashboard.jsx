@@ -1,91 +1,94 @@
-import React from "react";
-import { Box, Typography, Stack, Chip } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ErrorIcon from "@mui/icons-material/Error";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+// FeedHealthDashboard.jsx — Kofi Solutions 1.142
+//
+// - Calls /RSSProxyAggregator?mode=health
+// - Uses universal backend health handler
+// - Shows feed statuses + market failures
+// - Never crashes on missing fields
 
-import { FEEDS } from "../data/feedsMap";
+import React, { useEffect, useState } from "react";
+import { Box, Typography, Tooltip, Chip, Stack } from "@mui/material";
 
-function statusToChip(status) {
-  switch (status) {
-    case "ok":
-    case "json":
-      return {
-        label: "OK",
-        color: "success",
-        icon: <CheckCircleIcon fontSize="small" />
-      };
-    case "error":
-      return {
-        label: "Error",
-        color: "error",
-        icon: <ErrorIcon fontSize="small" />
-      };
-    case "degraded":
-    case "fallback":
-      return {
-        label: "Degraded",
-        color: "warning",
-        icon: <WarningAmberIcon fontSize="small" />
-      };
-    default:
-      return {
-        label: "Unknown",
-        color: "default",
-        icon: <HelpOutlineIcon fontSize="small" />
-      };
-  }
-}
+export default function FeedHealthDashboard() {
+  const [feeds, setFeeds] = useState({});
+  const [markets, setMarkets] = useState([]);
+  const [error, setError] = useState(false);
 
-export default function FeedHealthDashboard({ healthMap }) {
-  const hasData = healthMap && Object.keys(healthMap).length > 0;
+  useEffect(() => {
+    const fetchHealth = async () => {
+      try {
+        const res = await fetch("/RSSProxyAggregator?mode=health");
+        const data = await res.json();
+
+        if (data?.status === "ok") {
+          setFeeds(data.feeds || {});
+          setMarkets(data.markets || []);
+          setError(false);
+        } else {
+          console.error("Health response not ok:", data);
+          setError(true);
+        }
+      } catch (err) {
+        console.error("Health fetch failed", err);
+        setError(true);
+      }
+    };
+
+    fetchHealth();
+  }, []);
+
+  const getColor = (status) => {
+    if (status === "ok" || status === "json") return "success.main";
+    if (status === "fallback" || status === "degraded") return "warning.main";
+    return "error.main";
+  };
 
   return (
-    <Box
-      sx={{
-        backgroundColor: "#fff",
-        borderRadius: 2,
-        boxShadow: 2,
-        p: 3,
-        mt: 2
-      }}
-    >
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Feed Health Status
+    <Box sx={{ px: 2, py: 1 }}>
+      <Typography variant="h6" sx={{ mb: 1 }}>
+        Feed Health
       </Typography>
 
-      {hasData ? (
-        <Stack spacing={1}>
-          {Object.entries(FEEDS).map(([key, meta]) => {
-            const rawStatus = healthMap?.[key];
-            const chip = statusToChip(rawStatus || "unknown");
-
-            return (
-              <Stack
-                key={key}
-                direction="row"
-                spacing={2}
-                alignItems="center"
-                justifyContent="space-between"
-              >
-                <Typography variant="body2">
-                  {meta.label}
-                  {meta.legacy && " (Legacy)"}
-                </Typography>
-                <Chip
-                  size="small"
-                  label={chip.label}
-                  color={chip.color}
-                  icon={chip.icon}
-                  variant={chip.color === "success" ? "filled" : "outlined"}
-                />
-              </Stack>
-            );
-          })}
-        </Stack>
+      {error ? (
+        <Typography color="error">Health error</Typography>
       ) : (
-        <Typography color="error">No feed health data available.</Typography>
+        <>
+          {/* Feed statuses */}
+          <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 2 }}>
+            {Object.entries(feeds).map(([key, status]) => (
+              <Tooltip key={key} title={`Status: ${status}`}>
+                <Chip
+                  label={key}
+                  size="small"
+                  sx={{
+                    backgroundColor: getColor(status),
+                    color: "#000",
+                    fontWeight: 600
+                  }}
+                />
+              </Tooltip>
+            ))}
+          </Stack>
+
+          {/* Market failures */}
+          {markets.length > 0 && (
+            <>
+              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                Market Snapshot Failures
+              </Typography>
+              <Stack direction="row" flexWrap="wrap" gap={1}>
+                {markets.map((sym) => (
+                  <Chip
+                    key={sym}
+                    label={sym.toUpperCase()}
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                  />
+                ))}
+              </Stack>
+            </>
+          )}
+        </>
       )}
     </Box>
   );

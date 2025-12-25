@@ -1,13 +1,12 @@
 // ------------------------------------------------------------
-// backend.js — v2.0 (Final Production Build)
+// backend.js — v1.143 (Kofi Solutions)
 // ------------------------------------------------------------
 //
-// - Uses backend FEEDS map (routing only)
-// - RSS + JSON + fallback feeds
-// - CoinTelegraph special handling
-// - Market snapshots (CoinGecko)
-// - Health checks
-// - Normalized output for UI
+// - FEEDS-based routing for RSS/JSON/fallback feeds
+// - CoinCap (crypto) + Yahoo Finance (stocks) for market snapshots
+// - Universal health handler (never throws, always returns JSON)
+// - Market failure tracking for health dashboard
+// - DNS-safe, timeout-safe, HTML-safe
 // ------------------------------------------------------------
 
 import { FEEDS } from "./feedsMap.js";
@@ -57,18 +56,17 @@ function stripImgTags(html = "") {
 // ------------------------------------------------------------
 // RSS Parser
 // ------------------------------------------------------------
-
 function extractImageFromBlock(block) {
-  // <media:content url="...">
   let m = block.match(/<media:content[^>]*url="([^"]+)"/i);
   if (m) return m[1];
 
-  // <media:thumbnail url="...">
   m = block.match(/<media:thumbnail[^>]*url="([^"]+)"/i);
   if (m) return m[1];
 
-  // <enclosure url="...">
   m = block.match(/<enclosure[^>]*url="([^"]+)"/i);
+  if (m) return m[1];
+
+  m = block.match(/<img[^>]*src="([^"]+)"/i);
   if (m) return m[1];
 
   return null;
@@ -84,14 +82,14 @@ async function parseFeed(text, feedKey) {
     };
 
     let description = get("description");
-    let image = null;
 
     // CoinTelegraph special handling
+    let image;
     if (feedKey === "ct") {
       description = stripImgTags(description);
-      let image = extractImage(description) || extractImageFromBlock(block);
+      image = extractImageFromBlock(block);
     } else {
-      image = extractImage(description);
+      image = extractImage(description) || extractImageFromBlock(block);
     }
 
     return {
@@ -134,7 +132,7 @@ async function handleRss(url, feedKey) {
 }
 
 // ------------------------------------------------------------
-// Fallback URLs
+// Fallback URLs & IMGs
 // ------------------------------------------------------------
 const FALLBACK_URLS = {
   cb: "https://blog.coinbase.com/",
@@ -142,6 +140,14 @@ const FALLBACK_URLS = {
   kraken_blog: "https://blog.kraken.com/",
   rh_crypto: "https://robinhood.com/crypto",
   ft_finance: "https://www.ft.com/"
+};
+
+const FALLBACK_IMAGES = {
+  cb: "https://www.coinbase.com/favicon.ico",
+  binance_blog: "https://www.binance.com/favicon.ico",
+  kraken_blog: "https://www.kraken.com/favicon.ico",
+  rh_crypto: "https://robinhood.com/favicon.ico",
+  cryptopanic_crypto: "https://cryptopanic.com/favicon.ico"
 };
 
 // ------------------------------------------------------------
@@ -167,7 +173,7 @@ async function handleFallback(feedKey) {
 }
 
 // ------------------------------------------------------------
-// JSON Handlers
+// JSON Handlers (News)
 // ------------------------------------------------------------
 
 // CryptoPanic
@@ -208,7 +214,7 @@ async function handleCryptoPanic() {
   }
 }
 
-// Yahoo Crypto
+// Yahoo Crypto News
 async function handleYahooCrypto() {
   try {
     const res = await fetch(
@@ -221,7 +227,13 @@ async function handleYahooCrypto() {
       }
     );
 
-    const json = await res.json();
+    // Yahoo sometimes returns HTML on error → guard
+    const text = await res.text();
+    if (text.trim().startsWith("<")) {
+      throw new Error("Yahoo returned HTML instead of JSON");
+    }
+
+    const json = JSON.parse(text);
     const results = json?.data || [];
 
     const items = results.map(item => ({
@@ -247,7 +259,7 @@ async function handleYahooCrypto() {
   }
 }
 
-// CoinGecko Status Updates
+// CoinGecko Status Updates (optional JSON feed)
 async function handleCoinGeckoCrypto() {
   try {
     const res = await fetch(
@@ -284,46 +296,140 @@ async function handleCoinGeckoCrypto() {
 }
 
 // ------------------------------------------------------------
-// Market Snapshot Handler
+// Market Snapshot Handler (CoinCap for Crypto + Yahoo Finance for Stocks)
 // ------------------------------------------------------------
-const SYMBOL_TO_COINGECKO = {
+
+// Crypto → CoinCap IDs
+const CRYPTO_MAP = {
   btc: "bitcoin",
   eth: "ethereum",
   sol: "solana",
-  aapl: "apple",
-  msft: "microsoft",
-  amzn: "amazon"
+  xrp: "xrp",
+  ada: "cardano",
+  avax: "avalanche"
 };
 
+// Stocks → Yahoo Finance symbols
+const STOCK_MAP = {
+  aapl: "AAPL",
+  msft: "MSFT",
+  amzn: "AMZN",
+  nvda: "NVDA",
+  meta: "META",
+  goog: "GOOG",
+  jpm: "JPM",
+  gs: "GS",
+  bac: "BAC",
+  v: "V",
+  ma: "MA",
+  "brk.b": "BRK-B",
+  orcl: "ORCL",
+  ibm: "IBM",
+  sap: "SAP",
+  dis: "DIS",
+  wbd: "WBD",
+  manu: "MANU"
+};
+
+// Cache + TTL
+const MARKET_CACHE = {};
+const MARKET_CACHE_TTL_MS = 60 * 1000;
+
+// Track failures for Health Dashboard
+const MARKET_FAILURES = new Set();
+
 async function handleMarket(symbol) {
-  const cgId = SYMBOL_TO_COINGECKO[symbol];
-  if (!cgId) {
-    return jsonResponse(400, {
-      status: "error",
-      error: "Unknown symbol"
-    });
+  const key = symbol.toLowerCase();
+  const now = Date.now();
+
+  // Serve from cache if fresh
+  const cached = MARKET_CACHE[key];
+  if (cached && now - cached.timestamp < MARKET_CACHE_TTL_MS) {
+    return jsonResponse(200, { status: "ok", data: cached.data });
   }
 
-  const url =
-    `https://api.coingecko.com/api/v3/coins/${cgId}/market_chart?vs_currency=usd&days=1`;
+  // -------------------------------
+  // CRYPTO (CoinCap)
+  // -------------------------------
+  if (CRYPTO_MAP[key]) {
+    const id = CRYPTO_MAP[key];
 
-  try {
-    const res = await fetch(url, {
-      headers: {
-        "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0"
+    try {
+      const chartUrl = `https://api.coincap.io/v2/assets/${id}/history?interval=h1`;
+      const chartRes = await fetch(chartUrl, {
+        headers: { "Accept": "application/json", "User-Agent": "Mozilla/5.0" }
+      });
+
+      const chartJson = await chartRes.json();
+      if (!chartJson?.data?.length) throw new Error("No chart data");
+
+      const prices = chartJson.data.map(p => [p.time, parseFloat(p.priceUsd)]);
+      const data = { prices };
+
+      MARKET_CACHE[key] = { timestamp: now, data };
+      MARKET_FAILURES.delete(key);
+
+      return jsonResponse(200, { status: "ok", data });
+    } catch (err) {
+      console.error(`CoinCap error for ${symbol}:`, err);
+      MARKET_FAILURES.add(key);
+      return jsonResponse(502, {
+        status: "error",
+        error: `CoinCap failed for ${symbol}: ${err.message}`
+      });
+    }
+  }
+
+  // -------------------------------
+  // STOCKS (Yahoo Finance)
+  // -------------------------------
+  if (STOCK_MAP[key]) {
+    const yfSymbol = STOCK_MAP[key];
+
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yfSymbol}?interval=1h&range=1d`;
+
+      const res = await fetch(url, {
+        headers: { "Accept": "application/json", "User-Agent": "Mozilla/5.0" }
+      });
+
+      const json = await res.json();
+      const result = json?.chart?.result?.[0];
+
+      if (!result?.timestamp || !result?.indicators?.quote?.[0]?.close) {
+        throw new Error("Invalid Yahoo Finance data");
       }
-    });
 
-    const data = await res.json();
-    return jsonResponse(200, { status: "ok", data });
-  } catch (err) {
-    console.error("Market error:", err);
-    return jsonResponse(502, {
-      status: "error",
-      error: err.message
-    });
+      const timestamps = result.timestamp;
+      const closes = result.indicators.quote[0].close;
+
+      const prices = timestamps.map((t, i) => [
+        t * 1000,
+        closes[i]
+      ]);
+
+      const data = { prices };
+
+      MARKET_CACHE[key] = { timestamp: now, data };
+      MARKET_FAILURES.delete(key);
+
+      return jsonResponse(200, { status: "ok", data });
+    } catch (err) {
+      console.error(`Yahoo Finance error for ${symbol}:`, err);
+      MARKET_FAILURES.add(key);
+      return jsonResponse(502, {
+        status: "error",
+        error: `Yahoo Finance failed for ${symbol}: ${err.message}`
+      });
+    }
   }
+
+  // Unknown symbol
+  MARKET_FAILURES.add(key);
+  return jsonResponse(400, {
+    status: "error",
+    error: `Unknown symbol: ${symbol}`
+  });
 }
 
 // ------------------------------------------------------------
@@ -374,45 +480,60 @@ async function handleFeedRequest(feedKey) {
 }
 
 // ------------------------------------------------------------
-// Health Handler (Safe + Stable)
+// UNIVERSAL HEALTH HANDLER — handles ANY number of failures
 // ------------------------------------------------------------
 async function handleHealth() {
-  const checkFeed = async (key, val) => {
+  const safeCheck = async (key, val) => {
     try {
-      if (typeof val !== "string") return [key, "error"];
-
+      if (!val || typeof val !== "string") return [key, "error"];
       if (val.startsWith("fallback:")) return [key, "fallback"];
       if (val.startsWith("json:")) return [key, "json"];
 
-      // Use GET instead of HEAD — more widely supported
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 5000);
+      try {
+        new URL(val);
+      } catch {
+        return [key, "error"];
+      }
 
-      const res = await fetch(val, {
-        method: "GET",
-        signal: controller.signal
-      });
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
 
-      clearTimeout(timeout);
+        const res = await fetch(val, {
+          method: "GET",
+          signal: controller.signal
+        });
 
-      return [key, res.ok ? "ok" : "error"];
-    } catch {
+        clearTimeout(timeout);
+        return [key, res.ok ? "ok" : "error"];
+      } catch (err) {
+        console.error(`Health fetch failed for ${key}:`, err.message);
+        return [key, "error"];
+      }
+    } catch (err) {
+      console.error(`Health check crashed for ${key}:`, err.message);
       return [key, "error"];
     }
   };
 
-  const entries = await Promise.all(
-    Object.entries(FEEDS).map(([key, val]) => checkFeed(key, val))
+  const feedEntries = await Promise.all(
+    Object.entries(FEEDS).map(([key, val]) => safeCheck(key, val))
   );
 
-  const status = {};
-  for (const [k, v] of entries) status[k] = v;
+  const feeds = {};
+  for (const [k, v] of feedEntries) feeds[k] = v;
 
-  return jsonResponse(200, { status: "ok", feeds: status });
+  const markets = Array.from(MARKET_FAILURES || []);
+
+  return jsonResponse(200, {
+    status: "ok",
+    feeds,
+    markets
+  });
 }
 
 // ------------------------------------------------------------
-// Lambda Entry
+// Lambda Entry — routing priority: mode → feed
 // ------------------------------------------------------------
 export async function handler(event) {
   try {
@@ -423,8 +544,12 @@ export async function handler(event) {
     const qs = event.queryStringParameters || {};
     const mode = qs.mode || "rss";
 
-    if (mode === "health") return await handleHealth();
+    // PRIORITY 1: HEALTH
+    if (mode === "health") {
+      return await handleHealth();
+    }
 
+    // PRIORITY 2: MARKET
     if (mode === "market") {
       const symbol = qs.symbol;
       if (!symbol) {
@@ -436,6 +561,7 @@ export async function handler(event) {
       return await handleMarket(symbol);
     }
 
+    // PRIORITY 3: FEEDS (RSS/JSON)
     const feedKey =
       qs.feed ||
       qs.source ||

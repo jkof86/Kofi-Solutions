@@ -4,7 +4,7 @@ import {
   Typography,
   Box,
   CircularProgress,
-  Chip
+  Tooltip
 } from "@mui/material";
 import RssFeedIcon from "@mui/icons-material/RssFeed";
 import TabsLayout from "./layouts/TabsLayout";
@@ -12,12 +12,20 @@ import FeedHealthDashboard from "./FeedHealthDashboard";
 import { useNavigate } from "react-router-dom";
 import MainContainer from "./layouts/MainContainer";
 import HeaderShell from "./layouts/HeaderShell";
+import Drawer from '@mui/material/Drawer';
+
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+
+
 
 export default function Home() {
   const [feedHealth, setFeedHealth] = useState(null);
   const [loadingHealth, setLoadingHealth] = useState(true);
   const [healthError, setHealthError] = useState(null);
+  const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(null);
+
+
 
   // ------------------------------------------------------------
   // Fetch feed health
@@ -62,7 +70,11 @@ export default function Home() {
 
   return (
     <>
-      <HeaderShell onHeightChange={setHeaderHeight} />
+      <HeaderShell
+        onHeightChange={setHeaderHeight}
+        isHealthOpen={isHealthOpen}
+        setIsHealthOpen={setIsHealthOpen} 
+        />
 
       <MainContainer headerHeight={headerHeight}>
         <Container maxWidth="xl" sx={{ mt: 2, mb: 6 }}>
@@ -86,37 +98,44 @@ export default function Home() {
                 py: 2,
                 borderRadius: 2,
                 boxShadow: 3,
-                mb: 3
+                mb: 3,
+                zIndex: 2500
               }}
-            > 
+            >
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <RssFeedIcon fontSize="large" />
                 <Typography variant="h5" sx={{ fontWeight: 600 }}>
                   News Feeds (RSS)
                 </Typography>
               </Box>
-
+              
             </Box>
 
             {/* Tabs */}
             <TabsLayout />
 
             {/* Feed Health */}
-            <Box sx={{ mt: 4 }}>
-              <Typography variant="h5" sx={{ mb: 2 }}>
-                Feed Health
+
+            <Drawer
+              anchor="right"
+              open={isHealthOpen}
+              onClose={() => setIsHealthOpen(false)}
+              PaperProps={{
+                sx: {
+                  width: "22rem",
+                  padding: 2,
+                  backgroundColor: "#fafafa"
+                }
+              }}
+            >
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                System Health
               </Typography>
 
-              {loadingHealth ? (
-                <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-                  <CircularProgress />
-                </Box>
-              ) : healthError ? (
-                <Typography color="error">{healthError}</Typography>
-              ) : (
-                <FeedHealthDashboard healthMap={feedHealth} />
-              )}
-            </Box>
+              <FeedHealthDashboard />
+            </Drawer>
+
+
           </Box>
         </Container>
       </MainContainer>

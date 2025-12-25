@@ -14,6 +14,7 @@ import {
   Divider,
   Tooltip
 } from "@mui/material";
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import {
   Home as HomeIcon,
   Info as InfoIcon,
@@ -24,12 +25,19 @@ import {
   ViewList as ViewListIcon,
   Menu as MenuIcon
 } from "@mui/icons-material";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+
+import FeedHealthDashboard from "../FeedHealthDashboard";
+
 
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+
 import { googleLogout } from "@react-oauth/google";
 
 import avatarImage from '../../images/icons/avatar_full.jpg';
+import TickerBar from "./TickerBar";
+
 
 const TICKER_DATA = [
   { label: "BITCOIN", value: 87841.0, change: -0.95 },
@@ -41,6 +49,10 @@ const TICKER_DATA = [
 ];
 
 export default function HeaderShell({ onHeightChange }) {
+  // const [feedHealth, setFeedHealth] = useState(null);
+  // const [loadingHealth, setLoadingHealth] = useState(true);
+  // const [healthError, setHealthError] = useState(null);
+  const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -60,7 +72,7 @@ export default function HeaderShell({ onHeightChange }) {
 
   const navItems = [
     { label: "Home", icon: <HomeIcon />, to: "/home" },
-    { label: "Gaming", icon: <InfoIcon />, to: "/gaming/about" },
+    { label: "Gaming", icon: <SportsEsportsIcon />, to: "/gaming/about" },
     {
       label: "WordPress",
       icon: <InfoIcon />,
@@ -263,43 +275,58 @@ export default function HeaderShell({ onHeightChange }) {
               <Typography variant="h3" sx={{ fontWeight: 600 }}>
                 Kofi Solutions
               </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                Dashboard
-              </Typography>
+              <Chip label="v1.142" size="small"
+                sx={{
+                  backgroundColor: "#fff",
+                  color: "#1976d2",
+                  fontWeight: 600
+                }}
+              />
             </Box>
           </Stack>
 
-          <Chip
-            label="v1.142"
-            size="small"
-            sx={{
-              backgroundColor: "#fff",
-              color: "#1976d2",
-              fontWeight: 600
+
+          {/* System Health Drawer */}
+          <Drawer
+            anchor="right"
+            open={isHealthOpen}
+            onClose={() => setIsHealthOpen(false)}
+            PaperProps={{
+              sx: {
+                width: "22rem",
+                padding: 2,
+                backgroundColor: "#fafafa",
+                zIndex: 2000
+              }
             }}
-          />
+          >
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+              System Health
+            </Typography>
 
-        </Box>
+            <FeedHealthDashboard />
 
-        {/* Ticker */}
-        <Box sx={{ backgroundColor: "#f5f5f5", py: 1, px: 2 }}>
-          <Stack direction="row" spacing={4} justifyContent="center">
-            {TICKER_DATA.map((item, idx) => (
-              <Typography
-                key={idx}
-                variant="body2"
+          </Drawer>
+
+          <Box justifyContent='center'>
+
+            <Tooltip title="Feed & Market Health">
+              <HealthAndSafetyIcon
                 sx={{
-                  color: item.change >= 0 ? "success.main" : "error.main",
-                  fontWeight: 500
+                  cursor: "pointer",
+                  color: "#ffffff",
+                  // zIndex: 3000,
+                  position: "relative"
                 }}
-              >
-                {item.label}: ${item.value.toFixed(2)} (
-                {item.change >= 0 ? "+" : ""}
-                {item.change.toFixed(2)}%)
-              </Typography>
-            ))}
-          </Stack>
+                onClick={() => setIsHealthOpen(true)}
+              />
+            </Tooltip>
+          </Box>
+
         </Box>
+
+
+        <TickerBar />
 
       </Box>
     </Box>
