@@ -1,11 +1,12 @@
 import {
   AppBar,
+  Avatar,
   Toolbar,
   Box,
   Typography,
   Button,
-  Stack,
   Chip,
+  Stack,
   Drawer,
   ListItem,
   ListItemButton,
@@ -20,11 +21,15 @@ import {
   AccountCircle as AccountCircleIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
-  ViewList as ViewListIcon
+  ViewList as ViewListIcon,
+  Menu as MenuIcon
 } from "@mui/icons-material";
+
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { googleLogout } from "@react-oauth/google";
+
+import avatarImage from '../../images/icons/avatar_full.jpg';
 
 const TICKER_DATA = [
   { label: "BITCOIN", value: 87841.0, change: -0.95 },
@@ -137,7 +142,7 @@ export default function HeaderShell({ onHeightChange }) {
   return (
     <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000 }}>
 
-      {/* 🔥 This wrapper contains ALL header content and is measured */}
+      {/* This wrapper contains ALL header content and is measured */}
       <Box ref={ref}>
 
         {/* Drawer Menu */}
@@ -146,13 +151,41 @@ export default function HeaderShell({ onHeightChange }) {
           onClose={() => setIsDrawerOpen(false)}
           PaperProps={{ sx: { width: "15rem" } }}
         >
-          <Typography sx={{ my: 2, textAlign: "center" }}>Portfolio</Typography>
-          <Divider sx={{ borderColor: "black", borderBottomWidth: "5px", mb: 1 }} />
+
+          {/*           
+  // ------------------------------------------------------------
+  // Login Validation
+  // ------------------------------------------------------------ */}
+
+          <Stack direction="row" padding={1} spacing={1} justifyContent={'center'}>
+            <Tooltip title='View Resume / Portfolio'>
+              <Chip sx={{
+                cursor: 'pointer', // Makes the mouse change to pointer on hover
+                '&:hover': {
+                  backgroundColor: '#95CDD5', // Optional: subtle hover effect
+                },
+              }}
+                avatar={<Avatar alt="Jason" src={avatarImage}
+                />}
+                label="Jason"
+                variant="outlined"
+                component={Link}
+                to="/about"
+              />
+            </Tooltip>
+          </Stack>
+
+
+          {/* <Divider sx={{ borderColor: "black", borderBottomWidth: "5px", mb: 1 }} /> */}
+
 
           {navItems.map(({ label, icon, to, external, href }) => (
             <ListItem key={label} disablePadding>
               <ListItemButton
-                sx={{ textAlign: "left", borderTop: "1px solid black" }}
+                sx={{
+                  textAlign: "left",
+                  borderTop: "1px solid black"
+                }}
                 component={external ? "a" : Link}
                 to={external ? undefined : to}
                 href={external ? href : undefined}
@@ -170,7 +203,7 @@ export default function HeaderShell({ onHeightChange }) {
           {navItems2.map(({ label, icon, to, action }) => (
             <ListItem key={label} disablePadding>
               <ListItemButton
-                sx={{ textAlign: "left", borderTop: "1px solid black" }}
+                sx={{ textAlign: "left", borderBottom: "1px solid black" }}
                 component={to ? Link : "button"}
                 to={to}
                 onClick={() => {
@@ -221,7 +254,7 @@ export default function HeaderShell({ onHeightChange }) {
           }}
         >
           <Stack direction="row" spacing={2} alignItems="center">
-            <ViewListIcon
+            <MenuIcon
               fontSize="large"
               sx={{ cursor: "pointer" }}
               onClick={() => setIsDrawerOpen(true)}
@@ -231,10 +264,20 @@ export default function HeaderShell({ onHeightChange }) {
                 Kofi Solutions
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                Innovation | Strategy | Execution
+                Dashboard
               </Typography>
             </Box>
           </Stack>
+
+          <Chip
+            label="v1.141"
+            size="small"
+            sx={{
+              backgroundColor: "#fff",
+              color: "#1976d2",
+              fontWeight: 600
+            }}
+          />
 
         </Box>
 

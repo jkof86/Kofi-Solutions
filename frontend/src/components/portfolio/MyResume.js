@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button, Box } from '@mui/material';
-import pdfFile from '../misc/jkof_portfolio.PDF';
+import pdfFile from '../../misc/jkof_resume.pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -14,7 +14,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     import.meta.url,
 ).toString();
 
-export default function MyPortfolio() {
+export default function MyResume() {
 
     const [numPages, setNumPages] = useState();
     const [pageNumber, setPageNumber] = useState(1);

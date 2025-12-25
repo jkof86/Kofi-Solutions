@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
-import MyPortfolio from "../MyPortfolio";
+import MyPortfolio from "./MyPortfolio";
 import NavDrawerProfessional from '../navigation/NavDrawerProfessional';
-import MyResume from '../MyResume';
+import MyResume from './MyResume';
 
 export default function About() {
 

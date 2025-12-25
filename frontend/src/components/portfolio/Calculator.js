@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 
 import { useState } from "react";
-import PieChart from "../PieChart";
+import PieChart from "./PieChart";
 import NavDrawerFitness from "../navigation/NavDrawerFitness";
 
 export default function Calculator() {

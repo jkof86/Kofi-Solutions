@@ -88,7 +88,7 @@ export default function Home() {
                 boxShadow: 3,
                 mb: 3
               }}
-            >
+            > 
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                 <RssFeedIcon fontSize="large" />
                 <Typography variant="h5" sx={{ fontWeight: 600 }}>
@@ -96,15 +96,6 @@ export default function Home() {
                 </Typography>
               </Box>
 
-              <Chip
-                label="v1.141"
-                size="small"
-                sx={{
-                  backgroundColor: "#fff",
-                  color: "#1976d2",
-                  fontWeight: 600
-                }}
-              />
             </Box>
 
             {/* Tabs */}

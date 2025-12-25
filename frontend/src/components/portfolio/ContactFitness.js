@@ -4,7 +4,7 @@ import {
     CardMedia
 } from "@mui/material";
 import { Link } from 'react-router-dom';
-import SlideShowFitness from "../SlideShowFitness";
+import SlideShowFitness from "./SlideShowFitness";
 import NavDrawerFitness from "../navigation/NavDrawerFitness";
 
 export default function ContactFitness() {
