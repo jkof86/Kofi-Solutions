@@ -83,7 +83,6 @@ async function parseFeed(text, feedKey) {
 
     let description = get("description");
 
-    // CoinTelegraph special handling
     let image;
     if (feedKey === "ct") {
       description = stripImgTags(description);
@@ -139,7 +138,17 @@ const FALLBACK_URLS = {
   binance_blog: "https://www.binance.com/en/blog",
   kraken_blog: "https://blog.kraken.com/",
   rh_crypto: "https://robinhood.com/crypto",
-  ft_finance: "https://www.ft.com/"
+  ft_finance: "https://www.ft.com/",
+  reuters_world: "https://www.reuters.com/world/",
+  marketwatch_finance: "https://www.marketwatch.com/",
+  yahoo_finance: "https://finance.yahoo.com/",
+  ap_world: "https://apnews.com/",
+  sky_sports: "https://www.skysports.com/",
+  darkreading_security: "https://www.darkreading.com/",
+  logrocket_react: "https://blog.logrocket.com/",
+  infoq_java: "https://www.infoq.com/java/",
+  iot_agenda: "https://www.techtarget.com/iotagenda/",
+  espn_sports: "https://www.espn.com/"
 };
 
 const FALLBACK_IMAGES = {
@@ -227,7 +236,6 @@ async function handleYahooCrypto() {
       }
     );
 
-    // Yahoo sometimes returns HTML on error → guard
     const text = await res.text();
     if (text.trim().startsWith("<")) {
       throw new Error("Yahoo returned HTML instead of JSON");
@@ -342,15 +350,12 @@ async function handleMarket(symbol) {
   const key = symbol.toLowerCase();
   const now = Date.now();
 
-  // Serve from cache if fresh
   const cached = MARKET_CACHE[key];
   if (cached && now - cached.timestamp < MARKET_CACHE_TTL_MS) {
     return jsonResponse(200, { status: "ok", data: cached.data });
   }
 
-  // -------------------------------
   // CRYPTO (CoinCap)
-  // -------------------------------
   if (CRYPTO_MAP[key]) {
     const id = CRYPTO_MAP[key];
 
@@ -380,9 +385,7 @@ async function handleMarket(symbol) {
     }
   }
 
-  // -------------------------------
   // STOCKS (Yahoo Finance)
-  // -------------------------------
   if (STOCK_MAP[key]) {
     const yfSymbol = STOCK_MAP[key];
 
@@ -424,7 +427,6 @@ async function handleMarket(symbol) {
     }
   }
 
-  // Unknown symbol
   MARKET_FAILURES.add(key);
   return jsonResponse(400, {
     status: "error",
@@ -446,7 +448,6 @@ async function handleFeedRequest(feedKey) {
     });
   }
 
-  // JSON feeds
   if (target.startsWith("json:")) {
     const key = target.slice(5);
 
@@ -461,13 +462,11 @@ async function handleFeedRequest(feedKey) {
     });
   }
 
-  // Fallback feeds
   if (target.startsWith("fallback:")) {
     const fbKey = target.slice(9);
     return await handleFallback(fbKey);
   }
 
-  // RSS feeds
   if (/^https?:\/\//.test(target)) {
     return await handleRss(target, feedKey);
   }
@@ -480,7 +479,7 @@ async function handleFeedRequest(feedKey) {
 }
 
 // ------------------------------------------------------------
-// UNIVERSAL HEALTH HANDLER — handles ANY number of failures
+// UNIVERSAL HEALTH HANDLER
 // ------------------------------------------------------------
 async function handleHealth() {
   const safeCheck = async (key, val) => {
@@ -544,12 +543,10 @@ export async function handler(event) {
     const qs = event.queryStringParameters || {};
     const mode = qs.mode || "rss";
 
-    // PRIORITY 1: HEALTH
     if (mode === "health") {
       return await handleHealth();
     }
 
-    // PRIORITY 2: MARKET
     if (mode === "market") {
       const symbol = qs.symbol;
       if (!symbol) {
@@ -561,7 +558,6 @@ export async function handler(event) {
       return await handleMarket(symbol);
     }
 
-    // PRIORITY 3: FEEDS (RSS/JSON)
     const feedKey =
       qs.feed ||
       qs.source ||

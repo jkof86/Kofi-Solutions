@@ -23,6 +23,7 @@ import {
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   ViewList as ViewListIcon,
+  Switch as SwitchIcon,
   Menu as MenuIcon
 } from "@mui/icons-material";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
@@ -37,6 +38,8 @@ import { googleLogout } from "@react-oauth/google";
 
 import avatarImage from '../../images/icons/avatar_full.jpg';
 import TickerBar from "./TickerBar";
+import FormControlLabel from "@mui/material";
+// import Switch from "@mui/Switch";
 
 
 const TICKER_DATA = [
@@ -54,6 +57,8 @@ export default function HeaderShell({ onHeightChange }) {
   // const [healthError, setHealthError] = useState(null);
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [strictMode, setStrictMode] = useState(true);
+
   const navigate = useNavigate();
 
   // 🔥 THIS ref measures the ENTIRE header (AppBar + Banner + Ticker)
@@ -300,6 +305,17 @@ export default function HeaderShell({ onHeightChange }) {
               }
             }}
           >
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={strictMode}
+                  onChange={(e) => setStrictMode(e.target.checked)}
+                />
+              }
+              label="Strict 
+              Health Mode"
+            />
+
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               System Health
             </Typography>
