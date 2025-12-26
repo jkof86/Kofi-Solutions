@@ -1,13 +1,10 @@
-// ------------------------------------------------------------
-// RSSFeed.jsx — Feed list + batching
-// ------------------------------------------------------------
-
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Button, Stack } from "@mui/material";
 import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
 
 const BATCH_SIZE = 4;
+
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
@@ -18,40 +15,53 @@ export default function RSSFeed({ name }) {
   const [error, setError] = useState(null);
   const [isFallback, setIsFallback] = useState(false);
 
-  useEffect(() => {
-    async function fetchFeed() {
-      setLoading(true);
-      setError(null);
-      setIsFallback(false);
-      setVisibleCount(BATCH_SIZE);
+  // -----------------------------
+  // Fetch a single feed
+  // -----------------------------
+  const fetchFeed = async (feedName = name) => {
+    setLoading(true);
+    setError(null);
+    setIsFallback(false);
+    setVisibleCount(BATCH_SIZE);
 
-      try {
-        const url = `${BACKEND_URL}?feed=${encodeURIComponent(name)}`;
-        const res = await fetch(url);
-        const json = await res.json();
+    try {
+      const url = `${BACKEND_URL}?feed=${encodeURIComponent(feedName)}`;
+      const res = await fetch(url);
+      const json = await res.json();
 
-        // backend: status !== "ok" used for fallback/unavailable
-        if (json.status !== "ok") {
-          setIsFallback(true);
-          setItems(json.items || []);
-          // do NOT show red error text if we have a fallback card
-          if (!json.items || json.items.length === 0) {
-            setError(json.error || "Feed error");
-          }
-        } else {
-          setItems(json.items || []);
+      if (json.status !== "ok") {
+        setIsFallback(true);
+        setItems(json.items || []);
+        if (!json.items || json.items.length === 0) {
+          setError(json.error || "Feed error");
         }
-      } catch (err) {
-        setError(err.message);
-        setItems([]);
-      } finally {
-        setLoading(false);
+      } else {
+        setItems(json.items || []);
       }
+    } catch (err) {
+      setError(err.message);
+      setItems([]);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (name) {
-      fetchFeed();
-    }
+  // -----------------------------
+  // Refresh All (parent-level)
+  // -----------------------------
+  const refreshAll = () => {
+    fetchFeed(name);
+  };
+
+  // -----------------------------
+  // Per-feed refresh (passed to FeedCard)
+  // -----------------------------
+  const refreshFeedItem = () => {
+    fetchFeed(name);
+  };
+
+  useEffect(() => {
+    if (name) fetchFeed(name);
   }, [name]);
 
   const visibleItems = items.slice(0, visibleCount);
@@ -59,18 +69,32 @@ export default function RSSFeed({ name }) {
 
   return (
     <Box>
-      {loading && (
-        <Typography sx={{ mb: 2 }}>Loading feed: {feedMeta?.label}…</Typography>
+      {/* Header + Refresh All */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2
+        }}
+      >
+        <Typography variant="h6"></Typography>
+
+        <Button variant="outlined" onClick={refreshAll}>
+          Refresh All
+        </Button>
+      </Box>
+
+      {loading && feedMeta && (
+        <Typography sx={{ mb: 2 }}>Loading feed: {feedMeta.label}…</Typography>
       )}
 
-      {/* Only show red error if we truly have nothing to show */}
       {error && items.length === 0 && (
         <Typography color="error" sx={{ mb: 2 }}>
           {error}
         </Typography>
       )}
 
-      {/* Fallback/unavailable message should live on the card(s) only */}
       {isFallback && items.length > 0 && (
         <Typography variant="body2" sx={{ mb: 1 }}>
           Feed "{name}" is currently unavailable (fallback mode).
@@ -83,6 +107,7 @@ export default function RSSFeed({ name }) {
             key={`${item.url}-${idx}`}
             item={item}
             feedMeta={feedMeta}
+            onRefresh={refreshFeedItem}
           />
         ))}
       </Stack>
@@ -91,7 +116,7 @@ export default function RSSFeed({ name }) {
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Button
             variant="outlined"
-            onClick={() => setVisibleCount(c => c + BATCH_SIZE)}
+            onClick={() => setVisibleCount((c) => c + BATCH_SIZE)}
           >
             Load more
           </Button>

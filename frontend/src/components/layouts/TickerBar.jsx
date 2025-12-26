@@ -1,11 +1,6 @@
-// TickerBar.jsx — Kofi Solutions 1.142
-//
-// - Horizontally scrolling marquee
-// - Auto-fetches market data from backend
-// - Uses backend market cache + expanded symbols
-// - Shows WarningAmberIcon when fetch fails
-// - Category chips + icons + sparkline placeholder
-// - Ready for auto-sync with activeCategory
+// ------------------------------------------------------------
+// TickerBar.jsx — Kofi Solutions 1.145 (FINAL)
+// ------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Chip } from "@mui/material";
@@ -18,7 +13,9 @@ import {
   SYMBOL_ICONS
 } from "../../data/tickerConfig";
 
-// If you wire a UI context, pass activeCategory as prop
+const API =
+  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
+
 const DEFAULT_CATEGORY = "crypto";
 
 export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
@@ -32,7 +29,6 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
     )?.[0];
   };
 
-  // Auto-sync symbols with active category
   useEffect(() => {
     if (activeCategory && CATEGORY_SYMBOLS[activeCategory]) {
       setSymbols(CATEGORY_SYMBOLS[activeCategory]);
@@ -41,68 +37,36 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
     }
   }, [activeCategory]);
 
-  // Fetch ticker data from backend (RSSProxyAggregator)
   useEffect(() => {
-    const SUPPORTED_SYMBOLS = [
-      "btc",
-      "eth",
-      "sol",
-      "xrp",
-      "ada",
-      "avax",
-      "aapl",
-      "msft",
-      "amzn",
-      "jpm",
-      "gs",
-      "bac",
-      "v",
-      "ma",
-      "brk.b",
-      "nvda",
-      "meta",
-      "goog",
-      "qcom",
-      "txn",
-      "stm",
-      "orcl",
-      "ibm",
-      "sap",
-      "dis",
-      "wbd",
-      "manu"
-    ];
+    const SUPPORTED = TICKER_SYMBOLS.map((s) => s.toLowerCase());
 
     const fetchTickerData = async () => {
       const results = {};
 
       await Promise.all(
-        SUPPORTED_SYMBOLS.map(async (symbol) => {
+        SUPPORTED.map(async (lower) => {
+          const upper = lower.toUpperCase();
+
           try {
             const res = await fetch(
-              `/RSSProxyAggregator?mode=market&symbol=${encodeURIComponent(
-                symbol
-              )}`
+              `${API}?mode=market&symbol=${encodeURIComponent(lower)}`
             );
             const json = await res.json();
 
-            if (json?.status === "ok" && json.data?.prices?.length > 0) {
-              const pricesArr = json.data.prices;
-              const latest = pricesArr[pricesArr.length - 1][1];
-              const previous = pricesArr[0][1];
-              const change = ((latest - previous) / previous) * 100;
+            if (json?.status === "ok" && json.price != null) {
+              const latest = json.price;
+              const change = json.change_24h ?? 0;
 
-              results[symbol.toUpperCase()] = {
+              results[upper] = {
                 price: latest,
                 change,
                 warning: false
               };
             } else {
-              results[symbol.toUpperCase()] = { warning: true };
+              results[upper] = { warning: true };
             }
-          } catch (err) {
-            console.error(`Ticker fetch failed for ${symbol}`, err);
-            results[symbol.toUpperCase()] = { warning: true };
+          } catch {
+            results[upper] = { warning: true };
           }
         })
       );
@@ -116,7 +80,6 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Restart animation when symbols change
   useEffect(() => {
     const el = document.querySelector(".scroll");
     if (el) {
@@ -140,7 +103,6 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
         }
       }}
     >
-      {/* Scrolling container */}
       <Box
         className="scroll"
         sx={{
@@ -151,7 +113,6 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
       >
         {symbols.map((sym, idx) => {
           const p = prices[sym];
-          const change = p?.change ?? 0;
           const category = getCategory(sym) || "tech";
           const icon = SYMBOL_ICONS[sym] || "";
 
@@ -164,7 +125,6 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
                 mx: 4
               }}
             >
-              {/* Category chip */}
               <Chip
                 label={category.toUpperCase()}
                 size="small"
@@ -176,8 +136,7 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
                 }}
               />
 
-              {/* Symbol + price or warning */}
-              {p?.warning ? (
+              {!p || p.warning ? (
                 <Typography
                   variant="body2"
                   sx={{ color: "warning.main", fontWeight: 600 }}
@@ -192,17 +151,16 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
                 <Typography
                   variant="body2"
                   sx={{
-                    color: change >= 0 ? "success.main" : "error.main",
+                    color: p.change >= 0 ? "success.main" : "error.main",
                     fontWeight: 600
                   }}
                 >
-                  {icon} {sym}: ${p?.price?.toFixed(2)} (
-                  {change >= 0 ? "+" : ""}
-                  {change.toFixed(2)}%)
+                  {icon} {sym}: ${p.price.toFixed(2)} (
+                  {p.change >= 0 ? "+" : ""}
+                  {p.change.toFixed(2)}%)
                 </Typography>
               )}
 
-              {/* Sparkline placeholder (ready for charts) */}
               <Box
                 sx={{
                   width: 60,
@@ -218,7 +176,6 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
         })}
       </Box>
 
-      {/* Timestamp */}
       <Typography
         variant="caption"
         sx={{
@@ -231,7 +188,6 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
         Updated: {lastUpdated}
       </Typography>
 
-      {/* Keyframes for marquee */}
       <style>
         {`
           @keyframes scrollTicker {

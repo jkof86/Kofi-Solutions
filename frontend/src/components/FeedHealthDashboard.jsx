@@ -1,93 +1,73 @@
-// FeedHealthDashboard.jsx — Kofi Solutions 1.142
-//
-// - Calls /RSSProxyAggregator?mode=health
-// - Uses universal backend health handler
-// - Shows feed statuses + market failures
-// - Never crashes on missing fields
-
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Tooltip, Chip, Stack } from "@mui/material";
+import { Box, Chip, Typography, Stack } from "@mui/material";
+
+const API =
+  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
 export default function FeedHealthDashboard() {
-  const [feeds, setFeeds] = useState({});
-  const [markets, setMarkets] = useState([]);
-  const [error, setError] = useState(false);
+  const [health, setHealth] = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchHealth = async () => {
+    async function load() {
       try {
-        const res = await fetch("/RSSProxyAggregator?mode=health");
-        const data = await res.json();
+        const res = await fetch(`${API}?mode=health`);
+        const json = await res.json();
 
-        if (data?.status === "ok") {
-          setFeeds(data.feeds || {});
-          setMarkets(data.markets || []);
-          setError(false);
+        if (json.status !== "ok") {
+          setError(json.error || "Health error");
         } else {
-          console.error("Health response not ok:", data);
-          setError(true);
+          setHealth(json);
         }
       } catch (err) {
-        console.error("Health fetch failed", err);
-        setError(true);
+        setError(err.message);
       }
-    };
+    }
 
-    fetchHealth();
+    load();
+    const interval = setInterval(load, 60000);
+    return () => clearInterval(interval);
   }, []);
 
-  const getColor = (status) => {
-    if (status === "ok" || status === "json") return "success.main";
-    if (status === "fallback" || status === "degraded") return "warning.main";
-    return "error.main";
-  };
+  if (error) {
+    return <Typography color="error">Health Error: {error}</Typography>;
+  }
+
+  if (!health) {
+    return <Typography>Loading health…</Typography>;
+  }
+
+  const { feeds = {}, markets = [], strict } = health;
 
   return (
-    <Box sx={{ px: 2, py: 1 }}>
-      <Typography variant="h6" sx={{ mb: 1 }}>
-        Feed Health
+    <Box>
+      <Typography variant="subtitle2" sx={{ mb: 1 }}>
+        System Health {strict ? "(Strict)" : "(Soft)"}
       </Typography>
+      <Stack spacing={1} sx={{ mb: 2 }}>
+        {Object.entries(feeds).map(([feed, status]) => (
+          <Chip
+            key={feed}
+            label={`${feed}: ${status}`}
+            color={
+              status === "ok"
+                ? "success"
+                : status === "fallback" || status === "json"
+                ? "warning"
+                : "error"
+            }
+          />
+        ))}
+      </Stack>
 
-      {error ? (
-        <Typography color="error">Health error</Typography>
-      ) : (
+      {markets.length > 0 && (
         <>
-          {/* Feed statuses */}
-          <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 2 }}>
-            {Object.entries(feeds).map(([key, status]) => (
-              <Tooltip key={key} title={`Status: ${status}`}>
-                <Chip
-                  label={key}
-                  size="small"
-                  sx={{
-                    backgroundColor: getColor(status),
-                    color: "#000",
-                    fontWeight: 600
-                  }}
-                />
-              </Tooltip>
+          <Typography variant="subtitle2">Market Failures</Typography>
+          <Stack spacing={1}>
+            {markets.map((m) => (
+              <Chip key={m} label={m} color="error" />
             ))}
           </Stack>
-
-          {/* Market failures */}
-          {markets.length > 0 && (
-            <>
-              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                Market Snapshot Failures
-              </Typography>
-              <Stack direction="row" flexWrap="wrap" gap={1}>
-                {markets.map((sym) => (
-                  <Chip
-                    key={sym}
-                    label={sym.toUpperCase()}
-                    size="small"
-                    color="warning"
-                    variant="outlined"
-                  />
-                ))}
-              </Stack>
-            </>
-          )}
         </>
       )}
     </Box>

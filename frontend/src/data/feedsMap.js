@@ -1,9 +1,11 @@
-  // ------------------------------------------------------------
-// feedsMap.js — Frontend FEEDS metadata (no URLs)
+// ------------------------------------------------------------
+// feedsMap.js — Frontend FEEDS metadata (aligned with backend)
 // ------------------------------------------------------------
 
 export const FEEDS = {
+  // ------------------------------------------------------------
   // CRYPTO (Primary)
+  // ------------------------------------------------------------
   ct: {
     id: "ct",
     label: "CoinTelegraph",
@@ -25,59 +27,63 @@ export const FEEDS = {
     legacy: false,
     symbol: "btc"
   },
-  // coingecko_crypto: {
-  //   id: "coingecko_crypto",
-  //   label: "CoinGecko Status",
-  //   category: "crypto",
-  //   legacy: false,
-  //   symbol: "btc"
-  // },
-  // cb_eng: {
-  //   id: "cb_eng",
-  //   label: "Coinbase Blog (RSS)",
-  //   category: "crypto",
-  //   legacy: false,
-  //   symbol: "btc"
-  // },
+  coingecko_crypto: {
+    id: "coingecko_crypto",
+    label: "CoinGecko Status",
+    category: "crypto",
+    legacy: false,
+    symbol: "btc"
+  },
+  cb_eng: {
+    id: "cb_eng",
+    label: "Coinbase Engineering",
+    category: "crypto",
+    legacy: false,
+    symbol: "btc"
+  },
 
-  // (Legacy Sources)
+  // ------------------------------------------------------------
+  // CRYPTO (Legacy Sources)
+  // ------------------------------------------------------------
   cb: {
     id: "cb",
     label: "Coinbase Blog (HTML)",
-    category: "crypto",
+    category: "legacy_crypto",
     legacy: true,
     symbol: "btc"
   },
   binance_blog: {
     id: "binance_blog",
     label: "Binance Blog",
-    category: "crypto",
+    category: "legacy_crypto",
     legacy: true,
     symbol: "btc"
   },
   kraken_blog: {
     id: "kraken_blog",
     label: "Kraken Blog",
-    category: "crypto",
+    category: "legacy_crypto",
     legacy: true,
     symbol: "btc"
   },
   rh_crypto: {
     id: "rh_crypto",
     label: "Robinhood Crypto",
-    category: "crypto",
+    category: "legacy_crypto",
     legacy: true,
     symbol: "btc"
   },
   cryptopanic_crypto: {
     id: "cryptopanic_crypto",
     label: "CryptoPanic",
-    category: "crypto",
+    category: "legacy_crypto",
     legacy: true,
     symbol: "btc"
   },
 
+  // ------------------------------------------------------------
   // FINANCE
+  // ------------------------------------------------------------
   marketwatch_finance: {
     id: "marketwatch_finance",
     label: "MarketWatch",
@@ -96,11 +102,13 @@ export const FEEDS = {
     id: "ft_finance",
     label: "Financial Times",
     category: "finance",
-    legacy: true,
+    legacy: false,
     symbol: "aapl"
   },
 
+  // ------------------------------------------------------------
   // NEWS
+  // ------------------------------------------------------------
   ap_world: {
     id: "ap_world",
     label: "AP World",
@@ -120,7 +128,9 @@ export const FEEDS = {
     legacy: false
   },
 
+  // ------------------------------------------------------------
   // JAVA
+  // ------------------------------------------------------------
   baeldung_java: {
     id: "baeldung_java",
     label: "Baeldung",
@@ -140,7 +150,9 @@ export const FEEDS = {
     legacy: false
   },
 
+  // ------------------------------------------------------------
   // SECURITY
+  // ------------------------------------------------------------
   krebs_security: {
     id: "krebs_security",
     label: "Krebs on Security",
@@ -160,7 +172,9 @@ export const FEEDS = {
     legacy: false
   },
 
+  // ------------------------------------------------------------
   // IoT
+  // ------------------------------------------------------------
   iot_world: {
     id: "iot_world",
     label: "IoT World Today",
@@ -174,7 +188,9 @@ export const FEEDS = {
     legacy: false
   },
 
+  // ------------------------------------------------------------
   // SPRING
+  // ------------------------------------------------------------
   spring_blog: {
     id: "spring_blog",
     label: "Spring Blog",
@@ -188,7 +204,9 @@ export const FEEDS = {
     legacy: false
   },
 
+  // ------------------------------------------------------------
   // AWS
+  // ------------------------------------------------------------
   aws_news: {
     id: "aws_news",
     label: "AWS News Blog",
@@ -202,7 +220,9 @@ export const FEEDS = {
     legacy: false
   },
 
+  // ------------------------------------------------------------
   // REACT
+  // ------------------------------------------------------------
   reactjs_blog: {
     id: "reactjs_blog",
     label: "ReactJS Blog",
@@ -216,7 +236,9 @@ export const FEEDS = {
     legacy: false
   },
 
+  // ------------------------------------------------------------
   // SPORTS
+  // ------------------------------------------------------------
   espn_sports: {
     id: "espn_sports",
     label: "ESPN",
@@ -231,12 +253,15 @@ export const FEEDS = {
   }
 };
 
+// ------------------------------------------------------------
+// Helpers
+// ------------------------------------------------------------
 export function getFeedsForCategory(categoryId) {
   return Object.values(FEEDS).filter(feed => feed.category === categoryId);
 }
 
 export function getLegacyCryptoFeeds() {
   return Object.values(FEEDS).filter(
-    feed => feed.category === "crypto" && feed.legacy
+    feed => feed.category === "legacy_crypto"
   );
 }

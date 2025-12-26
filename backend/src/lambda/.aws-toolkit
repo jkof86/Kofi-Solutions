@@ -1,0 +1,5 @@
+{
+  "lambdaHandler": "backend.handler",
+  "runtime": "nodejs18.x",
+  "sourceRoot": "./"
+}

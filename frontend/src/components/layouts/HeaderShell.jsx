@@ -27,7 +27,9 @@ import {
   Menu as MenuIcon
 } from "@mui/icons-material";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
-
+import NewspaperIcon from '@mui/icons-material/Newspaper';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import WorkIcon from '@mui/icons-material/Work';
 import FeedHealthDashboard from "../FeedHealthDashboard";
 
 
@@ -54,9 +56,7 @@ const TICKER_DATA = [
 ];
 
 export default function HeaderShell({ onHeightChange }) {
-  // const [feedHealth, setFeedHealth] = useState(null);
-  // const [loadingHealth, setLoadingHealth] = useState(true);
-  // const [healthError, setHealthError] = useState(null);
+
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [strictMode, setStrictMode] = useState(true);
@@ -81,13 +81,12 @@ export default function HeaderShell({ onHeightChange }) {
     { label: "Home", icon: <HomeIcon />, to: "/home" },
     { label: "Gaming", icon: <SportsEsportsIcon />, to: "/gaming/about" },
     {
-      label: "WordPress",
-      icon: <InfoIcon />,
+      label: "WordPress", icon: <NewspaperIcon />, 
       external: true,
       href: "https://wp.kofisolutions.com"
     },
-    { label: "Professional", icon: <ContactSupportIcon />, to: "/professional/about" },
-    { label: "Fitness & Nutrition", icon: <InfoIcon />, to: "/fitness/calculator" }
+    { label: "Professional", icon: <WorkIcon />, to: "/professional/about" },
+    { label: "Fitness & Nutrition", icon: <FitnessCenterIcon />, to: "/fitness/calculator" }
   ];
 
   const navItems2 = [
@@ -282,7 +281,7 @@ export default function HeaderShell({ onHeightChange }) {
               <Typography variant="h3" sx={{ fontWeight: 600 }}>
                 Kofi Solutions
               </Typography>
-              <Chip label="v1.142" size="small"
+              <Chip label="v1.145" size="small"
                 sx={{
                   backgroundColor: "#fff",
                   color: "#1976d2",
@@ -307,17 +306,6 @@ export default function HeaderShell({ onHeightChange }) {
               }
             }}
           >
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={strictMode}
-                  onChange={(e) => setStrictMode(e.target.checked)}
-                />
-              }
-              label="Strict 
-              Health Mode"
-            /> 
-
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               System Health
             </Typography>

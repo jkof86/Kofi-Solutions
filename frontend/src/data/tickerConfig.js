@@ -1,6 +1,5 @@
 // tickerConfig.js — Kofi Solutions 1.142
 
-// Category → symbols
 export const CATEGORY_SYMBOLS = {
   crypto: ["BTC", "ETH", "SOL", "XRP", "ADA", "AVAX"],
   finance: ["JPM", "GS", "BAC", "V", "MA", "BRK.B"],
@@ -10,10 +9,8 @@ export const CATEGORY_SYMBOLS = {
   sports: ["DIS", "WBD", "MANU"]
 };
 
-// Flattened list for “all symbols” mode
 export const TICKER_SYMBOLS = Object.values(CATEGORY_SYMBOLS).flat();
 
-// Category colors for chips
 export const CATEGORY_COLORS = {
   crypto: "#ff9800",
   finance: "#1976d2",
@@ -23,7 +20,6 @@ export const CATEGORY_COLORS = {
   sports: "#e91e63"
 };
 
-// Optional icons (emoji / glyphs)
 export const SYMBOL_ICONS = {
   BTC: "₿",
   ETH: "◆",
