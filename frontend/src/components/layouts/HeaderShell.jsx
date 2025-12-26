@@ -38,8 +38,10 @@ import { googleLogout } from "@react-oauth/google";
 
 import avatarImage from '../../images/icons/avatar_full.jpg';
 import TickerBar from "./TickerBar";
-import FormControlLabel from "@mui/material";
-// import Switch from "@mui/Switch";
+
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
+
 
 
 const TICKER_DATA = [
@@ -314,7 +316,7 @@ export default function HeaderShell({ onHeightChange }) {
               }
               label="Strict 
               Health Mode"
-            />
+            /> 
 
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               System Health
