@@ -1,13 +1,15 @@
 // ------------------------------------------------------------
-// handleMarket.js — v1.171 (Symbol-Aware + History-Safe)
+// handleMarket.js — v1.172 (Modular + History-Safe)
 // ------------------------------------------------------------
 
 const { jsonResponse } = require("../utils/jsonResponse.js");
-const { CRYPTO_MAP } = require("../market/cryptoMap.js");
-const { STOCK_MAP } = require("../market/stocksMap.js");
-const { ETF_MAP } = require("../market/etfMap.js");
-const { fetchCryptoPrice } = require("../market/fetchCryptoPrice.js");
-const { fetchYahooPrice } = require("../market/fetchYahooPrice.js");
+const { CRYPTO_MAP } = require("../config/cryptoMap.js");
+const { STOCK_MAP } = require("../config/stockMap.js");
+const { ETF_MAP } = require("../config/etfMap.js");
+
+// const { fetchCryptoPrice } = require("../market/fetchCryptoPrice.js");
+const { fetchYahooStock } = require("../market/stockYahoo.js");
+const { fetchYahooEtf } = require("../market/etfYahoo.js");
 
 async function handleMarket(symbol, opts = {}) {
   console.log("[handleMarket] Incoming symbol:", symbol, opts);
@@ -23,8 +25,8 @@ async function handleMarket(symbol, opts = {}) {
 
     const lower = symbol.toLowerCase();
     const cryptoId = CRYPTO_MAP[lower];
-    const stockSymbol = STOCK_MAP[lower];
-    const etfSymbol = ETF_MAP[lower];
+    const stockId = STOCK_MAP[lower];
+    const etfId = ETF_MAP[lower];
 
     // ------------------------------------------------------------
     // 1. CRYPTO
@@ -46,9 +48,9 @@ async function handleMarket(symbol, opts = {}) {
     // ------------------------------------------------------------
     // 2. STOCK
     // ------------------------------------------------------------
-    if (stockSymbol) {
+    if (stockId) {
       try {
-        const result = await fetchYahooPrice(stockSymbol, opts);
+        const result = await fetchYahooStock(stockId, opts);
         return jsonResponse(200, {
           status: "ok",
           type: "stock",
@@ -63,9 +65,9 @@ async function handleMarket(symbol, opts = {}) {
     // ------------------------------------------------------------
     // 3. ETF
     // ------------------------------------------------------------
-    if (etfSymbol) {
+    if (etfId) {
       try {
-        const result = await fetchYahooPrice(etfSymbol, opts);
+        const result = await fetchYahooEtf(etfId, opts);
         return jsonResponse(200, {
           status: "ok",
           type: "etf",

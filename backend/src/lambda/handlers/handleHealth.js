@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// handleHealth.js — v1.170 (No fetchFeed, Unified Feed Checks)
+// handleHealth.js — v1.171 (Frontend-Aligned Normalized Health)
 // ------------------------------------------------------------
 
 const { jsonResponse } = require("../utils/jsonResponse.js");
@@ -12,7 +12,7 @@ async function handleHealth(opts = {}) {
   console.log("[handleHealth] Starting health check", opts);
 
   const feeds = {};
-  const markets = [];
+  const markets = {};
 
   try {
     // ------------------------------------------------------------
@@ -23,13 +23,17 @@ async function handleHealth(opts = {}) {
         const result = await handleFeed(feedId, { test: "health" });
 
         feeds[feedId] = {
-          ok: result?.status === "ok" || result?.status === "fallback",
           status: result?.status || "error",
+          fallback: result?.status === "fallback",
           count: result?.items?.length || 0
         };
       } catch (err) {
         console.error("[Health] Feed error:", feedId, err);
-        feeds[feedId] = { ok: false, status: "error", error: String(err) };
+        feeds[feedId] = {
+          status: "error",
+          fallback: true,
+          count: 0
+        };
       }
     }
 
@@ -37,27 +41,23 @@ async function handleHealth(opts = {}) {
     // MARKET HEALTH
     // ------------------------------------------------------------
     for (const sym of MARKET_SYMBOLS) {
-      if (!sym || typeof sym !== "string") {
-        console.warn("[Health] Skipping invalid market symbol:", sym);
-        continue;
-      }
+      if (!sym || typeof sym !== "string") continue;
 
       try {
         const result = await handleMarket(sym);
 
-        markets.push({
-          symbol: sym,
-          ok: result?.status === "ok",
-          type: result?.type || null
-        });
+        markets[sym] = {
+          status: result?.status || "error",
+          type: result?.type || null,
+          price: result?.price ?? null
+        };
       } catch (err) {
         console.error("[Health] Market error:", sym, err);
-        markets.push({
-          symbol: sym,
-          ok: false,
+        markets[sym] = {
+          status: "error",
           type: null,
-          error: String(err)
-        });
+          price: null
+        };
       }
     }
 
