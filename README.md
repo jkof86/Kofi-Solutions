@@ -1,208 +1,205 @@
-# 📘 Kofi Solutions Dashboard — v1.141
+```markdown
+# README.frontend.md — Kofi Solutions Frontend (v1.17)
 
-A modular, real-time, single-page dashboard built with **React**, **MUI**, **AWS Lambda**, and **API Gateway**, featuring:
+A modular, reactive, real-time dashboard built with React 18 + MUI v5.
 
-- Live crypto + finance tickers
-- Feed health monitoring
-- Recharts-powered market snapshots
-- Multi-category RSS + JSON aggregation
-- Responsive, branded UI shell
-- Local test-mode authentication
-- Fully normalized backend FEEDS map
+## 🏗️ Overview
 
-## 🚀 Features
+The v1.17 frontend is a fully normalized, production-ready React application designed to consume the unified backend aggregator.  
+This release focuses on:
 
-### 🔷 HeaderShell (Fixed Header + Banner + Ticker)
+- Stability
+- Correct wiring
+- Health-driven UI
+- Market chart reliability
+- Feed switching + category switching
+- Debug visibility
 
-- Fully responsive fixed header
-- Auto-measured height using ResizeObserver
-- Branded banner section
-- Live ticker row (BTC, ETH, SOL, AAPL, MSFT, AMZN)
-- Drawer navigation with external + internal links
+The entire UI is now driven by a consistent global state model, ensuring predictable behavior across all components.
 
-### 🔷 MainBar
+## 🚀 Key Improvements in v1.17
 
-- Secondary navigation bar
-- Used across Login, Register, and other standalone pages
-- Supports custom banner insertion
+### 🔥 1. TabsLayout Rebuild
 
-### 🔷 FeedHealthDashboard
+The core dashboard layout has been fully rewired:
 
-Displays the health of every backend feed:
+- Correct `feedId` propagation
+- Correct symbol mapping for `MarketChart`
+- Category switching resets feed index
+- Feed switching stable across all categories
+- Health badges mapped from global health object
+- Debug logging added for visibility
 
-- **ok** → green
-- **error** → red
-- **degraded / fallback** → yellow
-- **json** → treated as OK
-- Fully normalized against backend FEEDS map
+This eliminates long-standing issues with:
 
-### 🔷 MarketChart (Recharts Integrated)
+- Undefined feed IDs
+- Missing feed parameters
+- Incorrect symbol mapping
+- Tabs not updating on category change
 
-- 1-day snapshot (price + % change)
-- Live chart using CoinGecko market data
-- ResponsiveContainer for perfect scaling
-- Smooth line animations
-- Graceful fallback UI
+### 🔥 2. RSSFeed Rebuild
 
-## 🏗️ Architecture Overview
+`RSSFeed.jsx` now:
 
-### Frontend
+- Uses `feedId` instead of legacy name
+- Calls backend using the correct contract: `?mode=feed&feed=<id>`
+- Supports debug mode (`&debug=debug_feeds`)
+- Displays fallback mode messaging
+- Handles empty feeds gracefully
+- Supports batch loading (“Load more”)
+- Shows per-item refresh
 
-- React 18
-- Material UI (MUI v5)
-- Recharts
-- React Router
-- LocalStorage-based test authentication
-- Modular components:
-  - HeaderShell
-  - MainBar
-  - FeedHealthDashboard
-  - MarketChart
-  - RSSFeed
-  - FeedCard
-  - Home (main dashboard)
+This resolves:
 
-### Backend
+- “Missing feed parameter”
+- Silent failures
+- Incorrect debug behavior
 
-- AWS Lambda (Node 18)
-- API Gateway (REST)
-- Unified RSS/JSON aggregator
-- Health endpoint
-- Normalized FEEDS map
+### 🔥 3. MarketChart Stabilization
 
-## 📡 Backend FEEDS Map (Routing Layer)
+`MarketChart.jsx` now:
 
-The backend uses a strict FEEDS map containing only:
+- Uses a fixed-height responsive container
+- Handles missing history arrays
+- Prevents width/height = -1 errors
+- Displays graceful fallback UI
+- Correctly maps symbols from `FEEDS`
 
-- RSS URLs
-- `json:<handler>`
-- `fallback:<feedKey>`
+This resolves:
 
-This ensures predictable routing and stable health checks.
+- Recharts crashes
+- “No chart data” loops
+- Rendering behind fixed header
 
-**Example:**
+### 🔥 4. FeedStatusContext v1.180
 
-```js
-export const FEEDS = {
-  ct: "https://cointelegraph.com/rss",
-  decrypt: "https://decrypt.co/feed",
-  yahoo_crypto: "json:yahoo_crypto",
-  cb: "fallback:cb",
-  marketwatch_finance: "https://www.marketwatch.com/rss/topstories",
-  baeldung_java: "https://www.baeldung.com/feed",
-  espn_sports: "https://www.espn.com/espn/rss/news"
-};
+The global health system now includes:
+
+- Automatic polling (`?mode=health`)
+- Backend → legacy status normalization
+- Global health object
+- `strictMode` + `sampleSize` preserved
+- `lastUpdated` timestamp
+- Debug mode
+
+This powers:
+
+- `FeedStatusBar`
+- `FeedHealthDashboard`
+- `TabsLayout` badges
+- Ticker fallback logic
+
+### 🔥 5. Ticker + HeaderShell Stability
+
+- Ticker now uses normalized market symbols
+- Fallback logic tied to health object
+- `HeaderShell` auto-offset via `ResizeObserver`
+- Fully responsive across breakpoints
+
+## 🧩 Frontend File Structure
+
+```
+/src
+  /components
+    HeaderShell.jsx
+    MainBar.jsx
+    TabsLayout.jsx
+    RSSFeed.jsx
+    FeedCard.jsx
+    MarketChart.jsx
+    FeedStatusBar.jsx
+    FeedHealthDashboard.jsx
+  /context
+    FeedStatusContext.jsx
+  /data
+    feedCategories.js
+    feedsMap.js
+  /auth
+    Login.jsx
+    Register.jsx
+  /debug
+    DebugPanel.jsx
+  /docs
+    README.md
+    backend.md
+    frontend.md
+    architecture.md
+    CHANGELOG.md
 ```
 
-## ❤️ Health Endpoint
-
-The health endpoint safely checks each feed:
-
-- Validates URLs
-- Handles JSON + fallback feeds
-- Uses safe fetch with timeout + double try/catch
-
-**Returns:**
-
-```json
-{
-  "status": "ok",
-  "feeds": {
-    "ct": "ok",
-    "decrypt": "ok",
-    "cb": "fallback",
-    "marketwatch_finance": "ok"
-  }
-}
-```
-
-## 🔐 Authentication (Test Mode Only)
-
-Login + Register use unencrypted LocalStorage.
-
-**⚠️ Warning displayed in UI:**
-
-- Credentials are **NOT** encrypted
-- Do **NOT** use real passwords
-- For testing/demo only
-
-Google OAuth login is supported for demo purposes.
-
-## 🎨 UI Layout
+## 🎨 UI Architecture
 
 ### HeaderShell
 
-```
-[ Fixed AppBar ]
-[ Banner ]
-[ Ticker ]
-```
+- Fixed AppBar
+- Banner slot
+- Live ticker
+- Drawer navigation
 
-### Main Content
+### TabsLayout
 
-Automatically offset using measured header height.
+- Category tabs (crypto, finance, news…)
+- Feed tabs (ct, decrypt, yahoo_crypto…)
+- Feed content + MarketChart side-by-side
 
-### Reusable Layout Snippets
+### RSSFeed
 
-- 2-column responsive grid
-- Icon-left / content-right layout
-- Custom banner slot for Login/Register
+- Batch loading
+- Debug mode
+- Fallback messaging
+- Per-item refresh
 
-## 🧩 Development
+### MarketChart
 
-### Install
+- Recharts line chart
+- Responsive container
+- Auto-height
+- Graceful fallback
+
+### FeedStatusBar
+
+- Bottom health indicator
+- Uses global health object
+
+### FeedHealthDashboard
+
+- Right-side drawer
+- Full feed + market health matrix
+
+## 🔐 Authentication
+
+- LocalStorage-based test mode
+- Google OAuth supported for demo
+- Warning displayed for non-encrypted credentials
+
+## 🧪 Running Locally
+
+**Install**
 
 ```bash
 npm install
 ```
 
-### Run
+**Run**
 
 ```bash
 npm start
 ```
 
-### Build
+**Build**
 
 ```bash
 npm run build
 ```
 
-## 🧪 Testing the Backend
+## 🏁 Frontend Summary (v1.17)
 
-### Health Check
-
+- `TabsLayout` fully rewired
+- `RSSFeed` contract fixed
+- `MarketChart` stabilized
+- Health system integrated
+- Ticker normalized
+- `FEEDS` + categories aligned
+- Debug visibility improved
+- Zero mismatches with backend
 ```
-GET /RSSProxyAggregator?mode=health
-```
-
-### Feed Fetch
-
-```
-GET /RSSProxyAggregator?feed=<key>
-```
-
-## 📦 Deployment
-
-### Frontend
-
-- Netlify
-- Vercel
-- S3 + CloudFront
-
-### Backend
-
-- AWS Lambda
-- API Gateway
-- CloudWatch logs
-
-## 🏁 Version
-
-**v1.141** — Stable release with:
-
-- Recharts integration
-- HeaderShell refactor
-- Feed health normalization
-- Layout fixes
-- Banner support
-- Login/Register alignment

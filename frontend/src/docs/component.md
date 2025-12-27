@@ -1,56 +1,160 @@
-
----
-
-# 🧩 Component
-
 ```markdown
-# Component Overview
+# component.md — Kofi Solutions Components (v1.17)
 
-The frontend is a modular React SPA built with MUI and Recharts.
+A complete reference for all major frontend components.
 
-## Core Components
+## 🧩 Component Overview
 
-### HeaderShell
-- Fixed header
+The v1.17 frontend is composed of modular, reusable components designed for stability, clarity, and real-time updates.
+
+## 🎨 Components
+
+### 1. HeaderShell.jsx
+
+**Responsibilities**
+
+- Fixed AppBar
 - Banner slot
-- Live ticker row
+- Live ticker
 - Drawer navigation
-- Auto height measurement via ResizeObserver
+- Auto-offset main content
 
-### MainBar
+**Key Props**
+
+| Prop   | Type       | Description               |
+|--------|------------|---------------------------|
+| banner | ReactNode  | Optional banner content   |
+
+**Notes**
+
+- Uses `ResizeObserver` to measure header height
+- Ticker uses normalized market symbols
+
+### 2. MainBar.jsx
+
+**Responsibilities**
+
 - Secondary navigation bar
 - Used on Login/Register pages
 - Supports custom banners
 
-### FeedHealthDashboard
-- Displays health of all backend feeds
-- Color-coded:
-  - ok → green
-  - error → red
-  - fallback → yellow
-  - json → treated as ok
+### 3. TabsLayout.jsx
 
-### MarketChart
-- Recharts-powered 1‑day snapshot chart
-- Smooth animations
-- ResponsiveContainer for scaling
+**Responsibilities**
 
-### RSSFeed / FeedCard
-- Renders normalized feed items
-- Supports fallback images
-- Consistent layout across categories
+- Category tabs (crypto, finance, news…)
+- Feed tabs (ct, decrypt, yahoo_crypto…)
+- Renders `RSSFeed` + `MarketChart`
+- Displays health badges
 
-## Layout Utilities
+**Key Props**
 
-### Two‑Column Layout
-- Responsive grid
-- Icon-left / content-right pattern
+| Prop       | Type   | Description                  |
+|------------|--------|------------------------------|
+| categories | array  | Category definitions         |
+| feeds      | object | `FEEDS` map                  |
 
-### Banner Slot
-- Used on Login/Register pages
-- Accepts any image or JSX
+**Notes**
 
-## Authentication (Test Mode)
-- LocalStorage only
-- Not encrypted
-- Warning displayed in UI
+- Correct `feedId` propagation
+- Stable switching across categories
+
+### 4. RSSFeed.jsx
+
+**Responsibilities**
+
+- Fetches feed via `?mode=feed&feed=<id>`
+- Displays feed items
+- Supports debug mode
+- Shows fallback messaging
+- Batch loading (“Load more”)
+
+**Key Props**
+
+| Prop   | Type   | Description                  |
+|--------|--------|------------------------------|
+| feedId | string | Feed key from `FEEDS` map    |
+
+### 5. FeedCard.jsx
+
+**Responsibilities**
+
+- Renders individual feed items
+- Displays title, date, source, thumbnail
+- Supports per-item refresh
+
+**Key Props**
+
+| Prop     | Type   | Description            |
+|----------|--------|------------------------|
+| item     | object | Feed item              |
+| feedMeta | object | `FEEDS` metadata       |
+
+### 6. MarketChart.jsx
+
+**Responsibilities**
+
+- Renders price + history chart
+- Uses Recharts
+- Graceful fallback UI
+
+**Key Props**
+
+| Prop   | Type   | Description       |
+|--------|--------|-------------------|
+| symbol | string | Market symbol     |
+
+### 7. FeedStatusBar.jsx
+
+**Responsibilities**
+
+- Bottom health indicator
+- Shows global health status
+- Uses `FeedStatusContext`
+
+### 8. FeedHealthDashboard.jsx
+
+**Responsibilities**
+
+- Right-side drawer
+- Full feed + market health matrix
+- Color-coded statuses
+
+### 9. FeedStatusContext.jsx
+
+**Responsibilities**
+
+- Global health state
+- Polls backend every 60s
+- Normalizes backend → legacy status
+- Provides:
+  - `status`
+  - `health`
+  - `strictMode`
+  - `sampleSize`
+  - `debugMode`
+  - `lastUpdated`
+
+## 🧪 Component Interactions
+
+```
+TabsLayout
+ ├─ RSSFeed
+ ├─ MarketChart
+ └─ FeedStatusBar
+
+FeedStatusContext
+ ├─ TabsLayout
+ ├─ FeedHealthDashboard
+ ├─ FeedStatusBar
+ └─ HeaderShell (ticker)
+```
+
+## 🏁 Component Summary (v1.17)
+
+- Fully normalized props
+- Stable feed + category switching
+- Health-driven UI
+- Responsive, branded layout
+- Zero mismatches with backend
+```

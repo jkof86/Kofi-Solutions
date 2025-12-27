@@ -1,124 +1,160 @@
-# 📡 API
+```markdown
+# api.md — Kofi Solutions API (v1.17)
 
-The dashboard communicates with a single backend endpoint:
+A unified, normalized API powering feeds, markets, and system health.
+
+## 🏗️ Overview
+
+All backend functionality is exposed through a single AWS Lambda behind API Gateway, using a unified routing model:
 
 ```
-/RSSProxyAggregator
+/RSSProxyAggregator?mode=<mode>&<params>
 ```
 
-## Endpoints
+**Supported modes:**
 
-### 1. Fetch a Feed
+- `mode=feed`
+- `mode=market`
+- `mode=health`
 
-```http
-GET /RSSProxyAggregator?feed=<key>
+All responses are normalized JSON objects designed for predictable frontend consumption.
+
+## 📡 Endpoints
+
+### 1. Feed Endpoint
+
+**GET** `/RSSProxyAggregator?mode=feed&feed=<id>`
+
+#### Parameters
+
+| Name   | Type   | Required | Description                                      |
+|--------|--------|----------|--------------------------------------------------|
+| feed   | string | yes      | Feed ID from `FEEDS` map                         |
+| debug  | string | no       | `debug=debug_feeds` enables verbose backend logging |
+
+#### Response
+
+```json
+{
+  "status": "ok" | "fallback" | "error",
+  "feed": "ct",
+  "items": [
+    {
+      "title": "...",
+      "url": "...",
+      "date": "...",
+      "source": "CoinTelegraph"
+    }
+  ],
+  "debug": { ... }
+}
 ```
 
-Returns a normalized list of feed items.
+**Status meanings**
 
-### 2. Health Check
+- `ok` → RSS or JSON handler succeeded
+- `fallback` → HTML fallback parser succeeded
+- `error` → All handlers failed
 
-```http
-GET /RSSProxyAggregator?mode=health
-```
+### 2. Market Endpoint
 
-Returns the status of all feeds in the FEEDS map.
+**GET** `/RSSProxyAggregator?mode=market&symbol=<symbol>`
 
-## Response Shapes
+#### Parameters
 
-### Feed Response
+| Name   | Type   | Required | Description                            |
+|--------|--------|----------|----------------------------------------|
+| symbol | string | yes      | Crypto, stock, or ETF symbol           |
+
+#### Response
 
 ```json
 {
   "status": "ok",
-  "items": [
-    {
-      "title": "...",
-      "link": "...",
-      "published": "...",
-      "summary": "...",
-      "image": "..."
-    }
+  "type": "crypto" | "stock" | "etf",
+  "symbol": "btc",
+  "price": 123.45,
+  "history": [
+    { "t": 1700000000, "p": 123.45 },
+    ...
   ]
 }
 ```
 
-### Health Response
+**Symbol resolution**
+
+- Crypto → `CRYPTO_MAP`
+- Stocks → `STOCK_MAP`
+- ETFs → `ETF_MAP`
+
+### 3. Health Endpoint
+
+**GET** `/RSSProxyAggregator?mode=health`
+
+#### Response
 
 ```json
 {
   "status": "ok",
   "feeds": {
-    "ct": "ok",
-    "decrypt": "ok",
-    "cb": "fallback"
-  }
+    "ct": { "ok": true, "status": "ok", "count": 25 },
+    "decrypt": { "ok": false, "status": "error", "count": 0 }
+  },
+  "markets": [
+    { "symbol": "btc", "ok": true, "type": "crypto" },
+    { "symbol": "aapl", "ok": false, "type": "stock" }
+  ]
 }
 ```
 
-## Notes
+**Used by**
 
-- All feeds (RSS or JSON) are normalized to the same structure.
-- Fallback feeds return `"fallback"` in health mode.
-- JSON handlers are invoked via `json:<handler>` in the FEEDS map.
+- `FeedStatusContext`
+- `FeedStatusBar`
+- `FeedHealthDashboard`
+- `TabsLayout` badges
+- Ticker fallback logic
 
----
+## 🔧 Error Handling
 
-# 🧩 Component Overview
+All endpoints return:
 
-The frontend is a modular React Single Page Application (SPA) built with **MUI** and **Recharts**.
+```json
+{
+  "status": "error",
+  "error": "Message",
+  "detail": "Optional stack trace"
+}
+```
 
-## Core Components
+Errors never crash Lambda — all handlers are wrapped in double try/catch.
 
-### HeaderShell
+## 🧪 Testing
 
-- Fixed header
-- Banner slot
-- Live ticker row
-- Drawer navigation
-- Auto height measurement via ResizeObserver
+**Feed**
 
-### MainBar
+```bash
+curl "<api>?mode=feed&feed=ct"
+```
 
-- Secondary navigation bar
-- Used on Login/Register pages
-- Supports custom banners
+**Market**
 
-### FeedHealthDashboard
+```bash
+curl "<api>?mode=market&symbol=btc"
+```
 
-- Displays health of all backend feeds
-- Color-coded:
-  - `ok` → green
-  - `error` → red
-  - `fallback` → yellow
-  - `json` → treated as `ok`
+**Health**
 
-### MarketChart
+```bash
+curl "<api>?mode=health"
+```
 
-- Recharts-powered 1-day snapshot chart
-- Smooth animations
-- ResponsiveContainer for scaling
+## 🏁 API Summary (v1.17)
 
-### RSSFeed / FeedCard
-
-- Renders normalized feed items
-- Supports fallback images
-- Consistent layout across categories
-
-## Layout Utilities
-
-### Two-Column Layout
-
-- Responsive grid
-- Icon-left / content-right pattern
-
-### Banner Slot
-
-- Used on Login/Register pages
-- Accepts any image or JSX
-
-## Authentication (Test Mode)
-
-- LocalStorage only
-- Not encrypted
-- Warning displayed in UI
+- Unified routing
+- Normalized responses
+- Crash-proof handlers
+- Fallback-aware feed system
+- Market history support
+- Real-time health monitoring
+```
