@@ -78,7 +78,7 @@ export default function HeaderShell({ onHeightChange }) {
     { label: "Home", icon: <HomeIcon />, to: "/home" },
     { label: "Gaming", icon: <SportsEsportsIcon />, to: "/gaming/about" },
     {
-      label: "WordPress", icon: <NewspaperIcon />, 
+      label: "WordPress", icon: <NewspaperIcon />,
       external: true,
       href: "https://wp.kofisolutions.com"
     },
@@ -102,7 +102,7 @@ export default function HeaderShell({ onHeightChange }) {
   ];
 
   const handleClick = () => {
-    alert("Kofi Solutions");
+    alert("Emailing webmaster... ");
     sendEmail();
   };
 
@@ -148,186 +148,184 @@ export default function HeaderShell({ onHeightChange }) {
     }
   }
   function sendEmail() {
-    const recipient = "jason.kofi@kofisolutions.com";
+    const recipient = "admin@kofisolutions.com";
     const subject = encodeURIComponent("Attention: ");
     const body = encodeURIComponent("");
     window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
   }
 
-  return (
-    <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000 }}>
+return (
+  <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000 }}>
+    {/* Wrapper that is measured */}
+    <Box ref={ref}>
 
-      {/* This wrapper contains ALL header content and is measured */}
-      <Box ref={ref}>
-
-        {/* Drawer Menu */}
-        <Drawer
-          open={isDrawerOpen}
-          onClose={() => setIsDrawerOpen(false)}
-          PaperProps={{ sx: { width: "15rem" } }}
-        >
-
-
-          <Stack direction="row" padding={1} spacing={1} justifyContent={'center'}>
-            <Tooltip title='View Resume / Portfolio'>
-              <Chip sx={{
-                cursor: 'pointer', // Makes the mouse change to pointer on hover
-                '&:hover': {
-                  backgroundColor: '#95CDD5', // Optional: subtle hover effect
-                },
-              }}
-                avatar={<Avatar alt="Jason" src={avatarImage}
-                />}
-                label="Jason"
-                variant="outlined"
-                component={Link}
-                to="/about"
-              />
-            </Tooltip>
-          </Stack>
-
-
-          {/* <Divider sx={{ borderColor: "black", borderBottomWidth: "5px", mb: 1 }} /> */}
-
-
-          {navItems.map(({ label, icon, to, external, href }) => (
-            <ListItem key={label} disablePadding>
-              <ListItemButton
-                sx={{
-                  textAlign: "left",
-                  borderTop: "1px solid black"
-                }}
-                component={external ? "a" : Link}
-                to={external ? undefined : to}
-                href={external ? href : undefined}
-                target={external ? "_blank" : undefined}
-                onClick={() => setIsDrawerOpen(false)}
-              >
-                {icon}
-                <ListItemText primary={label} sx={{ ml: 1 }} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-
-          <Divider sx={{ borderColor: "black", borderBottomWidth: "5px", mt: 1 }} />
-
-          {navItems2.map(({ label, icon, to, action }) => (
-            <ListItem key={label} disablePadding>
-              <ListItemButton
-                sx={{ textAlign: "left", borderBottom: "1px solid black" }}
-                component={to ? Link : "button"}
-                to={to}
-                onClick={() => {
-                  setIsDrawerOpen(false);
-                  if (action) action();
-                }}
-              >
-                {icon}
-                <ListItemText primary={label} sx={{ ml: 1 }} />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </Drawer>
-
-        {/* NavBar */}
-        <AppBar position="static" color="default" elevation={1}>
-          <Toolbar sx={{ justifyContent: "space-between" }}>
-            <Typography variant="h6">
-              <Tooltip title="Compose Email">
-                <Chip
-                  label="Contact"
-                  variant="filled"
-                  color="primary"
-                  onClick={handleClick}
-                />
-              </Tooltip>
-            </Typography>
-
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Button color="inherit" component={Link} to="/home">HOME</Button>
-              <Button color="inherit" onClick={handleRegister}>REGISTER</Button>
-              <Button color="inherit" onClick={handleLogin}>LOGIN</Button>
-              <Button color="inherit" onClick={handleLogout}>LOGOUT</Button>
-            </Box>
-          </Toolbar>
-        </AppBar>
-
-        {/* Banner */}
+      {/* Drawer Menu */}
+      <Drawer
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        PaperProps={{ sx: { width: "15rem" } }}
+      >
+        {/* CLICKABLE PROFILE BOX */}
         <Box
+          component={Link}
+          to="/about"
           sx={{
-            background: "linear-gradient(to right, #1e3c72, #2a5298)",
-            color: "#fff",
-            px: 3,
-            py: 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between"
+            cursor: "pointer",
+            textDecoration: "none",
+            color: "inherit",
+            "&:hover": { backgroundColor: "#eef4f5ff" }
           }}
         >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <MenuIcon
-              fontSize="large"
-              sx={{ cursor: "pointer" }}
-              onClick={() => setIsDrawerOpen(true)}
-            />
-            <Box>
-              <Typography variant="h3" sx={{ fontWeight: 600 }}>
-                Kofi Solutions
-              </Typography>
-              <Chip label="v1.145" size="small"
+          <Stack direction="row" padding={1} spacing={1} justifyContent="center">
+            <Tooltip title="View Resume / Portfolio">
+              <Chip
                 sx={{
-                  backgroundColor: "#fff",
-                  color: "#1976d2",
-                  fontWeight: 600
+                  height: 36,
+                  fontSize: "0.9rem",
+                  px: 1.5,
+                  "& .MuiChip-label": { paddingLeft: 6, paddingRight: 6 }
                 }}
-              />
-            </Box>
-          </Stack>
-
-
-          {/* System Health Drawer */}
-          <Drawer
-            anchor="right"
-            open={isHealthOpen}
-            onClose={() => setIsHealthOpen(false)}
-            PaperProps={{
-              sx: {
-                width: "22rem",
-                padding: 2,
-                backgroundColor: "#fafafa",
-                zIndex: 2000
-              }
-            }}
-          >
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-              System Health
-            </Typography>
-
-            <FeedHealthDashboard />
-
-          </Drawer>
-
-          <Box justifyContent='center'>
-
-            <Tooltip title="Feed & Market Health">
-              <HealthAndSafetyIcon
-                sx={{
-                  cursor: "pointer",
-                  color: "#ffffff",
-                  // zIndex: 3000,
-                  position: "relative"
-                }}
-                onClick={() => setIsHealthOpen(true)}
+                size="medium"
+                avatar={<Avatar alt="Jason" src={avatarImage} />}
+                label="Jason"
+                variant="outlined"
               />
             </Tooltip>
-          </Box>
-
+          </Stack>
         </Box>
 
+        {/* NAV ITEMS */}
+        {navItems.map(({ label, icon, to, external, href }) => (
+          <ListItem key={label} disablePadding>
+            <ListItemButton
+              sx={{ textAlign: "left", borderTop: "1px solid black" }}
+              component={external ? "a" : Link}
+              to={external ? undefined : to}
+              href={external ? href : undefined}
+              target={external ? "_blank" : undefined}
+              onClick={() => setIsDrawerOpen(false)}
+            >
+              {icon}
+              <ListItemText primary={label} sx={{ ml: 1 }} />
+            </ListItemButton>
+          </ListItem>
+        ))}
 
-        <TickerBar />
+        <Divider sx={{ borderColor: "black", borderBottomWidth: "5px", mt: 1 }} />
 
+        {/* NAV ITEMS 2 */}
+        {navItems2.map(({ label, icon, to, action }) => (
+          <ListItem key={label} disablePadding>
+            <ListItemButton
+              sx={{ textAlign: "left", borderBottom: "1px solid black" }}
+              component={to ? Link : "button"}
+              to={to}
+              onClick={() => {
+                setIsDrawerOpen(false);
+                if (action) action();
+              }}
+            >
+              {icon}
+              <ListItemText primary={label} sx={{ ml: 1 }} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </Drawer>
+
+      {/* NAVBAR */}
+      <AppBar position="static" color="default" elevation={1}>
+        <Toolbar sx={{ justifyContent: "space-between" }}>
+          <Typography variant="h6">
+            <Tooltip title="Compose Email">
+              <Chip
+                label="Contact"
+                variant="filled"
+                color="primary"
+                onClick={handleClick}
+              />
+            </Tooltip>
+          </Typography>
+
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button color="inherit" component={Link} to="/home">HOME</Button>
+            <Button color="inherit" onClick={handleRegister}>REGISTER</Button>
+            <Button color="inherit" onClick={handleLogin}>LOGIN</Button>
+            <Button color="inherit" onClick={handleLogout}>LOGOUT</Button>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      {/* BANNER */}
+      <Box
+        sx={{
+          background: "linear-gradient(to right, #1e3c72, #2a5298)",
+          color: "#fff",
+          px: 3,
+          py: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between"
+        }}
+      >
+        <Stack direction="row" spacing={2} alignItems="center">
+          <MenuIcon
+            fontSize="large"
+            sx={{ cursor: "pointer" }}
+            onClick={() => setIsDrawerOpen(true)}
+          />
+
+          <Box>
+            <Typography variant="h3" sx={{ fontWeight: 600 }}>
+              Dashboard
+            </Typography>
+            <Chip
+              label="v1.17"
+              size="large"
+              sx={{
+                backgroundColor: "#fff",
+                color: "#1976d2",
+                fontWeight: 600
+              }}
+            />
+          </Box>
+        </Stack>
+
+        {/* HEALTH DRAWER BUTTON */}
+        <Tooltip title="Feed & Market Health">
+          <HealthAndSafetyIcon
+            sx={{
+              cursor: "pointer",
+              color: "#ffffff",
+              position: "relative"
+            }}
+            onClick={() => setIsHealthOpen(true)}
+          />
+        </Tooltip>
+
+        {/* SYSTEM HEALTH DRAWER */}
+        <Drawer
+          anchor="right"
+          open={isHealthOpen}
+          onClose={() => setIsHealthOpen(false)}
+          PaperProps={{
+            sx: {
+              width: "22rem",
+              padding: 2,
+              backgroundColor: "#fafafa",
+              zIndex: 2000
+            }
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            System Health
+          </Typography>
+
+          <FeedHealthDashboard />
+        </Drawer>
       </Box>
+
+      {/* TICKER */}
+      <TickerBar />
     </Box>
-  );
-}
+  </Box>
+)}
