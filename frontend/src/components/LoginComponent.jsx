@@ -11,8 +11,7 @@ import MainBar from './navigation/MainBar';
 
 export default function LoginComponent() {
 
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const storedUser = JSON.parse(localStorage.getItem('user'));
+  const [formData, setFormData] = useState({ email: '' });
 
   const navigate = useNavigate();
   const goToNewComponent = () => {
@@ -21,46 +20,19 @@ export default function LoginComponent() {
   };
 
   // ------------------------------------------------------------
-      // Login Validation
-      // ------------------------------------------------------------
-  
-      const goToRegister = () => {
-          //reload page to clear cache
-          navigate("/register");
-          // window.location.reload()
-      }
-      const goToLogin = () => {
-          //reload page to clear cache
-          navigate("/login");
-          // window.location.reload();
-      }
-  
-      function handleRegister() {
-          if (localStorage.getItem('isLoggedIn'))
-              alert('Please logout before registering a new account');
-          else
-              goToRegister();
-      }
-  
-      function handleLogin() {
-          if (localStorage.getItem('isLoggedIn')) {
-              alert('You are currently logged in');
-              navigate('/home');
-          }
-          else
-              goToLogin();
-      }
-  
-      function handleLogout() {
-          if (!localStorage.getItem('isLoggedIn'))
-              alert('You are currently logged out');
-          else {
-              googleLogout(); // disables auto-login
-              alert(`Logged out successfully`);
-              localStorage.removeItem('isLoggedIn');
-              goToLogin();
-          }
-      }
+  // Login Validation
+  // ------------------------------------------------------------
+
+  const goToRegister = () => {
+    //reload page to clear cache
+    navigate("/register");
+    // window.location.reload()
+  }
+  const goToLogin = () => {
+    //reload page to clear cache
+    navigate("/login");
+    // window.location.reload();
+  }
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -69,17 +41,17 @@ export default function LoginComponent() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    loginUser(formData.email, formData.password);
+    loginUser(formData.email);
   };
 
-  function loginUser(username, password) {
-    if (storedUser && storedUser.username === username && storedUser.password === password) {
+  function loginUser(username) {
+    if (username) {
       localStorage.setItem('isLoggedIn', 'true');
-      alert(`Welcome back, ${storedUser.username}!`);
+      alert(`Welcome back, ${username}!`);
       goToNewComponent();
       return true;
     } else {
-      alert('Invalid username or password');
+      alert('Enter an email address');
       return false;
     }
   }
@@ -146,8 +118,6 @@ export default function LoginComponent() {
       >
         <GoogleLogin onSuccess={handleSuccess} onError={handleError} />
 
-        <Typography variant="h6" textAlign="center">Login</Typography>
-
         <TextField
           label="Email"
           name="email"
@@ -158,23 +128,13 @@ export default function LoginComponent() {
           fullWidth
         />
 
-        <TextField
-          label="Password"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-          fullWidth
-        />
-
         <Button
-          type="submit"
+          type='submit'
           variant="contained"
           color="primary"
           fullWidth
         >
-          Submit
+          Guest Account
         </Button>
       </Box>
     </>

@@ -1,42 +1,57 @@
+// ------------------------------------------------------------
+// RSSFeed.jsx — v1.172 (Corrected + Router-Aligned)
+// ------------------------------------------------------------
+
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, Stack } from "@mui/material";
+import { Box, Typography, Button, Stack, Collapse } from "@mui/material";
 import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
 
 const BATCH_SIZE = 4;
-
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
-export default function RSSFeed({ name }) {
+export default function RSSFeed({ feedId }) {
   const [items, setItems] = useState([]);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isFallback, setIsFallback] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
+  const [showDebug, setShowDebug] = useState(false);
 
-  // -----------------------------
-  // Fetch a single feed
-  // -----------------------------
-  const fetchFeed = async (feedName = name) => {
+  const feedMeta = FEEDS[feedId];
+
+  const fetchFeed = async (id = feedId, debug = false) => {
     setLoading(true);
     setError(null);
     setIsFallback(false);
     setVisibleCount(BATCH_SIZE);
+    setDebugInfo(null);
 
     try {
-      const url = `${BACKEND_URL}?feed=${encodeURIComponent(feedName)}`;
+      const url = `${BACKEND_URL}?mode=feed&feed=${encodeURIComponent(id)}${
+        debug ? "&debug=debug_feeds" : ""
+      }`;
+
       const res = await fetch(url);
       const json = await res.json();
 
+      const hasItems = Array.isArray(json.items) && json.items.length > 0;
+
       if (json.status !== "ok") {
-        setIsFallback(true);
+        setIsFallback(json.status === "fallback");
         setItems(json.items || []);
-        if (!json.items || json.items.length === 0) {
+
+        if (!hasItems) {
           setError(json.error || "Feed error");
         }
       } else {
         setItems(json.items || []);
+      }
+
+      if (json.debug) {
+        setDebugInfo(json.debug);
       }
     } catch (err) {
       setError(err.message);
@@ -46,30 +61,22 @@ export default function RSSFeed({ name }) {
     }
   };
 
-  // -----------------------------
-  // Refresh All (parent-level)
-  // -----------------------------
-  const refreshAll = () => {
-    fetchFeed(name);
+  const refreshAll = () => fetchFeed(feedId);
+  const refreshWithDebug = () => {
+    fetchFeed(feedId, true);
+    setShowDebug(true);
   };
-
-  // -----------------------------
-  // Per-feed refresh (passed to FeedCard)
-  // -----------------------------
-  const refreshFeedItem = () => {
-    fetchFeed(name);
-  };
+  const refreshFeedItem = () => fetchFeed(feedId);
 
   useEffect(() => {
-    if (name) fetchFeed(name);
-  }, [name]);
+    if (feedId) fetchFeed(feedId);
+  }, [feedId]);
 
   const visibleItems = items.slice(0, visibleCount);
-  const feedMeta = FEEDS[name];
 
   return (
     <Box>
-      {/* Header + Refresh All */}
+      {/* Header */}
       <Box
         sx={{
           display: "flex",
@@ -78,11 +85,18 @@ export default function RSSFeed({ name }) {
           mb: 2
         }}
       >
-        <Typography variant="h6"></Typography>
+        <Typography variant="h6">
+          {feedMeta ? feedMeta.label : feedId}
+        </Typography>
 
-        <Button variant="outlined" onClick={refreshAll}>
-          Refresh All
-        </Button>
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button variant="outlined" onClick={refreshAll}>
+            Refresh All
+          </Button>
+          <Button variant="outlined" color="secondary" onClick={refreshWithDebug}>
+            Debug
+          </Button>
+        </Box>
       </Box>
 
       {loading && feedMeta && (
@@ -97,9 +111,31 @@ export default function RSSFeed({ name }) {
 
       {isFallback && items.length > 0 && (
         <Typography variant="body2" sx={{ mb: 1 }}>
-          Feed "{name}" is currently unavailable (fallback mode).
+          Feed "{feedId}" is using HTML fallback mode.
         </Typography>
       )}
+
+      {/* Debug panel */}
+      <Collapse in={showDebug && !!debugInfo}>
+        <Box
+          sx={{
+            mb: 2,
+            p: 1,
+            borderRadius: 1,
+            border: "1px dashed #ccc",
+            backgroundColor: "#fafafa",
+            fontFamily: "monospace",
+            fontSize: 12,
+            maxHeight: 200,
+            overflow: "auto"
+          }}
+        >
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            Debug info:
+          </Typography>
+          <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+        </Box>
+      </Collapse>
 
       <Stack spacing={2}>
         {visibleItems.map((item, idx) => (

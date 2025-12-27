@@ -1,175 +1,87 @@
-// ------------------------------------------------------------
-// MarketChart.jsx — Snapshot + Recharts Line Chart
-// ------------------------------------------------------------
+// MarketChart.jsx — v1.2
 
 import React, { useEffect, useState } from "react";
+import { Box, Typography } from "@mui/material";
 import {
-  Box,
-  Typography,
-  CircularProgress
-} from "@mui/material";
-
-import {
+  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer
+  CartesianGrid
 } from "recharts";
 
+const API =
+  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
+
 export default function MarketChart({ symbol }) {
-  const [latest, setLatest] = useState(null);
-  const [changePct, setChangePct] = useState(null);
-  const [chartData, setChartData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState([]);
+  const [error, setError] = useState("");
 
-  // ------------------------------------------------------------
-  // Fetch 1D snapshot
-  // ------------------------------------------------------------
   useEffect(() => {
-    async function fetchSnapshot() {
+    if (!symbol) return;
+
+    const fetchData = async () => {
       try {
         const res = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true`
-        );
-        const json = await res.json();
-        const price = json.bitcoin.usd;
-        const change = json.bitcoin.usd_24h_change;
-
-        setLatest(price);
-        setChangePct(change);
-      } catch {
-        setLatest(null);
-        setChangePct(null);
-      }
-    }
-
-    fetchSnapshot();
-  }, [symbol]);
-
-  // ------------------------------------------------------------
-  // Fetch 1D chart data
-  // ------------------------------------------------------------
-  useEffect(() => {
-    async function fetchChart() {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1`
+          `${API}?mode=market&symbol=${encodeURIComponent(symbol.toLowerCase())}`
         );
         const json = await res.json();
 
-        const formatted = json.prices.map(([timestamp, price]) => ({
-          time: new Date(timestamp).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit"
-          }),
-          price
-        }));
+        if (json.status !== "ok" || !Array.isArray(json.history)) {
+          setError("No chart data");
+          setData([]);
+          return;
+        }
 
-        setChartData(formatted);
-      } catch {
-        setChartData([]);
-      } finally {
-        setLoading(false);
+        setData(
+          json.history.map((p) => ({
+            time: p.time,
+            price: p.price
+          }))
+        );
+        setError("");
+      } catch (e) {
+        setError("Chart error");
+        setData([]);
       }
-    }
+    };
 
-    fetchChart();
+    fetchData();
   }, [symbol]);
+
+  if (!symbol) {
+    return (
+      <Typography variant="body2" sx={{ opacity: 0.7 }}>
+        No symbol selected
+      </Typography>
+    );
+  }
 
   return (
-    <Box
-      sx={{
-        borderRadius: 2,
-        border: "1px solid #ddd",
-        p: 2,
-        backgroundColor: "#fff",
-        boxShadow: 1,
-        mt: 2
-      }}
-    >
-      {/* Title */}
-      <Typography variant="h6" sx={{ mb: 1 }}>
-        {symbol.toUpperCase()} — 1D Snapshot
-      </Typography>
-
-      {/* Snapshot */}
-      {latest != null ? (
-        <>
-          <Typography variant="body1" sx={{ fontWeight: 600 }}>
-            Latest: ${latest.toFixed(2)}
-          </Typography>
-
-          {changePct != null && (
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 500,
-                color: changePct >= 0 ? "success.main" : "error.main"
-              }}
-            >
-              {changePct >= 0 ? "+" : ""}
-              {changePct.toFixed(2)}%
-            </Typography>
-          )}
-        </>
-      ) : (
-        <Typography variant="body2" color="error">
-          Snapshot unavailable.
+    <Box sx={{ width: "100%", height: 300 }}>
+      {error || data.length === 0 ? (
+        <Typography variant="body2" sx={{ opacity: 0.7 }}>
+          {error || "No data"}
         </Typography>
+      ) : (
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="time" hide />
+            <YAxis domain={["auto", "auto"]} />
+            <Tooltip />
+            <Line
+              type="monotone"
+              dataKey="price"
+              stroke="#1976d2"
+              dot={false}
+              strokeWidth={2}
+            />
+          </LineChart>
+        </ResponsiveContainer>
       )}
-
-      {/* Chart */}
-      <Box sx={{ height: 250, mt: 2 }}>
-        {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100%"
-            }}
-          >
-            <CircularProgress size={28} />
-          </Box>
-        ) : chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <XAxis
-                dataKey="time"
-                tick={{ fontSize: 10 }}
-                interval="preserveStartEnd"
-              />
-              <YAxis
-                domain={["auto", "auto"]}
-                tick={{ fontSize: 10 }}
-                width={40}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#fff",
-                  borderRadius: 8,
-                  border: "1px solid #ccc"
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="price"
-                stroke="#1976d2"
-                strokeWidth={2}
-                dot={false}
-                animationDuration={500}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <Typography variant="body2" color="error">
-            Chart data unavailable.
-          </Typography>
-        )}
-      </Box>
     </Box>
   );
 }

@@ -1,13 +1,13 @@
 // ------------------------------------------------------------
-// GlobalRefreshContext.jsx — Phase 4.1 Stable
+// GlobalRefreshContext.jsx — v1.146 FINAL
 //
 // Fixes:
-// ✅ Prevents infinite refresh loops
-// ✅ Ensures isRefreshing resets properly
-// ✅ Makes refreshAll fully stable + re-entrant safe
-// ✅ Makes triggerRefresh safe (no feedback loops)
-// ✅ Preserves Phase 3 streaming + per-feed updates
-// ✅ Adds cache detection and "cached" status
+// ✅ Uses new FeedStatusContext API (setStatus + setBulkStatus)
+// ✅ Uses ?feed= instead of deprecated ?source=
+// ✅ Removes unsupported "cached" logic
+// ✅ Global refresh now uses health endpoint (correct source of truth)
+// ✅ Per-feed refresh uses feed endpoint
+// ✅ Prevents infinite loops + re-entrant refresh
 // ------------------------------------------------------------
 
 import React, {
@@ -18,64 +18,59 @@ import React, {
 } from "react";
 
 import { FeedStatusContext } from "./FeedStatusContext";
-import { feedCategories } from "../lambda/feedCategories";
+import { FEEDS } from "../data/feedsMap";
 
 export const GlobalRefreshContext = createContext({
   refreshVersion: 0,
-  triggerRefresh: () => { },
-  refreshAll: () => { },
-  loadFeed: () => { },
+  triggerRefresh: () => {},
+  refreshAll: () => {},
+  loadFeed: () => {},
   lastUpdated: null,
   isRefreshing: false
 });
 
-const LAMBDA_URL =
+const API =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
-const allFeedNames = Object.values(feedCategories)
-  .flat()
-  .map(f => f.name);
+const allFeedNames = Object.keys(FEEDS);
 
 export function GlobalRefreshProvider({ children }) {
   const [refreshVersion, setRefreshVersion] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { updateStatus } = useContext(FeedStatusContext);
+  const { setStatus, setBulkStatus } = useContext(FeedStatusContext);
 
   // ------------------------------------------------------------
-  // ✅ Per-feed loader with cache detection
+  // Per-feed refresh (uses ?feed=)
   // ------------------------------------------------------------
   const loadFeed = useCallback(
     async (feedName) => {
-      updateStatus(feedName, "loading");
+      setStatus(feedName, "loading");
 
       try {
-        const url = `${LAMBDA_URL}?source=${feedName}`;
+        const url = `${API}?feed=${encodeURIComponent(feedName)}`;
         const res = await fetch(url);
         const json = await res.json();
 
-        const ok = res.ok && json.status === "ok";
-        const cached = json.cached === true || (json.age && json.age < 60);
-
-        if (ok) {
-          updateStatus(feedName, cached ? "cached" : "ok");
+        if (json.status === "ok") {
+          setStatus(feedName, "ok");
+        } else if (json.status === "fallback") {
+          setStatus(feedName, "fallback");
         } else {
-          updateStatus(feedName, "error");
+          setStatus(feedName, "error");
         }
 
-        // ✅ bump refreshVersion to trigger RSSFeed re-render
-        setRefreshVersion(v => v + 1);
-
-      } catch {
-        updateStatus(feedName, "error");
+        setRefreshVersion((v) => v + 1);
+      } catch (err) {
+        setStatus(feedName, "error");
       }
     },
-    [updateStatus]
+    [setStatus]
   );
 
   // ------------------------------------------------------------
-  // ✅ Global refresh (Phase 4 stable)
+  // Global refresh (uses ?mode=health)
   // ------------------------------------------------------------
   const refreshAll = useCallback(async () => {
     if (isRefreshing) return;
@@ -83,25 +78,41 @@ export function GlobalRefreshProvider({ children }) {
     setIsRefreshing(true);
 
     try {
-      allFeedNames.forEach(feed => updateStatus(feed, "loading"));
+      // Mark all feeds as loading
+      allFeedNames.forEach((f) => setStatus(f, "loading"));
 
-      for (const feed of allFeedNames) {
-        await loadFeed(feed);
+      const url = `${API}?mode=health&strict=true&sampleSize=1`;
+      const res = await fetch(url);
+      const json = await res.json();
+
+      if (json.status === "ok" && json.feeds) {
+        // Push backend truth into context
+        setBulkStatus(json.feeds);
+      } else {
+        // If health fails, mark all feeds as error
+        const errMap = {};
+        allFeedNames.forEach((f) => (errMap[f] = "error"));
+        setBulkStatus(errMap);
       }
 
       setLastUpdated(Date.now());
+      setRefreshVersion((v) => v + 1);
     } catch (err) {
       console.error("Global refresh error:", err);
+
+      const errMap = {};
+      allFeedNames.forEach((f) => (errMap[f] = "error"));
+      setBulkStatus(errMap);
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, loadFeed, updateStatus]);
+  }, [isRefreshing, setStatus, setBulkStatus]);
 
   // ------------------------------------------------------------
-  // ✅ triggerRefresh — safe version bump
+  // Manual refresh bump
   // ------------------------------------------------------------
   const triggerRefresh = useCallback(() => {
-    setRefreshVersion(v => v + 1);
+    setRefreshVersion((v) => v + 1);
   }, []);
 
   return (

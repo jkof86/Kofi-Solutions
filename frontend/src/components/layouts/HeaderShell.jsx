@@ -41,9 +41,6 @@ import { googleLogout } from "@react-oauth/google";
 import avatarImage from '../../images/icons/avatar_full.jpg';
 import TickerBar from "./TickerBar";
 
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Switch from "@mui/material/Switch";
-
 
 
 const TICKER_DATA = [
@@ -170,10 +167,6 @@ export default function HeaderShell({ onHeightChange }) {
           PaperProps={{ sx: { width: "15rem" } }}
         >
 
-          {/*           
-  // ------------------------------------------------------------
-  // Login Validation
-  // ------------------------------------------------------------ */}
 
           <Stack direction="row" padding={1} spacing={1} justifyContent={'center'}>
             <Tooltip title='View Resume / Portfolio'>

@@ -16,8 +16,10 @@ export default function MainBar() {
 
     const goToRegister = () => {
         //reload page to clear cache
-        navigate("/register");
+        // navigate("/register");
         // window.location.reload()
+
+        alert('Registration is temporarily disabled');
     }
     const goToLogin = () => {
         //reload page to clear cache

@@ -1,5 +1,10 @@
 // ------------------------------------------------------------
-// feedsMap.js — Frontend FEEDS metadata (aligned with backend)
+// feedsMap.js — v1.171 (Frontend FEEDS metadata)
+// ------------------------------------------------------------
+//
+// MUST match backend FEEDS exactly.
+// MUST match FEED_CATEGORIES exactly.
+// MUST provide stable feed IDs for TabsLayout.
 // ------------------------------------------------------------
 
 export const FEEDS = {
@@ -43,7 +48,7 @@ export const FEEDS = {
   },
 
   // ------------------------------------------------------------
-  // CRYPTO (Legacy Sources)
+  // CRYPTO (Legacy / HTML fallback)
   // ------------------------------------------------------------
   cb: {
     id: "cb",
@@ -257,11 +262,9 @@ export const FEEDS = {
 // Helpers
 // ------------------------------------------------------------
 export function getFeedsForCategory(categoryId) {
-  return Object.values(FEEDS).filter(feed => feed.category === categoryId);
+  return Object.values(FEEDS).filter(f => f.category === categoryId);
 }
 
 export function getLegacyCryptoFeeds() {
-  return Object.values(FEEDS).filter(
-    feed => feed.category === "legacy_crypto"
-  );
+  return Object.values(FEEDS).filter(f => f.category === "legacy_crypto");
 }
