@@ -31,7 +31,7 @@ export default function App() {
       <Route path="/gaming/about" element={<ContactGaming />} />
       <Route path="/account" element={<Account />} />
       <Route path="/settings" element={<Settings />} />
-      <Route path="/register" element={<RegisterComponent />} />
+      {/* <Route path="/register" element={<RegisterComponent />} />   */}
       <Route path="/login" element={<LoginComponent />} />
       <Route path="/home" element={<Home />} />
 
