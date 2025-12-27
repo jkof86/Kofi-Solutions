@@ -1,6 +1,5 @@
 import {
   AppBar,
-  Avatar,
   Toolbar,
   Box,
   Typography,
@@ -8,29 +7,20 @@ import {
   Chip,
   Stack,
   Drawer,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Divider,
+
   Tooltip
 } from "@mui/material";
-import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
+
 import {
   Home as HomeIcon,
-  Info as InfoIcon,
   ContactSupport as ContactSupportIcon,
-  AccountCircle as AccountCircleIcon,
-  Settings as SettingsIcon,
-  Logout as LogoutIcon,
-  ViewList as ViewListIcon,
-  Switch as SwitchIcon,
   Menu as MenuIcon
 } from "@mui/icons-material";
+
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
-import NewspaperIcon from '@mui/icons-material/Newspaper';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import WorkIcon from '@mui/icons-material/Work';
 import FeedHealthDashboard from "../FeedHealthDashboard";
+import NavDrawerMain from "../navigation/NavDrawerMain";
+import TickerBar from "./TickerBar";
 
 
 import { Link, useNavigate } from "react-router-dom";
@@ -38,19 +28,15 @@ import { useState, useEffect, useRef } from "react";
 
 import { googleLogout } from "@react-oauth/google";
 
-import avatarImage from '../../images/icons/avatar_full.jpg';
-import TickerBar from "./TickerBar";
-
-
-
-const TICKER_DATA = [
-  { label: "BITCOIN", value: 87841.0, change: -0.95 },
-  { label: "ETHEREUM", value: 2940.71, change: -1.95 },
-  { label: "SOLANA", value: 124.08, change: -1.45 },
-  { label: "AAPL", value: 190.12, change: 0.8 },
-  { label: "MSFT", value: 410.55, change: -0.3 },
-  { label: "AMZN", value: 175.44, change: 1.2 }
-];
+// //debug
+// const TICKER_DATA = [
+//   { label: "BITCOIN", value: 87841.0, change: -0.95 },
+//   { label: "ETHEREUM", value: 2940.71, change: -1.95 },
+//   { label: "SOLANA", value: 124.08, change: -1.45 },
+//   { label: "AAPL", value: 190.12, change: 0.8 },
+//   { label: "MSFT", value: 410.55, change: -0.3 },
+//   { label: "AMZN", value: 175.44, change: 1.2 }
+// ];
 
 export default function HeaderShell({ onHeightChange }) {
 
@@ -74,32 +60,7 @@ export default function HeaderShell({ onHeightChange }) {
     return () => observer.disconnect();
   }, [onHeightChange]);
 
-  const navItems = [
-    { label: "Home", icon: <HomeIcon />, to: "/home" },
-    { label: "Gaming", icon: <SportsEsportsIcon />, to: "/gaming/about" },
-    {
-      label: "WordPress", icon: <NewspaperIcon />,
-      external: true,
-      href: "https://wp.kofisolutions.com"
-    },
-    { label: "Professional", icon: <WorkIcon />, to: "/professional/about" },
-    { label: "Fitness & Nutrition", icon: <FitnessCenterIcon />, to: "/fitness/calculator" }
-  ];
-
-  const navItems2 = [
-    { label: "Account", icon: <AccountCircleIcon />, to: "/professional/about" },
-    { label: "Settings", icon: <SettingsIcon />, to: "/professional/about" },
-    {
-      label: "Logout",
-      icon: <LogoutIcon />,
-      action: () => {
-        googleLogout();
-        alert("Logged out successfully");
-        localStorage.removeItem("isLoggedIn");
-        navigate("/login");
-      }
-    }
-  ];
+  //NavDrawerMain.js
 
   const handleClick = () => {
     alert("Emailing webmaster... ");
@@ -154,178 +115,111 @@ export default function HeaderShell({ onHeightChange }) {
     window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
   }
 
-return (
-  <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000 }}>
-    {/* Wrapper that is measured */}
-    <Box ref={ref}>
+  return (
+    <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000 }}>
+      {/* Wrapper that is measured */}
+      <Box ref={ref}>
 
-      {/* Drawer Menu */}
-      <Drawer
-        open={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        PaperProps={{ sx: { width: "15rem" } }}
-      >
-        {/* CLICKABLE PROFILE BOX */}
+        <NavDrawerMain
+          isDrawerOpen={isDrawerOpen}
+          setIsDrawerOpen={setIsDrawerOpen}
+        />
+
+        {/* NAVBAR */}
+        <AppBar position="static" color="default" elevation={1}>
+          <Toolbar sx={{ justifyContent: "space-between" }}>
+            <Typography variant="h6">
+              <Tooltip title="Compose Email">
+                <Chip
+                  label="Contact"
+                  variant="filled"
+                  color="primary"
+                  onClick={handleClick}
+                />
+              </Tooltip>
+            </Typography>
+
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button color="inherit" component={Link} to="/home">HOME</Button>
+              <Button color="inherit" onClick={handleRegister}>REGISTER</Button>
+              <Button color="inherit" onClick={handleLogin}>LOGIN</Button>
+              <Button color="inherit" onClick={handleLogout}>LOGOUT</Button>
+            </Box>
+          </Toolbar>
+        </AppBar>
+
+        {/* BANNER */}
         <Box
-          component={Link}
-          to="/about"
           sx={{
-            cursor: "pointer",
-            textDecoration: "none",
-            color: "inherit",
-            "&:hover": { backgroundColor: "#eef4f5ff" }
+            background: "linear-gradient(to right, #1e3c72, #2a5298)",
+            color: "#fff",
+            px: 3,
+            py: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between"
           }}
         >
-          <Stack direction="row" padding={1} spacing={1} justifyContent="center">
-            <Tooltip title="View Resume / Portfolio">
+          <Stack direction="row" spacing={2} alignItems="center">
+            <MenuIcon
+              fontSize="large"
+              sx={{ cursor: "pointer" }}
+              onClick={() => setIsDrawerOpen(true)}
+            />
+
+            <Box>
+              <Typography variant="h3" sx={{ fontWeight: 600 }}>
+                Dashboard
+              </Typography>
               <Chip
+                label="v1.17"
+                size="large"
                 sx={{
-                  height: 36,
-                  fontSize: "0.9rem",
-                  px: 1.5,
-                  "& .MuiChip-label": { paddingLeft: 6, paddingRight: 6 }
+                  backgroundColor: "#fff",
+                  color: "#1976d2",
+                  fontWeight: 600
                 }}
-                size="medium"
-                avatar={<Avatar alt="Jason" src={avatarImage} />}
-                label="Jason"
-                variant="outlined"
               />
-            </Tooltip>
+            </Box>
           </Stack>
+
+          {/* HEALTH DRAWER BUTTON */}
+          <Tooltip title="Feed & Market Health">
+            <HealthAndSafetyIcon
+              sx={{
+                cursor: "pointer",
+                color: "#ffffff",
+                position: "relative"
+              }}
+              onClick={() => setIsHealthOpen(true)}
+            />
+          </Tooltip>
+
+          {/* SYSTEM HEALTH DRAWER */}
+          <Drawer
+            anchor="right"
+            open={isHealthOpen}
+            onClose={() => setIsHealthOpen(false)}
+            PaperProps={{
+              sx: {
+                width: "22rem",
+                padding: 2,
+                backgroundColor: "#fafafa",
+                zIndex: 2000
+              }
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+              System Health
+            </Typography>
+
+            <FeedHealthDashboard />
+          </Drawer>
         </Box>
 
-        {/* NAV ITEMS */}
-        {navItems.map(({ label, icon, to, external, href }) => (
-          <ListItem key={label} disablePadding>
-            <ListItemButton
-              sx={{ textAlign: "left", borderTop: "1px solid black" }}
-              component={external ? "a" : Link}
-              to={external ? undefined : to}
-              href={external ? href : undefined}
-              target={external ? "_blank" : undefined}
-              onClick={() => setIsDrawerOpen(false)}
-            >
-              {icon}
-              <ListItemText primary={label} sx={{ ml: 1 }} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-
-        <Divider sx={{ borderColor: "black", borderBottomWidth: "5px", mt: 1 }} />
-
-        {/* NAV ITEMS 2 */}
-        {navItems2.map(({ label, icon, to, action }) => (
-          <ListItem key={label} disablePadding>
-            <ListItemButton
-              sx={{ textAlign: "left", borderBottom: "1px solid black" }}
-              component={to ? Link : "button"}
-              to={to}
-              onClick={() => {
-                setIsDrawerOpen(false);
-                if (action) action();
-              }}
-            >
-              {icon}
-              <ListItemText primary={label} sx={{ ml: 1 }} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </Drawer>
-
-      {/* NAVBAR */}
-      <AppBar position="static" color="default" elevation={1}>
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6">
-            <Tooltip title="Compose Email">
-              <Chip
-                label="Contact"
-                variant="filled"
-                color="primary"
-                onClick={handleClick}
-              />
-            </Tooltip>
-          </Typography>
-
-          <Box sx={{ display: "flex", gap: 2 }}>
-            <Button color="inherit" component={Link} to="/home">HOME</Button>
-            <Button color="inherit" onClick={handleRegister}>REGISTER</Button>
-            <Button color="inherit" onClick={handleLogin}>LOGIN</Button>
-            <Button color="inherit" onClick={handleLogout}>LOGOUT</Button>
-          </Box>
-        </Toolbar>
-      </AppBar>
-
-      {/* BANNER */}
-      <Box
-        sx={{
-          background: "linear-gradient(to right, #1e3c72, #2a5298)",
-          color: "#fff",
-          px: 3,
-          py: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between"
-        }}
-      >
-        <Stack direction="row" spacing={2} alignItems="center">
-          <MenuIcon
-            fontSize="large"
-            sx={{ cursor: "pointer" }}
-            onClick={() => setIsDrawerOpen(true)}
-          />
-
-          <Box>
-            <Typography variant="h3" sx={{ fontWeight: 600 }}>
-              Dashboard
-            </Typography>
-            <Chip
-              label="v1.17"
-              size="large"
-              sx={{
-                backgroundColor: "#fff",
-                color: "#1976d2",
-                fontWeight: 600
-              }}
-            />
-          </Box>
-        </Stack>
-
-        {/* HEALTH DRAWER BUTTON */}
-        <Tooltip title="Feed & Market Health">
-          <HealthAndSafetyIcon
-            sx={{
-              cursor: "pointer",
-              color: "#ffffff",
-              position: "relative"
-            }}
-            onClick={() => setIsHealthOpen(true)}
-          />
-        </Tooltip>
-
-        {/* SYSTEM HEALTH DRAWER */}
-        <Drawer
-          anchor="right"
-          open={isHealthOpen}
-          onClose={() => setIsHealthOpen(false)}
-          PaperProps={{
-            sx: {
-              width: "22rem",
-              padding: 2,
-              backgroundColor: "#fafafa",
-              zIndex: 2000
-            }
-          }}
-        >
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-            System Health
-          </Typography>
-
-          <FeedHealthDashboard />
-        </Drawer>
+        {/* TICKER */}
+        <TickerBar />
       </Box>
-
-      {/* TICKER */}
-      <TickerBar />
     </Box>
-  </Box>
-)}
+  )
+}

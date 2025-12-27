@@ -1,225 +1,145 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import {
+  Avatar,
+  Box,
+  Chip,
+  Stack,
+  Drawer,
+  Tooltip,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Divider
+} from "@mui/material";
 
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
-import HomeIcon from '@mui/icons-material/Home';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import InfoIcon from '@mui/icons-material/Info';
-import ContactSupportIcon from '@mui/icons-material/ContactSupport';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import SettingsIcon from '@mui/icons-material/Settings';
-import LogoutIcon from '@mui/icons-material/Logout';
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
+import {
+  Home as HomeIcon,
+  AccountCircle as AccountCircleIcon,
+  Settings as SettingsIcon,
+  Logout as LogoutIcon,
+} from "@mui/icons-material";
 
-import Divider from '@mui/material/Divider';
-import Drawer from '@mui/material/Drawer';
-import Typography from '@mui/material/Typography';
+import NewspaperIcon from '@mui/icons-material/Newspaper';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import WorkIcon from '@mui/icons-material/Work';
+
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+
+import { googleLogout } from "@react-oauth/google";
+import avatarImage from '../../images/icons/avatar_full.jpg';
 
 
-import { googleLogout } from '@react-oauth/google';
-import { useNavigate } from 'react-router-dom';
+// ------------------------------
+// NAV ITEMS
+// ------------------------------
+const navItems = [
+  { label: "Home", icon: <HomeIcon />, to: "/home" },
+  { label: "Gaming", icon: <SportsEsportsIcon />, to: "/gaming/about" },
+  {
+    label: "WordPress",
+    icon: <NewspaperIcon />,
+    external: true,
+    href: "https://wp.kofisolutions.com"
+  },
+  { label: "Professional", icon: <WorkIcon />, to: "/professional/about" },
+  { label: "Fitness & Nutrition", icon: <FitnessCenterIcon />, to: "/fitness/calculator" }
+];
 
-const navItems = ['Back', 'Home', 'About', 'Contact'];
-const navItems2 = ['Account', 'Settings', 'Logout'];
 
-export default function NavDrawerMain() {
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const goToLogin = () => {
-        //reload page to clear cache
+  const navItems2 = [
+    { label: "Account", icon: <AccountCircleIcon />, to: "/professional/about" },
+    { label: "Settings", icon: <SettingsIcon />, to: "/professional/about" },
+    {
+      label: "Logout",
+      icon: <LogoutIcon />,
+      action: () => {
+        googleLogout();
+        alert("Logged out successfully");
+        localStorage.removeItem("isLoggedIn");
         navigate("/login");
-        // window.location.reload()
+      }
     }
+  ];
 
-    function handleLogout() {
-        googleLogout(); // disables auto-login
-        alert(`Logged out successfully`);
-        localStorage.removeItem('isLoggedIn');
-        goToLogin();
-    }
+  return (
+    <>
+      {/* Drawer Menu */}
+      <Drawer
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        PaperProps={{ sx: { width: "15rem" } }}
+      >
+        {/* CLICKABLE PROFILE BOX */}
+        <Box
+          component={Link}
+          to="/about"
+          sx={{
+            cursor: "pointer",
+            textDecoration: "none",
+            color: "inherit",
+            "&:hover": { backgroundColor: "#eef4f5ff" }
+          }}
+        >
+          <Stack direction="row" padding={1} spacing={1} justifyContent="center">
+            <Tooltip title="View Resume / Portfolio">
+              <Chip
+                sx={{
+                  height: 36,
+                  fontSize: "0.9rem",
+                  px: 1.5,
+                  "& .MuiChip-label": { paddingLeft: 6, paddingRight: 6 }
+                }}
+                size="medium"
+                avatar={<Avatar alt="Jason" src={avatarImage} />}
+                label="Jason"
+                variant="outlined"
+              />
+            </Tooltip>
+          </Stack>
+        </Box>
 
-    return (<>
-        <Drawer
-            open={isDrawerOpen}
-            onClose={() => setIsDrawerOpen(false)}
-            // PaperProps allows us to resize the menu
-            PaperProps={{
-                sx: { width: "15rem" }
-            }}>
+        {/* NAV ITEMS */}
+        {navItems.map(({ label, icon, to, external, href }) => (
+          <ListItem key={label} disablePadding>
+            <ListItemButton
+              sx={{ textAlign: "left", borderTop: "1px solid black" }}
+              component={external ? "a" : Link}
+              to={external ? undefined : to}
+              href={external ? href : undefined}
+              target={external ? "_blank" : undefined}
+              onClick={() => setIsDrawerOpen(false)}
+            >
+              {icon}
+              <ListItemText primary={label} sx={{ ml: 1 }} />
+            </ListItemButton>
+          </ListItem>
+        ))}
 
-            <Typography sx={{ my: 2, textAlign: 'center' }}>
-                Portfolio
-            </Typography>
+        <Divider sx={{ borderColor: "black", borderBottomWidth: "5px", mt: 1 }} />
 
-            <Divider sx={{
-                borderColor: 'black',
-                borderBottomWidth: '5px', margin: ' 5px'
-            }} />
-
-            {/* //THIS SECTION HANDLES MENU BUTTON NAVIGATION  */}
-            {navItems.map((item) => (
-                <ListItem key={item} disablePadding>
-
-                    {/* //------------------------------------------------ */}
-
-                    {item === 'Back' ? <ListItemButton sx={{ textAlign: 'left' }}
-                        component={Link}
-                        to='/professional/about'
-                        onClick={() => {
-                            console.info("BACK BUTTON TEST");
-                            setIsDrawerOpen(false);
-                        }}>
-                        <ArrowBackIcon sx={{ margin: '5px' }} />
-                        <ListItemText primary={item} />
-                    </ListItemButton> : ''}
-
-                    {/* //------------------------------------------------ */}
-
-                    {item === 'Home' ? <ListItemButton sx={{ textAlign: 'left' }}
-                        component={Link}
-                        to='/home'
-                        onClick={() => {
-                            console.info("HOME BUTTON TEST");
-                            setIsDrawerOpen(false);
-                        }}>
-                        <HomeIcon sx={{ margin: '5px' }} />
-                        <ListItemText primary={item} />
-                    </ListItemButton> : ''}
-
-
-                    {/* //------------------------------------------------ */}
-
-                    {item === 'Professional' ? <ListItemButton sx={{
-                        borderTop: '1px solid black',
-                        textAlign: 'left'
-                    }}
-                        component={Link}
-                        to='/professional/about'
-                        onClick={() => {
-                            console.info("CONTACT US BUTTON TEST");
-                            setIsDrawerOpen(false);
-                        }}>
-                        <ContactSupportIcon sx={{ margin: '5px' }} />
-                        <ListItemText primary={item} />
-                    </ListItemButton> : ''}
-
-                    {/* //------------------------------------------------ */}
-
-                    {item === 'Fitness & Nutrition' ? <ListItemButton sx={{
-                        borderTop: '1px solid black',
-                        textAlign: 'left'
-                    }}
-                        component={Link}
-                        to='/fitness/calculator'
-                        onClick={() => {
-                            console.info("ABOUT BUTTON TEST");
-                            setIsDrawerOpen(false);
-                        }}>
-                        <InfoIcon sx={{ margin: '5px' }} />
-                        <ListItemText primary={item} />
-                    </ListItemButton> : ''}
-
-
-
-                    {/* //------------------------------------------------ */}
-
-
-                    {item === 'Gaming' ? <ListItemButton sx={{
-                        borderTop: '1px solid black',
-                        textAlign: 'left'
-                    }}
-                        component={Link}
-                        to='/gaming/about'
-                        onClick={() => {
-                            console.info("ABOUT BUTTON TEST");
-                            setIsDrawerOpen(false);
-                        }}>
-                        <InfoIcon sx={{ margin: '5px' }} />
-                        <ListItemText primary={item} />
-                    </ListItemButton> : ''}
-
-
-
-                    {/* //------------------------------------------------ */}
-
-
-                    {item === 'WordPress' ? <ListItemButton sx={{
-                        borderTop: '1px solid black',
-                        textAlign: 'left'
-                    }}
-                        href='_blank'
-                        target='https://wp/kofisolutions.com'
-                        onClick={() => {
-                            console.info("ABOUT BUTTON TEST");
-                            setIsDrawerOpen(false);
-                        }}>
-                        <InfoIcon sx={{ margin: '5px' }} />
-                        <ListItemText primary={item} />
-                    </ListItemButton> : ''}
-
-
-
-                    {/* //------------------------------------------------ */}
-
-                </ListItem>
-
-            ))};
-
-            {/* //------------------------------------------------ */}
-
-            <Divider sx={{
-                borderColor: 'black',
-                borderBottomWidth: '5px'
-            }} />
-
-            {/* //------------------------------------------------ */}
-
-            {navItems2.map((item) => (
-                <ListItem key={item} disablePadding>
-
-                    {item === 'Account' ? <ListItemButton sx={{}}
-                        component={Link}
-                        to='/professional/about'
-                        onClick={() => {
-                            console.info("ACCOUNT BUTTON TEST");
-                            setIsDrawerOpen(false);
-                        }}>
-                        <AccountCircleIcon sx={{ margin: '5px' }} />
-                        <ListItemText primary={item} />
-                    </ListItemButton> : ''}
-
-                    {/* //------------------------------------------------ */}
-
-                    {item === 'Settings' ? <ListItemButton sx={{ borderTop: '1px solid black' }}
-                        component={Link}
-                        to='/professional/about'
-                        onClick={() => {
-                            console.info("SETTINGS BUTTON TEST");
-                            setIsDrawerOpen(false);
-                        }}>
-                        <SettingsIcon sx={{ margin: '5px' }} />
-                        <ListItemText primary={item} />
-                    </ListItemButton> : ''}
-
-                    {/* //------------------------------------------------ */}
-
-                    {item === 'Logout' ? <ListItemButton sx={{ borderTop: '1px solid black' }}
-                        onClick={() => {
-                            console.info("LOGOUT BUTTON TEST");
-                            setIsDrawerOpen(false);
-                            handleLogout();
-                        }}>
-                        <LogoutIcon sx={{ margin: '5px' }} />
-                        <ListItemText primary={item} />
-                    </ListItemButton> : ''}
-                </ListItem>
-            ))}
-
-        </Drawer>
-
+        {/* NAV ITEMS 2 */}
+        {navItems2.map(({ label, icon, to, action }) => (
+          <ListItem key={label} disablePadding>
+            <ListItemButton
+              sx={{ textAlign: "left", borderBottom: "1px solid black" }}
+              component={to ? Link : "button"}
+              to={to}
+              onClick={() => {
+                setIsDrawerOpen(false);
+                if (action) action();
+              }}
+            >
+              {icon}
+              <ListItemText primary={label} sx={{ ml: 1 }} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </Drawer>
     </>
-    );
+  );
 }
