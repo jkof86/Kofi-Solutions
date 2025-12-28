@@ -1,7 +1,7 @@
-// frontend/src/data/feedsMap.js
-// ESM FEEDS v1.178 — mirrors backend FEEDS 1:1
+// backend/src/lambda/config/feedsMap.js
+// CommonJS FEEDS v1.178 — AWS-safe, category-based, validator-aligned
 
-export const FEEDS = {
+const FEEDS = {
   crypto: [
     { id: "coindesk", name: "CoinDesk", url: "https://www.coindesk.com/arc/outboundfeeds/rss/", type: "rss" },
     { id: "cointelegraph", name: "CoinTelegraph", url: "https://cointelegraph.com/rss", type: "rss" },
@@ -104,10 +104,16 @@ export const FEEDS = {
   ]
 };
 
-export function getFeedsForCategory(categoryId) {
+function getFeedsForCategory(categoryId) {
   return FEEDS[categoryId] || [];
 }
 
-export function getLegacyCryptoFeeds() {
+function getLegacyCryptoFeeds() {
   return FEEDS.crypto.filter((f) => f.type === "rss");
 }
+
+module.exports = {
+  FEEDS,
+  getFeedsForCategory,
+  getLegacyCryptoFeeds
+};
