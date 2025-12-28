@@ -1,16 +1,16 @@
 // ------------------------------------------------------------
-// FeedHealthDashboard.jsx — v1.147 (Debug Controls + Health UI)
+// FeedHealthDashboard.jsx — v1.148 (Global Debug Toggle Integrated)
 // ------------------------------------------------------------
 //
 // Enhancements:
-//   • Debug controls moved into right drawer
-//   • Uses debugRequest() helper for backend testing
-//   • Health stored in FeedStatusContext for global access
-//   • Clean, production-ready layout
+//   • Global debug toggle (URL param + keyboard shortcut)
+//   • Global debug indicator chip
+//   • Debug mode auto-syncs with global toggle
+//   • No breaking changes to existing debugMode dropdown
 //
 // ------------------------------------------------------------
 
-import React, { useEffect, useContext } from "react";
+import React, { useEffect, useContext, useState } from "react";
 import {
   Box,
   Chip,
@@ -47,7 +47,36 @@ export default function FeedHealthDashboard() {
     setHealth
   } = useContext(FeedStatusContext);
 
-  const [error, setError] = React.useState(null);
+  const [error, setError] = useState(null);
+
+  // ------------------------------------------------------------
+  // NEW: Global Debug Toggle (URL param + keyboard shortcut)
+  // ------------------------------------------------------------
+  const [globalDebug, setGlobalDebug] = useState(() => {
+    const urlParam = new URLSearchParams(window.location.search).get("debug");
+    return urlParam === "true";
+  });
+
+  // Keyboard shortcut: Ctrl + Shift + D
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "D") {
+        setGlobalDebug((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  // Sync global debug → debugMode dropdown
+  useEffect(() => {
+    if (globalDebug && debugMode !== "debug_health") {
+      setDebugMode("debug_health");
+    }
+    if (!globalDebug && debugMode === "debug_health") {
+      setDebugMode("");
+    }
+  }, [globalDebug]);
 
   // ------------------------------------------------------------
   // Load Health
@@ -131,9 +160,22 @@ export default function FeedHealthDashboard() {
         sx={{ mb: 2 }}
       >
         <Typography variant="h6">System Health</Typography>
-        <IconButton onClick={load}>
-          <RefreshIcon />
-        </IconButton>
+
+        <Stack direction="row" spacing={1} alignItems="center">
+          {/* NEW: Global Debug Indicator */}
+          {globalDebug && (
+            <Chip
+              label="Global Debug ON"
+              color="secondary"
+              size="small"
+              sx={{ fontSize: 11 }}
+            />
+          )}
+
+          <IconButton onClick={load}>
+            <RefreshIcon />
+          </IconButton>
+        </Stack>
       </Stack>
 
       {/* Debug Controls */}
@@ -268,6 +310,7 @@ export default function FeedHealthDashboard() {
           </pre>
         </Box>
       )}
+
       <HealthHistory />
     </Box>
   );

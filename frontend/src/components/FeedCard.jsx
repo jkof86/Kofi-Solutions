@@ -26,18 +26,18 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
   let statusIcon = null;
   let statusLabel = "";
 
-  if (status === "ok") {
-    statusIcon = <CheckCircleIcon fontSize="small" color="success" />;
-    statusLabel = "OK";
-  } else if (status === "fallback" || status === "json") {
-    statusIcon = <WarningAmberIcon fontSize="small" color="warning" />;
-    statusLabel = "Fallback";
-  } else if (status === "error") {
-    statusIcon = <ErrorIcon fontSize="small" color="error" />;
-    statusLabel = "Error";
-  } else {
-    statusLabel = "Unknown";
-  }
+ // ------------------------------------------------------------
+// FeedCard.jsx — v1.181 (JSON OK Label)
+// ------------------------------------------------------------
+
+if (status === "ok") {
+  statusIcon = <CheckCircleIcon fontSize="small" color="success" />;
+  statusLabel = "OK";
+} else if (status === "json") {
+  statusIcon = <CheckCircleIcon fontSize="small" color="success" />;
+  statusLabel = "JSON OK";
+}
+
 
   return (
     <Card variant="outlined">

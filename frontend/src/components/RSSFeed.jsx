@@ -1,9 +1,9 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.172 (Corrected + Router-Aligned)
+// RSSFeed.jsx — v1.173 (Debug Toggle Enhanced)
 // ------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, Stack, Collapse } from "@mui/material";
+import { Box, Typography, Button, Stack, Collapse, Chip } from "@mui/material";
 import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
 
@@ -20,7 +20,24 @@ export default function RSSFeed({ feedId }) {
   const [debugInfo, setDebugInfo] = useState(null);
   const [showDebug, setShowDebug] = useState(false);
 
+  // NEW: global debug toggle
+  const [globalDebug, setGlobalDebug] = useState(() => {
+    const urlParam = new URLSearchParams(window.location.search).get("debug");
+    return urlParam === "true";
+  });
+
   const feedMeta = FEEDS[feedId];
+
+  // NEW: keyboard shortcut for debug mode
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "D") {
+        setGlobalDebug((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const fetchFeed = async (id = feedId, debug = false) => {
     setLoading(true);
@@ -29,9 +46,11 @@ export default function RSSFeed({ feedId }) {
     setVisibleCount(BATCH_SIZE);
     setDebugInfo(null);
 
+    const debugFlag = debug || globalDebug;
+
     try {
       const url = `${BACKEND_URL}?mode=feed&feed=${encodeURIComponent(id)}${
-        debug ? "&debug=debug_feeds" : ""
+        debugFlag ? "&debug=debug_feeds" : ""
       }`;
 
       const res = await fetch(url);
@@ -70,7 +89,7 @@ export default function RSSFeed({ feedId }) {
 
   useEffect(() => {
     if (feedId) fetchFeed(feedId);
-  }, [feedId]);
+  }, [feedId, globalDebug]);
 
   const visibleItems = items.slice(0, visibleCount);
 
@@ -90,9 +109,20 @@ export default function RSSFeed({ feedId }) {
         </Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
+          {/* NEW: Global debug indicator */}
+          {globalDebug && (
+            <Chip
+              label="Global Debug ON"
+              color="secondary"
+              size="small"
+              sx={{ fontSize: 11 }}
+            />
+          )}
+
           <Button variant="outlined" onClick={refreshAll}>
             Refresh All
           </Button>
+
           <Button variant="outlined" color="secondary" onClick={refreshWithDebug}>
             Debug
           </Button>

@@ -1,12 +1,13 @@
 // ------------------------------------------------------------
-// FeedStatusContext.jsx — v1.180 (Health Polling + Normalization)
+// FeedStatusContext.jsx — v1.181 (Corrected + Stable)
 // ------------------------------------------------------------
 //
-// New features:
-//   • Automatic health polling (every 60s)
-//   • Normalizes backend health → legacy status map
-//   • Updates lastUpdated timestamp
-//   • Fully aligned with TabsLayout, FeedStatusBar, Health Drawer
+// Fixes:
+//   • JSON feeds now normalize as "json" (healthy)
+//   • Health polling uses strictMode, sampleSize, debugMode
+//   • Health dashboard no longer freezes
+//   • Normalization unified across app
+//   • Full logging for backend debugging
 //
 // ------------------------------------------------------------
 
@@ -80,18 +81,25 @@ export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
   // Normalize backend health → legacy status map
   // ------------------------------------------------------------
-  const normalizeHealthToStatus = useCallback((healthObj) => {
-    if (!healthObj?.feeds) return;
+  const normalizeHealthToStatus = useCallback(
+    (healthObj) => {
+      if (!healthObj?.feeds) return;
 
-    const normalized = {};
-    for (const [feedId, entry] of Object.entries(healthObj.feeds)) {
-      if (entry.ok) normalized[feedId] = "ok";
-      else if (entry.status === "fallback") normalized[feedId] = "fallback";
-      else normalized[feedId] = "error";
-    }
+      const normalized = {};
+      for (const [feedId, entry] of Object.entries(healthObj.feeds)) {
+        if (entry.ok) {
+          normalized[feedId] = entry.type === "json" ? "json" : "ok";
+        } else if (entry.status === "fallback") {
+          normalized[feedId] = "fallback";
+        } else {
+          normalized[feedId] = "error";
+        }
+      }
 
-    setBulkStatus(normalized);
-  }, [setBulkStatus]);
+      setBulkStatus(normalized);
+    },
+    [setBulkStatus]
+  );
 
   // ------------------------------------------------------------
   // Poll backend health every 60 seconds
@@ -99,26 +107,27 @@ export function FeedStatusProvider({ children }) {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}?mode=health`);
+        const url = `${BACKEND_URL}?mode=health&strict=${strictMode}&sampleSize=${sampleSize}&debug=${debugMode}`;
+        const res = await fetch(url);
         const json = await res.json();
 
+        console.log("[FeedStatusContext] Raw health:", json);
+
+        // Always set health, even if status !== ok
         setHealth(json);
         setLastUpdated(Date.now());
-        normalizeHealthToStatus(json);
 
-        console.log("[FeedStatusContext] Health updated:", json);
+        // Normalize feed statuses
+        normalizeHealthToStatus(json);
       } catch (err) {
         console.error("[FeedStatusContext] Health fetch error:", err);
       }
     };
 
-    // Initial load
     fetchHealth();
-
-    // Polling interval
     const interval = setInterval(fetchHealth, 60000);
     return () => clearInterval(interval);
-  }, [normalizeHealthToStatus]);
+  }, [strictMode, sampleSize, debugMode, normalizeHealthToStatus]);
 
   // ------------------------------------------------------------
   // Memoized context value

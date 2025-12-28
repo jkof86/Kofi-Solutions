@@ -1,26 +1,16 @@
 // ------------------------------------------------------------
-// TabsLayout.jsx — v1.171 (Corrected + Stable)
-// ------------------------------------------------------------
-//
-// Fixes:
-//   • useEffect moved INSIDE component (your version was invalid)
-//   • RSSFeed now receives feedId prop (was incorrectly "name")
-//   • Category switching resets feedIndex safely
-//   • Feed switching logs correctly
-//   • MarketChart receives correct symbol
-//   • Health badges mapped correctly
-//   • Layout stable for Recharts
-//
+// TabsLayout.jsx — v1.177 (using helper functions)
 // ------------------------------------------------------------
 
 import React, { useEffect, useState, useMemo, useContext } from "react";
-import { Tabs, Tab, Box, Typography, Stack, Avatar } from "@mui/material";
+import { Tabs, Tab, Box, Typography, Stack, Avatar, Chip } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ErrorIcon from "@mui/icons-material/Error";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 import { FEED_CATEGORIES } from "../../data/feedCategories";
 import {
+  FEEDS,
   getFeedsForCategory,
   getLegacyCryptoFeeds
 } from "../../data/feedsMap";
@@ -32,7 +22,7 @@ import MarketChart from "../MarketChart";
 import FeedStatusBar from "../FeedStatusBar";
 
 // ------------------------------------------------------------
-// Feed Tab Label Component
+// Feed Tab Label
 // ------------------------------------------------------------
 function FeedTabLabel({ feed, status }) {
   const initials = feed.label
@@ -42,8 +32,10 @@ function FeedTabLabel({ feed, status }) {
     .toUpperCase();
 
   let icon = null;
-  if (status === "ok") icon = <CheckCircleIcon color="success" fontSize="small" />;
-  else if (status === "fallback" || status === "json")
+
+  if (status === "ok" || status === "json")
+    icon = <CheckCircleIcon color="success" fontSize="small" />;
+  else if (status === "fallback")
     icon = <WarningAmberIcon color="warning" fontSize="small" />;
   else icon = <ErrorIcon color="error" fontSize="small" />;
 
@@ -57,56 +49,109 @@ function FeedTabLabel({ feed, status }) {
 }
 
 // ------------------------------------------------------------
-// Main Layout Component
+// Main Component
 // ------------------------------------------------------------
 export default function TabsLayout() {
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [feedIndex, setFeedIndex] = useState(0);
 
-  const { health } = useContext(FeedStatusContext);
+  const { health, debugMode } = useContext(FeedStatusContext);
   const feedHealth = health?.feeds || {};
+
+  const globalDebug =
+    debugMode === "debug_feeds" ||
+    debugMode === "debug_health" ||
+    new URLSearchParams(window.location.search).get("debug") === "true";
 
   const activeCategory = FEED_CATEGORIES[categoryIndex];
 
+  // ------------------------------------------------------------
+  // Use helper functions
+  // ------------------------------------------------------------
   const feedsForActiveCategory = useMemo(() => {
     if (!activeCategory) return [];
-    return activeCategory.id === "legacy_crypto"
-      ? getLegacyCryptoFeeds()
-      : getFeedsForCategory(activeCategory.id);
+
+    if (activeCategory.id === "legacy_crypto") {
+      return getLegacyCryptoFeeds();
+    }
+
+    return getFeedsForCategory(activeCategory.id);
   }, [activeCategory]);
 
-  const activeFeed =
-    feedsForActiveCategory[feedIndex] || feedsForActiveCategory[0];
+  // ------------------------------------------------------------
+  // Finance ordering override
+  // ------------------------------------------------------------
+  const financeOrder = [
+    "marketwatch_finance",
+    "yahoo_finance",
+    "investing_markets",
+    "wsj_markets",
+    "cnbc_markets",
+    "ft_markets"
+  ];
 
+  const orderedFeeds =
+    activeCategory?.id === "finance"
+      ? financeOrder.map((id) => FEEDS[id]).filter(Boolean)
+      : feedsForActiveCategory;
+
+  const activeFeed = orderedFeeds[feedIndex] || orderedFeeds[0];
   const activeSymbol = activeFeed?.symbol ?? "btc";
 
   // ------------------------------------------------------------
-  // Debug logging (correct placement)
+  // Debug logging
   // ------------------------------------------------------------
   useEffect(() => {
+    if (!globalDebug) return;
+
     console.log("[TabsLayout] activeCategory:", activeCategory?.id);
     console.log("[TabsLayout] feedsForActiveCategory:", feedsForActiveCategory);
+    console.log("[TabsLayout] orderedFeeds:", orderedFeeds);
     console.log("[TabsLayout] activeFeed:", activeFeed?.id);
-    console.log("[TabsLayout] activeSymbol:", activeSymbol);
-  }, [activeCategory, feedsForActiveCategory, activeFeed, activeSymbol]);
+  }, [
+    activeCategory,
+    feedsForActiveCategory,
+    orderedFeeds,
+    activeFeed,
+    globalDebug
+  ]);
 
+  // ------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------
   return (
     <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
       {/* Category Tabs */}
-      <Tabs
-        value={categoryIndex}
-        onChange={(_, idx) => {
-          setCategoryIndex(idx);
-          setFeedIndex(0); // reset feed index on category change
-        }}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 1 }}
       >
-        {FEED_CATEGORIES.map((cat, idx) => (
-          <Tab key={cat.id} value={idx} label={cat.label} />
-        ))}
-      </Tabs>
+        <Tabs
+          value={categoryIndex}
+          onChange={(_, idx) => {
+            setCategoryIndex(idx);
+            setFeedIndex(0);
+          }}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ borderBottom: 1, borderColor: "divider", flex: 1 }}
+        >
+          {FEED_CATEGORIES.map((cat, idx) => (
+            <Tab key={cat.id} value={idx} label={cat.label} />
+          ))}
+        </Tabs>
+
+        {globalDebug && (
+          <Chip
+            label="Debug ON"
+            color="secondary"
+            size="small"
+            sx={{ ml: 2, fontSize: 11 }}
+          />
+        )}
+      </Stack>
 
       {/* Content Panel */}
       <Box
@@ -126,7 +171,7 @@ export default function TabsLayout() {
           scrollButtons="auto"
           sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}
         >
-          {feedsForActiveCategory.map((feed, idx) => (
+          {orderedFeeds.map((feed, idx) => (
             <Tab
               key={feed.id}
               value={idx}
@@ -157,13 +202,12 @@ export default function TabsLayout() {
             )}
           </Box>
 
-          <Box sx={{ flex: 1, minHeight: 300 }}> {/* FIXED for Recharts */}
+          <Box sx={{ flex: 1, minHeight: 300 }}>
             <MarketChart symbol={activeSymbol} />
           </Box>
         </Box>
       </Box>
 
-      {/* Bottom Health Bar */}
       <FeedStatusBar />
     </Box>
   );

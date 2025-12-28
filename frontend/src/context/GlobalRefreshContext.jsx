@@ -1,13 +1,13 @@
 // ------------------------------------------------------------
-// GlobalRefreshContext.jsx — v1.146 FINAL
+// GlobalRefreshContext.jsx — v1.181 (Corrected + Unified Normalization)
+// ------------------------------------------------------------
 //
 // Fixes:
-// ✅ Uses new FeedStatusContext API (setStatus + setBulkStatus)
-// ✅ Uses ?feed= instead of deprecated ?source=
-// ✅ Removes unsupported "cached" logic
-// ✅ Global refresh now uses health endpoint (correct source of truth)
-// ✅ Per-feed refresh uses feed endpoint
-// ✅ Prevents infinite loops + re-entrant refresh
+//   • Global refresh now uses same normalization as FeedStatusContext
+//   • JSON feeds marked as "json" (healthy)
+//   • Strict/soft mode preserved
+//   • No more ticker false warnings
+//
 // ------------------------------------------------------------
 
 import React, {
@@ -86,10 +86,19 @@ export function GlobalRefreshProvider({ children }) {
       const json = await res.json();
 
       if (json.status === "ok" && json.feeds) {
-        // Push backend truth into context
-        setBulkStatus(json.feeds);
+        // Normalize using same logic as FeedStatusContext
+        const normalized = {};
+        for (const [feedId, entry] of Object.entries(json.feeds)) {
+          if (entry.ok) {
+            normalized[feedId] = entry.type === "json" ? "json" : "ok";
+          } else if (entry.status === "fallback") {
+            normalized[feedId] = "fallback";
+          } else {
+            normalized[feedId] = "error";
+          }
+        }
+        setBulkStatus(normalized);
       } else {
-        // If health fails, mark all feeds as error
         const errMap = {};
         allFeedNames.forEach((f) => (errMap[f] = "error"));
         setBulkStatus(errMap);
