@@ -21,6 +21,10 @@ import RSSFeed from "../RSSFeed";
 import MarketChart from "../MarketChart";
 import FeedStatusBar from "../FeedStatusBar";
 
+import { sanitizeFeeds } from "../../utils/sanitizeFeeds";
+const CLEAN_FEEDS = sanitizeFeeds(FEEDS);
+
+
 // ------------------------------------------------------------
 // Feed Tab Label
 // ------------------------------------------------------------
@@ -75,140 +79,144 @@ export default function TabsLayout() {
       return getLegacyCryptoFeeds();
     }
 
-    return getFeedsForCategory(activeCategory.id);
-  }, [activeCategory]);
+    return CLEAN_FEEDS[activeCategory.id] || [];
 
-  // ------------------------------------------------------------
-  // Finance ordering override
-  // ------------------------------------------------------------
-  const financeOrder = [
-    "marketwatch_finance",
-    "yahoo_finance",
-    "investing_markets",
-    "wsj_markets",
-    "cnbc_markets",
-    "ft_markets"
-  ];
 
-  const orderedFeeds =
-    activeCategory?.id === "finance"
-      ? financeOrder.map((id) => FEEDS[id]).filter(Boolean)
-      : feedsForActiveCategory;
+    // ------------------------------------------------------------
+    // Finance ordering override
+    // ------------------------------------------------------------
+    const financeOrder = [
+      "marketwatch_finance",
+      "yahoo_finance",
+      "investing_markets",
+      "wsj_markets",
+      "cnbc_markets",
+      "ft_markets"
+    ];
 
-  const activeFeed = orderedFeeds[feedIndex] || orderedFeeds[0];
-  const activeSymbol = activeFeed?.symbol ?? "btc";
+    const orderedFeeds =
+      activeCategory?.id === "finance"
+        ? financeOrder.map((id) => CLEAN_FEEDS[id]).filter(Boolean)
+        : feedsForActiveCategory;
 
-  // ------------------------------------------------------------
-  // Debug logging
-  // ------------------------------------------------------------
-  useEffect(() => {
-    if (!globalDebug) return;
+    const activeFeed =
+      Array.isArray(orderedFeeds) && orderedFeeds.length > 0
+        ? orderedFeeds[feedIndex] || orderedFeeds[0]
+        : null;
 
-    console.log("[TabsLayout] activeCategory:", activeCategory?.id);
-    console.log("[TabsLayout] feedsForActiveCategory:", feedsForActiveCategory);
-    console.log("[TabsLayout] orderedFeeds:", orderedFeeds);
-    console.log("[TabsLayout] activeFeed:", activeFeed?.id);
-  }, [
-    activeCategory,
-    feedsForActiveCategory,
-    orderedFeeds,
-    activeFeed,
-    globalDebug
-  ]);
+    const activeSymbol = activeFeed?.symbol ?? "btc";
 
-  // ------------------------------------------------------------
-  // Render
-  // ------------------------------------------------------------
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
-      {/* Category Tabs */}
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 1 }}
-      >
-        <Tabs
-          value={categoryIndex}
-          onChange={(_, idx) => {
-            setCategoryIndex(idx);
-            setFeedIndex(0);
-          }}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ borderBottom: 1, borderColor: "divider", flex: 1 }}
+    // ------------------------------------------------------------
+    // Debug logging
+    // ------------------------------------------------------------
+    useEffect(() => {
+      if (!globalDebug) return;
+
+      console.log("[TabsLayout] activeCategory:", activeCategory?.id);
+      console.log("[TabsLayout] feedsForActiveCategory:", feedsForActiveCategory);
+      console.log("[TabsLayout] orderedFeeds:", orderedFeeds);
+      console.log("[TabsLayout] activeFeed:", activeFeed?.id);
+    }, [
+      activeCategory,
+      feedsForActiveCategory,
+      orderedFeeds,
+      activeFeed,
+      globalDebug
+    ]);
+
+    // ------------------------------------------------------------
+    // Render
+    // ------------------------------------------------------------
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+        {/* Category Tabs */}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 1 }}
         >
-          {FEED_CATEGORIES.map((cat, idx) => (
-            <Tab key={cat.id} value={idx} label={cat.label} />
-          ))}
-        </Tabs>
-
-        {globalDebug && (
-          <Chip
-            label="Debug ON"
-            color="secondary"
-            size="small"
-            sx={{ ml: 2, fontSize: 11 }}
-          />
-        )}
-      </Stack>
-
-      {/* Content Panel */}
-      <Box
-        sx={{
-          backgroundColor: "#fff",
-          borderRadius: 2,
-          boxShadow: 2,
-          p: 3,
-          mt: 1
-        }}
-      >
-        {/* Feed Tabs */}
-        <Tabs
-          value={feedIndex}
-          onChange={(_, idx) => setFeedIndex(idx)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}
-        >
-          {orderedFeeds.map((feed, idx) => (
-            <Tab
-              key={feed.id}
-              value={idx}
-              label={
-                <FeedTabLabel
-                  feed={feed}
-                  status={feedHealth[feed.id] || "unknown"}
-                />
-              }
-            />
-          ))}
-        </Tabs>
-
-        {/* Feed + Chart */}
-        <Box sx={{ display: "flex", flexDirection: "row", gap: 3, mt: 1 }}>
-          <Box
-            sx={{
-              flex: 2,
-              maxWidth: "800px",
-              overflowY: "auto",
-              maxHeight: "70vh"
+          <Tabs
+            value={categoryIndex}
+            onChange={(_, idx) => {
+              setCategoryIndex(idx);
+              setFeedIndex(0);
             }}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ borderBottom: 1, borderColor: "divider", flex: 1 }}
           >
-            {activeFeed ? (
-              <RSSFeed feedId={activeFeed.id} />
-            ) : (
-              <Typography>No feed selected.</Typography>
-            )}
-          </Box>
+            {FEED_CATEGORIES.map((cat, idx) => (
+              <Tab key={cat.id} value={idx} label={cat.label} />
+            ))}
+          </Tabs>
 
-          <Box sx={{ flex: 1, minHeight: 300 }}>
-            <MarketChart symbol={activeSymbol} />
+          {globalDebug && (
+            <Chip
+              label="Debug ON"
+              color="secondary"
+              size="small"
+              sx={{ ml: 2, fontSize: 11 }}
+            />
+          )}
+        </Stack>
+
+        {/* Content Panel */}
+        <Box
+          sx={{
+            backgroundColor: "#fff",
+            borderRadius: 2,
+            boxShadow: 2,
+            p: 3,
+            mt: 1
+          }}
+        >
+          {/* Feed Tabs */}
+          <Tabs
+            value={feedIndex}
+            onChange={(_, idx) => setFeedIndex(idx)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}
+          >
+            {orderedFeeds.map((feed, idx) => (
+              <Tab
+                key={feed.id}
+                value={idx}
+                label={
+                  <FeedTabLabel
+                    feed={feed}
+                    status={feedHealth[feed.id] || "unknown"}
+                  />
+                }
+              />
+            ))}
+          </Tabs>
+
+          {/* Feed + Chart */}
+          <Box sx={{ display: "flex", flexDirection: "row", gap: 3, mt: 1 }}>
+            <Box
+              sx={{
+                flex: 2,
+                maxWidth: "800px",
+                overflowY: "auto",
+                maxHeight: "70vh"
+              }}
+            >
+              {activeFeed ? (
+                <RSSFeed feedId={activeFeed.id} />
+              ) : (
+                <Typography>No feed selected.</Typography>
+              )}
+            </Box>
+
+            <Box sx={{ flex: 1, minHeight: 300 }}>
+              <MarketChart symbol={activeSymbol} />
+            </Box>
           </Box>
         </Box>
-      </Box>
 
-      <FeedStatusBar />
-    </Box>
-  );
-}
+        <FeedStatusBar />
+      </Box>
+    );
+  }

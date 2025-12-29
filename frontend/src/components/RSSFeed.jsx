@@ -7,6 +7,11 @@ import { Box, Typography, Button, Stack, Collapse, Chip } from "@mui/material";
 import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
 
+import { sanitizeFeeds } from "../utils/sanitizeFeeds";
+const CLEAN_FEEDS = sanitizeFeeds(FEEDS);
+
+
+
 const BATCH_SIZE = 4;
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
@@ -26,7 +31,33 @@ export default function RSSFeed({ feedId }) {
     return urlParam === "true";
   });
 
-  const feedMeta = FEEDS[feedId];
+  const feedMeta = Object.values(CLEAN_FEEDS)
+    .flat()
+    .find((f) => f.id === feedId);
+
+  if (!feedMeta) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error">
+          This feed is no longer available.
+        </Typography>
+      </Box>
+    );
+  }
+
+  // fetch guard
+  if (!feedMeta.url) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error">
+          Invalid feed: missing URL.
+        </Typography>
+      </Box>
+    );
+  }
+
+
+
 
   // NEW: keyboard shortcut for debug mode
   useEffect(() => {
@@ -39,6 +70,8 @@ export default function RSSFeed({ feedId }) {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+
+
   const fetchFeed = async (id = feedId, debug = false) => {
     setLoading(true);
     setError(null);
@@ -49,9 +82,8 @@ export default function RSSFeed({ feedId }) {
     const debugFlag = debug || globalDebug;
 
     try {
-      const url = `${BACKEND_URL}?mode=feed&feed=${encodeURIComponent(id)}${
-        debugFlag ? "&debug=debug_feeds" : ""
-      }`;
+      const url = `${BACKEND_URL}?mode=feed&feed=${encodeURIComponent(feedMeta.id)}${debugFlag ? "&debug=debug_feeds" : ""
+        }`;
 
       const res = await fetch(url);
       const json = await res.json();
@@ -129,9 +161,12 @@ export default function RSSFeed({ feedId }) {
         </Box>
       </Box>
 
-      {loading && feedMeta && (
-        <Typography sx={{ mb: 2 }}>Loading feed: {feedMeta.label}…</Typography>
+      {loading && (
+        <Typography sx={{ mb: 2 }}>
+          Loading feed: {feedMeta.label}
+        </Typography>
       )}
+
 
       {error && items.length === 0 && (
         <Typography color="error" sx={{ mb: 2 }}>

@@ -6,6 +6,16 @@ import React, { useContext } from "react";
 import { Box, Chip, Stack } from "@mui/material";
 import { FeedStatusContext } from "../context/FeedStatusContext";
 
+const STATUS_COLOR = {
+  ok: "success",
+  json: "warning",
+  fallback: "warning",
+  dead: "error",
+  blocked: "error",
+  html_error: "error",
+  unknown: "error",
+};
+
 export default function FeedStatusBar() {
   const { health, lastUpdated } = useContext(FeedStatusContext);
 
@@ -47,8 +57,9 @@ export default function FeedStatusBar() {
             status === "ok"
               ? "success"
               : status === "fallback" || status === "json"
-              ? "warning"
-              : "error";
+                ? "warning"
+                : "error";
+
 
           return (
             <Chip
