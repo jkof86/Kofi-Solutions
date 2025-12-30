@@ -25,7 +25,7 @@ const CRYPTO_MAP = {
   sol: "sol-solana",
   trx: "trx-tron",
   xrp: "xrp-xrp",
-  zec: "zec-zcash"
+  zec: "zec-zcash",
 
   // ------------------------------------------------------------
   // Optional future additions (commented for now)
@@ -39,5 +39,7 @@ const CRYPTO_MAP = {
   // apt: "apt-aptos",
   // sui: "sui-sui",
 };
+
+Object.freeze(CRYPTO_MAP);
 
 module.exports = { CRYPTO_MAP };

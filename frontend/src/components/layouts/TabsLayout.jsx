@@ -1,23 +1,5 @@
 // ------------------------------------------------------------
-// TabsLayout.jsx — v1.190 (Backend‑Driven Categories + Feeds)
-// ------------------------------------------------------------
-//
-// This component is the heart of the RSS dashboard UI.
-//
-// Responsibilities:
-//   ✓ Build categories dynamically from FEEDS map
-//   ✓ Render category tabs (top row)
-//   ✓ Render feed tabs (second row)
-//   ✓ Auto‑select first healthy feed when switching categories
-//   ✓ Filter feeds by health (strict/soft mode)
-//   ✓ Render RSSFeed panels for each feed
-//
-// Architectural Notes:
-//   • FEEDS is the single source of truth for categories + metadata
-//   • FeedStatusContext supplies health + strictMode
-//   • RSSFeed handles loading + fallback for each feedId
-//   • This replaces all legacy CategoryTabs.jsx logic
-//
+// TabsLayout.jsx — v1.196 (Optimistic Strict Mode)
 // ------------------------------------------------------------
 
 import React, {
@@ -30,16 +12,11 @@ import React, {
 import { Box, Tabs, Tab, Typography } from "@mui/material";
 
 import { FeedStatusContext } from "../../context/FeedStatusContext";
-import { FEEDS } from "../../data/feedsMap";   // FEEDS = { feedId: { name, url, category, ... } }
+import { FEEDS } from "../../data/feedsMap";
 import RSSFeed from "../RSSFeed";
 
-console.log("TabsLayout v1.190 loaded");
+console.log("TabsLayout v1.196 loaded");
 
-/**
- * TabPanel
- * Simple wrapper for MUI tab content.
- * Only renders children when the tab is active.
- */
 function TabPanel({ children, value, index }) {
   return (
     <div role="tabpanel" hidden={value !== index} style={{ width: "100%" }}>
@@ -54,17 +31,6 @@ export default function TabsLayout() {
   // ------------------------------------------------------------
   // Build categories dynamically from FEEDS map
   // ------------------------------------------------------------
-  //
-  // FEEDS is a flat object:
-  //   { "cnn": { name, url, category: "news" }, ... }
-  //
-  // We convert it into:
-  //   {
-  //     news: [ { feedId, name, url, ... }, ... ],
-  //     tech: [ ... ],
-  //     crypto: [ ... ]
-  //   }
-  //
   const categories = useMemo(() => {
     const map = {};
 
@@ -74,7 +40,6 @@ export default function TabsLayout() {
       map[cat].push({ feedId, ...meta });
     }
 
-    // Sort categories alphabetically for consistent UI
     return Object.keys(map)
       .sort()
       .reduce((acc, key) => {
@@ -88,10 +53,6 @@ export default function TabsLayout() {
   // ------------------------------------------------------------
   // UI state
   // ------------------------------------------------------------
-  //
-  // categoryIndex → which category tab is active
-  // feedIndex     → which feed tab inside that category is active
-  //
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [feedIndex, setFeedIndex] = useState(0);
 
@@ -101,30 +62,27 @@ export default function TabsLayout() {
   // ------------------------------------------------------------
   // Filter feeds by health (strict/soft mode)
   // ------------------------------------------------------------
-  //
-  // strictMode = true:
-  //   Only show feeds with status "ok" or "json"
-  //
-  // strictMode = false:
-  //   Show all feeds regardless of health
-  //
   const filteredFeeds = useMemo(() => {
     if (!strictMode) return feedsInCategory;
 
     return feedsInCategory.filter((f) => {
       const s = status[f.feedId];
-      return s === "ok" || s === "json";
+
+      // ⭐ Optimistic strict mode:
+      // If we don't have a status yet, show the feed.
+      if (!s) return true;
+
+      return (
+        s === "ok" ||
+        s === "json" ||
+        s === "fallback"
+      );
     });
   }, [feedsInCategory, status, strictMode]);
 
   // ------------------------------------------------------------
   // Auto-select first healthy feed when category changes
   // ------------------------------------------------------------
-  //
-  // When switching categories:
-  //   - Always reset feedIndex to 0
-  //   - This ensures RSSFeed loads the first available feed
-  //
   useEffect(() => {
     setFeedIndex(0);
   }, [categoryIndex, filteredFeeds.length]);
@@ -135,9 +93,7 @@ export default function TabsLayout() {
   return (
     <Box sx={{ width: "100%" }}>
 
-      {/* ------------------------------------------------------------
-          Category Tabs (top row)
-         ------------------------------------------------------------ */}
+      {/* Category Tabs */}
       <Box sx={{ mb: 1 }}>
         <Typography variant="h5" sx={{ mb: 1 }}>
           {currentCategory.toUpperCase()}
@@ -155,9 +111,7 @@ export default function TabsLayout() {
         </Tabs>
       </Box>
 
-      {/* ------------------------------------------------------------
-          Feed Tabs (second row)
-         ------------------------------------------------------------ */}
+      {/* Feed Tabs */}
       <Tabs
         value={feedIndex}
         onChange={(_, v) => setFeedIndex(v)}
@@ -170,21 +124,14 @@ export default function TabsLayout() {
         ))}
       </Tabs>
 
-      {/* ------------------------------------------------------------
-          Feed Panels (RSSFeed instances)
-         ------------------------------------------------------------ */}
+      {/* Feed Panels */}
       {filteredFeeds.map((f, i) => (
         <TabPanel key={f.feedId} value={feedIndex} index={i}>
-          <RSSFeed
-            name={f.feedId}
-            categoryLabel={currentCategory}
-          />
+          <RSSFeed name={f.feedId} categoryLabel={currentCategory} />
         </TabPanel>
       ))}
 
-      {/* ------------------------------------------------------------
-          Empty State (no healthy feeds)
-         ------------------------------------------------------------ */}
+      {/* Empty State */}
       {filteredFeeds.length === 0 && (
         <Box sx={{ p: 2 }}>
           <Typography>No healthy feeds in this category.</Typography>

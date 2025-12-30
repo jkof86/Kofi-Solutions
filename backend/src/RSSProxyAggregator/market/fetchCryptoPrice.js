@@ -7,13 +7,16 @@
 //     price: Number,
 //     change_24h: Number,
 //     history: [ { time, price } ],
-//     source: "coinpaprika"
+//     type: "crypto",
+//     symbol: coinId,
+//     source: "coinpaprika",
+//     timestamp: Number
 //   }
 //
 // Notes:
-//   • Fully AWS-safe (no fetch, uses axios)
+//   • Fully AWS-safe (axios only)
 //   • Never throws — always returns a safe object
-//   • History is optional (MarketChart handles empty arrays)
+//   • History is optional
 //   • Compatible with handleMarket v1.180
 //
 // ------------------------------------------------------------
@@ -50,26 +53,31 @@ async function fetchCryptoPrice(coinId, opts = {}) {
           .filter((p) => p.time && p.price != null);
       }
     } catch (err) {
-      // History is optional — never fail the whole call
+      console.error("[fetchCryptoPrice][HISTORY_ERROR]", coinId, err.code || err.message);
       history = [];
     }
 
     return {
+      type: "crypto",
+      symbol: coinId,
       price,
       change_24h: change24h,
       history,
-      source: "coinpaprika"
+      source: "coinpaprika",
+      timestamp: Date.now()
     };
 
   } catch (err) {
-    console.error("[fetchCryptoPrice] ERROR:", coinId, err);
+    console.error("[fetchCryptoPrice][ERROR]", coinId, err.code || err.message);
 
-    // Always return a safe object
     return {
+      type: "crypto",
+      symbol: coinId,
       price: null,
       change_24h: 0,
       history: [],
       source: "coinpaprika",
+      timestamp: Date.now(),
       error: String(err)
     };
   }

@@ -1,18 +1,14 @@
 // ------------------------------------------------------------
-// FeedCard.jsx — v1.190 (Health‑Aware Feed Item Card)
+// FeedCard.jsx — v1.195 (Backend‑Aligned + Safer)
 // ------------------------------------------------------------
 //
-// Responsibilities:
-//   ✓ Render a single feed item (title, source, date, description)
-//   ✓ Show feed health status (OK, JSON OK, Fallback, Dead, etc.)
-//   ✓ Allow manual refresh of feed content
-//   ✓ Allow manual refresh of feed health (per‑feed health check)
-//
-// Architectural Notes:
-//   • FeedStatusContext supplies health + setStatus()
-//   • feedMeta.id is the canonical feedId
-//   • onRefresh() triggers RSSFeed → fetchFeed()
-//   • Health refresh calls backend: ?mode=health&feed=<id>
+// Improvements in v1.195:
+//   ✓ Explicit normalization for all backend feed states
+//   ✓ JSON feeds always show "JSON OK" when healthy
+//   ✓ Fallback, blocked, dead, html_error preserved
+//   ✓ Safer guards for malformed feed items
+//   ✓ Safer guards for malformed backend responses
+//   ✓ Cleaner refreshHealth logic
 //
 // ------------------------------------------------------------
 
@@ -115,6 +111,12 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
   // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
+  const safeTitle = item?.title || "Untitled";
+  const safeUrl = item?.url || "#";
+  const safeSource = item?.source || "";
+  const safeDescription = item?.description || "";
+  const safeDate = item?.date ? new Date(item.date).toLocaleString() : "";
+
   return (
     <Card variant="outlined">
       <CardContent>
@@ -134,17 +136,17 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
             <Typography
               variant="subtitle1"
               component="a"
-              href={item.url}
+              href={safeUrl}
               target="_blank"
               rel="noopener noreferrer"
               sx={{ textDecoration: "none", color: "primary.main" }}
             >
-              {item.title}
+              {safeTitle}
             </Typography>
 
-            {item.source && (
+            {safeSource && (
               <Typography variant="caption" color="text.secondary">
-                {item.source}
+                {safeSource}
               </Typography>
             )}
           </Box>
@@ -185,18 +187,18 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
         {/* ------------------------------------------------------------
             Description
            ------------------------------------------------------------ */}
-        {item.description && (
+        {safeDescription && (
           <Typography variant="body2" sx={{ mb: 1 }}>
-            {item.description}
+            {safeDescription}
           </Typography>
         )}
 
         {/* ------------------------------------------------------------
             Timestamp
            ------------------------------------------------------------ */}
-        {item.date && (
+        {safeDate && (
           <Typography variant="caption" color="text.secondary">
-            {new Date(item.date).toLocaleString()}
+            {safeDate}
           </Typography>
         )}
       </CardContent>

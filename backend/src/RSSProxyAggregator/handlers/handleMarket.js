@@ -1,15 +1,6 @@
 // ------------------------------------------------------------
 // handleMarket.js — v1.180 (Normalized + History-Safe)
 // ------------------------------------------------------------
-//
-// Improvements:
-//   • Symbol normalization (BRK.B → brk-b)
-//   • Crypto restored (fetchCryptoPrice active again)
-//   • Unified lookup layer
-//   • History-safe responses for charts
-//   • Clean error handling + logging
-//
-// ------------------------------------------------------------
 
 const { jsonResponse } = require("../utils/jsonResponse.js");
 const { CRYPTO_MAP } = require("../config/cryptoMap.js");
@@ -41,6 +32,7 @@ async function handleMarket(symbol, opts = {}) {
     }
 
     const lower = normalizeSymbol(symbol);
+    console.log("[handleMarket] Normalized:", lower);
 
     const cryptoId = CRYPTO_MAP[lower];
     const stockId = STOCK_MAP[lower];
@@ -52,14 +44,22 @@ async function handleMarket(symbol, opts = {}) {
     if (cryptoId) {
       try {
         const result = await fetchCryptoPrice(cryptoId, opts);
+
         return jsonResponse(200, {
           status: "ok",
           type: "crypto",
           symbol: lower,
-          ...result
+          price: result?.price ?? null,
+          history: result?.history ?? []
         });
       } catch (err) {
-        console.error("[handleMarket] Crypto error:", lower, err);
+        console.error("[handleMarket][CRYPTO_ERROR]", lower, err.code || err.message);
+        return jsonResponse(200, {
+          status: "error",
+          type: null,
+          symbol: lower,
+          price: null
+        });
       }
     }
 
@@ -69,14 +69,22 @@ async function handleMarket(symbol, opts = {}) {
     if (stockId) {
       try {
         const result = await fetchYahooStock(stockId, opts);
+
         return jsonResponse(200, {
           status: "ok",
           type: "stock",
           symbol: lower,
-          ...result
+          price: result?.price ?? null,
+          history: result?.history ?? []
         });
       } catch (err) {
-        console.error("[handleMarket] Stock error:", lower, err);
+        console.error("[handleMarket][STOCK_ERROR]", lower, err.code || err.message);
+        return jsonResponse(200, {
+          status: "error",
+          type: null,
+          symbol: lower,
+          price: null
+        });
       }
     }
 
@@ -86,14 +94,22 @@ async function handleMarket(symbol, opts = {}) {
     if (etfId) {
       try {
         const result = await fetchYahooEtf(etfId, opts);
+
         return jsonResponse(200, {
           status: "ok",
           type: "etf",
           symbol: lower,
-          ...result
+          price: result?.price ?? null,
+          history: result?.history ?? []
         });
       } catch (err) {
-        console.error("[handleMarket] ETF error:", lower, err);
+        console.error("[handleMarket][ETF_ERROR]", lower, err.code || err.message);
+        return jsonResponse(200, {
+          status: "error",
+          type: null,
+          symbol: lower,
+          price: null
+        });
       }
     }
 
@@ -101,6 +117,7 @@ async function handleMarket(symbol, opts = {}) {
     // 4. ALL FAILED
     // ------------------------------------------------------------
     console.warn("[handleMarket] No market data for symbol:", lower);
+
     return jsonResponse(200, {
       status: "error",
       error: `No market data available for symbol: ${lower}`,
@@ -109,6 +126,7 @@ async function handleMarket(symbol, opts = {}) {
 
   } catch (err) {
     console.error("[handleMarket] FATAL ERROR:", err);
+
     return jsonResponse(200, {
       status: "error",
       error: "Market handler crashed",

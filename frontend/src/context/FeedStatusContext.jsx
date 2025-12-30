@@ -1,19 +1,14 @@
 // ------------------------------------------------------------
-// FeedStatusContext.jsx — v1.190 (Corrected + Fully Normalized)
+// FeedStatusContext.jsx — v1.195 (Backend‑Aligned + Safer)
 // ------------------------------------------------------------
 //
-// Responsibilities:
-//   ✓ Poll backend health every 60s
-//   ✓ Store full health object (feeds + markets)
-//   ✓ Maintain legacy per‑feed status map for UI components
-//   ✓ Normalize backend → UI statuses consistently
-//   ✓ Expose strictMode, sampleSize, debugMode
-//
-// Architectural Notes:
-//   • This is the single source of truth for feed health
-//   • TabsLayout + FeedCard + FeedHealthDashboard all depend on it
-//   • JSON feeds must normalize as "json" (healthy)
-//   • Fallback, blocked, dead, html_error must all be preserved
+// Improvements in v1.195:
+//   ✓ Explicit normalization for all backend feed states
+//   ✓ JSON feeds always normalize as "json"
+//   ✓ Fallback, blocked, dead, html_error preserved
+//   ✓ Safer guards for malformed backend responses
+//   ✓ Optional deep debug logging
+//   ✓ More stable memoization
 //
 // ------------------------------------------------------------
 
@@ -49,7 +44,7 @@ export const FeedStatusContext = createContext({
   setLastUpdated: () => {}
 });
 
-console.log("FeedStatusContext v1.190 active");
+console.log("FeedStatusContext v1.195 active");
 
 export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
@@ -91,19 +86,32 @@ export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
   const normalizeHealthToStatus = useCallback(
     (healthObj) => {
-      if (!healthObj?.feeds) return;
+      if (!healthObj?.feeds || typeof healthObj.feeds !== "object") {
+        console.warn("[FeedStatusContext] Missing feeds object in health");
+        return;
+      }
 
       const normalized = {};
 
       for (const [feedId, entry] of Object.entries(healthObj.feeds)) {
+        if (!entry) {
+          normalized[feedId] = "unknown";
+          continue;
+        }
+
         // Backend contract:
         //   entry.ok → boolean
         //   entry.type → "rss" | "json"
         //   entry.status → "fallback" | "dead" | "blocked" | "html_error" | "ok"
-        //
-        if (entry.ok) {
+        //   entry.error → string | null
+
+        if (entry.ok === true) {
           // JSON feeds must normalize as "json"
-          normalized[feedId] = entry.type === "json" ? "json" : "ok";
+          if (entry.type === "json") {
+            normalized[feedId] = "json";
+          } else {
+            normalized[feedId] = "ok";
+          }
           continue;
         }
 
@@ -120,6 +128,10 @@ export function FeedStatusProvider({ children }) {
             break;
           case "html_error":
             normalized[feedId] = "html_error";
+            break;
+          case "ok":
+            // Rare case: ok=false but status="ok"
+            normalized[feedId] = entry.type === "json" ? "json" : "ok";
             break;
           default:
             normalized[feedId] = "unknown";
@@ -141,7 +153,9 @@ export function FeedStatusProvider({ children }) {
         const res = await fetch(url);
         const json = await res.json();
 
-        console.log("[FeedStatusContext] Raw health:", json);
+        if (debugMode) {
+          console.log("[FeedStatusContext] Raw health:", json);
+        }
 
         // Always store full health object
         setHealth(json);

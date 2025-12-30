@@ -1,28 +1,10 @@
 // ------------------------------------------------------------
-// feedsMap.js — Frontend FEEDS v1.190
-// ------------------------------------------------------------
-//
-// This file defines the FEEDS map used by:
-//   • TabsLayout.jsx
-//   • RSSFeed.jsx
-//   • FeedStatusContext.jsx
-//   • TickerBar.jsx
-//
-// Structure:
-//   export const FEEDS = {
-//     feedId: { id, name, url, type, category }
-//   }
-//
-// IMPORTANT:
-//   • This is the FRONTEND FEEDS map.
-//   • It must match backend feed IDs exactly.
-//   • Do NOT import backend FEEDS here.
-//   • Do NOT redeclare FEEDS twice.
+// feedsMap.js — Frontend FEEDS v1.195 (Fully Synced)
 // ------------------------------------------------------------
 
 export const FEEDS = {
   // ------------------------------------------------------------
-  // CRYPTO
+  // CRYPTO (RSS)
   // ------------------------------------------------------------
   coindesk: {
     id: "coindesk",
@@ -38,13 +20,6 @@ export const FEEDS = {
     type: "rss",
     category: "crypto",
   },
-  decrypt: {
-    id: "decrypt",
-    name: "Decrypt",
-    url: "https://decrypt.co/feed",
-    type: "rss",
-    category: "crypto",
-  },
   cryptoslate: {
     id: "cryptoslate",
     name: "CryptoSlate",
@@ -52,14 +27,49 @@ export const FEEDS = {
     type: "rss",
     category: "crypto",
   },
+  decrypt: {
+    id: "decrypt",
+    name: "Decrypt",
+    url: "https://decrypt.co/feed",
+    type: "rss",
+    category: "crypto",
+  },
+
+  // ------------------------------------------------------------
+  // CRYPTO (JSON)
+  // ------------------------------------------------------------
+  yahoo_crypto: {
+    id: "yahoo_crypto",
+    name: "Yahoo Crypto",
+    url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=BTC-USD,ETH-USD,SOL-USD,XRP-USD,ADA-USD",
+    type: "json",
+    handler: "yahoo_crypto",
+    category: "crypto",
+  },
+  cryptopanic_crypto: {
+    id: "cryptopanic_crypto",
+    name: "CryptoPanic",
+    url: "https://cryptopanic.com/api/v1/posts/?auth_token=demo&public=true",
+    type: "json",
+    handler: "cryptopanic_crypto",
+    category: "crypto",
+  },
+  coingecko_crypto: {
+    id: "coingecko_crypto",
+    name: "CoinGecko Updates",
+    url: "https://api.coingecko.com/api/v3/status_updates",
+    type: "json",
+    handler: "coingecko_crypto",
+    category: "crypto",
+  },
 
   // ------------------------------------------------------------
   // FINANCE
   // ------------------------------------------------------------
-  yahoo_finance: {
-    id: "yahoo_finance",
-    name: "Yahoo Finance",
-    url: "https://finance.yahoo.com/news/rssindex",
+  cnbc_markets: {
+    id: "cnbc_markets",
+    name: "CNBC Markets",
+    url: "https://www.cnbc.com/id/10001147/device/rss/rss.html",
     type: "rss",
     category: "finance",
   },
@@ -70,10 +80,10 @@ export const FEEDS = {
     type: "rss",
     category: "finance",
   },
-  cnbc_markets: {
-    id: "cnbc_markets",
-    name: "CNBC Markets",
-    url: "https://www.cnbc.com/id/10001147/device/rss/rss.html",
+  yahoo_finance: {
+    id: "yahoo_finance",
+    name: "Yahoo Finance",
+    url: "https://finance.yahoo.com/news/rssindex",
     type: "rss",
     category: "finance",
   },
@@ -81,6 +91,13 @@ export const FEEDS = {
   // ------------------------------------------------------------
   // NEWS
   // ------------------------------------------------------------
+  aljazeera_world: {
+    id: "aljazeera_world",
+    name: "Al Jazeera World",
+    url: "https://www.aljazeera.com/xml/rss/all.xml",
+    type: "rss",
+    category: "news",
+  },
   bbc_world: {
     id: "bbc_world",
     name: "BBC World",
@@ -95,13 +112,6 @@ export const FEEDS = {
     type: "rss",
     category: "news",
   },
-  nyt_home: {
-    id: "nyt_home",
-    name: "NYT Home",
-    url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
-    type: "rss",
-    category: "news",
-  },
   npr_world: {
     id: "npr_world",
     name: "NPR World",
@@ -109,10 +119,10 @@ export const FEEDS = {
     type: "rss",
     category: "news",
   },
-  aljazeera_world: {
-    id: "aljazeera_world",
-    name: "Al Jazeera World",
-    url: "https://www.aljazeera.com/xml/rss/all.xml",
+  nyt_home: {
+    id: "nyt_home",
+    name: "NYT Home",
+    url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
     type: "rss",
     category: "news",
   },
@@ -145,6 +155,13 @@ export const FEEDS = {
     type: "rss",
     category: "spring",
   },
+  spring_cloud_blog: {
+    id: "spring_cloud_blog",
+    name: "Spring Cloud Blog",
+    url: "https://spring.io/blog/category/cloud.atom",
+    type: "rss",
+    category: "spring",
+  },
   spring_releases: {
     id: "spring_releases",
     name: "Spring Releases",
@@ -152,17 +169,17 @@ export const FEEDS = {
     type: "rss",
     category: "spring",
   },
+  spring_security_blog: {
+    id: "spring_security_blog",
+    name: "Spring Security Blog",
+    url: "https://spring.io/blog/category/security.atom",
+    type: "rss",
+    category: "spring",
+  },
 
   // ------------------------------------------------------------
   // JAVA
   // ------------------------------------------------------------
-  infoq_java: {
-    id: "infoq_java",
-    name: "InfoQ Java",
-    url: "https://feed.infoq.com/java",
-    type: "rss",
-    category: "java",
-  },
   baeldung: {
     id: "baeldung",
     name: "Baeldung",
@@ -170,14 +187,42 @@ export const FEEDS = {
     type: "rss",
     category: "java",
   },
+  dzone_java: {
+    id: "dzone_java",
+    name: "DZone Java",
+    url: "https://feeds.dzone.com/java",
+    type: "rss",
+    category: "java",
+  },
+  infoq_java: {
+    id: "infoq_java",
+    name: "InfoQ Java",
+    url: "https://feed.infoq.com/java",
+    type: "rss",
+    category: "java",
+  },
+  jetbrains_java: {
+    id: "jetbrains_java",
+    name: "JetBrains Java",
+    url: "https://blog.jetbrains.com/java/feed/",
+    type: "rss",
+    category: "java",
+  },
 
   // ------------------------------------------------------------
   // REACT
   // ------------------------------------------------------------
-  react_blog: {
-    id: "react_blog",
-    name: "React Blog",
-    url: "https://reactjs.org/feed.xml",
+  devto_react: {
+    id: "devto_react",
+    name: "Dev.to React",
+    url: "https://dev.to/feed/tag/react",
+    type: "rss",
+    category: "react",
+  },
+  javascript_weekly: {
+    id: "javascript_weekly",
+    name: "JavaScript Weekly",
+    url: "https://javascriptweekly.com/rss/",
     type: "rss",
     category: "react",
   },
@@ -188,14 +233,28 @@ export const FEEDS = {
     type: "rss",
     category: "react",
   },
+  overreacted: {
+    id: "overreacted",
+    name: "Overreacted",
+    url: "https://overreacted.io/rss.xml",
+    type: "rss",
+    category: "react",
+  },
+  react_blog: {
+    id: "react_blog",
+    name: "React Blog",
+    url: "https://reactjs.org/feed.xml",
+    type: "rss",
+    category: "react",
+  },
 
   // ------------------------------------------------------------
   // SPORTS
   // ------------------------------------------------------------
-  espn: {
-    id: "espn",
-    name: "ESPN",
-    url: "https://www.espn.com/espn/rss/news",
+  bbc_sport: {
+    id: "bbc_sport",
+    name: "BBC Sport",
+    url: "http://feeds.bbci.co.uk/sport/rss.xml",
     type: "rss",
     category: "sports",
   },
@@ -203,6 +262,27 @@ export const FEEDS = {
     id: "bleacher_report",
     name: "Bleacher Report",
     url: "https://bleacherreport.com/articles/feed",
+    type: "rss",
+    category: "sports",
+  },
+  espn: {
+    id: "espn",
+    name: "ESPN",
+    url: "https://www.espn.com/espn/rss/news",
+    type: "rss",
+    category: "sports",
+  },
+  sky_sports: {
+    id: "sky_sports",
+    name: "Sky Sports",
+    url: "https://www.skysports.com/rss/12040",
+    type: "rss",
+    category: "sports",
+  },
+  yahoo_sports: {
+    id: "yahoo_sports",
+    name: "Yahoo Sports",
+    url: "https://sports.yahoo.com/rss/",
     type: "rss",
     category: "sports",
   },

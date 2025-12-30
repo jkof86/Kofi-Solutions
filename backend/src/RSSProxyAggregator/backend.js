@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// backend.js — v1.170 (Unified Router + Crash-Proof)
+// backend.js — v1.180 (Unified Router + Crash-Proof + Bundle Debug)
 // ------------------------------------------------------------
 //
 // Routes:
@@ -12,14 +12,28 @@
 //   • Crash-proof routing
 //   • Clean logging
 //   • Debug/test passthrough
+//   • OPTIONS preflight
 //   • jsonResponse everywhere
-//
+//   • Bundle inspection (to confirm correct deployment)
 // ------------------------------------------------------------
 
 const { jsonResponse } = require("./utils/jsonResponse.js");
 const { handleFeed } = require("./handlers/handleFeed.js");
 const { handleMarket } = require("./handlers/handleMarket.js");
 const { handleHealth } = require("./handlers/handleHealth.js");
+
+// ------------------------------------------------------------
+// Bundle Debug — confirms which code Lambda is actually running
+// ------------------------------------------------------------
+console.log("[bundle] __dirname:", __dirname);
+console.log("[bundle] handler loaded from:", __filename);
+
+try {
+  const fs = require("fs");
+  console.log("[bundle] files:", fs.readdirSync(__dirname));
+} catch (err) {
+  console.error("[bundle] fs error:", err);
+}
 
 exports.handler = async (event) => {
   console.log("EVENT:", JSON.stringify(event));
@@ -33,6 +47,24 @@ exports.handler = async (event) => {
     const debug = query.debug || null;
     const force = query.force || null;
 
+    // ------------------------------------------------------------
+    // OPTIONS preflight
+    // ------------------------------------------------------------
+    if (event.httpMethod === "OPTIONS") {
+      return {
+        statusCode: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Headers": "*",
+          "Access-Control-Allow-Methods": "GET,OPTIONS"
+        },
+        body: ""
+      };
+    }
+
+    // ------------------------------------------------------------
+    // MODE REQUIRED
+    // ------------------------------------------------------------
     if (!mode) {
       return jsonResponse(200, {
         status: "error",

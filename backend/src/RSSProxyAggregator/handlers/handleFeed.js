@@ -1,69 +1,135 @@
 // ------------------------------------------------------------
-// handleFeed.js — v1.180 (FEEDS Integrity + Fast-Fail)
+// handleFeed.js — v1.190 (HEAD-Smart + AWS-Safe)
 // ------------------------------------------------------------
 
-const { jsonResponse } = require("../utils/jsonResponse.js");
-const feedsModule = require("../config/feedsMap.js");
-const { rssParser } = require("../utils/rssParser.js");
-const { JSON_HANDLERS } = require("../feeds/json/jsonHandlers.js");
+const https = require("https");
+const dns = require("dns");
+const Parser = require("rss-parser");
+const axios = require("axios");
 
-// FEEDS integrity check
-const FEEDS = feedsModule?.FEEDS;
-if (!FEEDS || typeof FEEDS !== "object" || Object.keys(FEEDS).length === 0) {
-  console.error("[handleFeed] FATAL: FEEDS map is empty or undefined:", FEEDS);
-}
+const parser = new Parser();
 
-function fastFail(feedId, error) {
-  console.warn(`[fastFail] Dead feed detected: ${feedId}`, error?.message);
-  return jsonResponse(200, {
-    status: "dead",
-    feed: feedId,
-    items: [],
-    error: error?.message || "dead feed"
+// Optional: one-time DNS test
+dns.lookup("google.com", (err, addr) => {
+  console.log("[dns test]", err, addr);
+});
+
+function testConnectivity() {
+  return new Promise((resolve) => {
+    const req = https.get("https://www.google.com", (res) => {
+      console.log("[net-test] status:", res.statusCode);
+      res.resume();
+      resolve();
+    });
+    req.on("error", (err) => {
+      console.error("[net-test][ERROR]", err.code || err.message);
+      resolve();
+    });
+    req.setTimeout(3000, () => {
+      console.error("[net-test][TIMEOUT]");
+      req.destroy();
+      resolve();
+    });
   });
 }
 
-async function handleFeed(feedId, opts = {}) {
-  // FEEDS missing → global failure
-  if (!FEEDS || Object.keys(FEEDS).length === 0) {
-    return jsonResponse(200, {
-      status: "error",
-      feed: feedId,
-      items: [],
-      error: "FEEDS map is empty — backend misconfigured"
-    });
+// Known feeds where HEAD is unreliable (404/405/etc.)
+const HEAD_UNRELIABLE = new Set([
+  "spring_cloud_blog",
+  "spring_security_blog",
+  "bleacher_report",
+]);
+
+async function handleFeed(feedIdOrObj, opts = {}) {
+  const feed =
+    typeof feedIdOrObj === "object" ? feedIdOrObj : null;
+
+  const id = feed?.id || feedIdOrObj?.id || feedIdOrObj;
+  const url = feed?.url || feedIdOrObj?.url;
+  const type = feed?.type || feedIdOrObj?.type || "rss";
+
+  console.log("[handleFeed] feedId:", id, "opts:", opts);
+
+  await testConnectivity();
+
+  if (!url || !id) {
+    console.error("[handleFeed][INVALID_FEED]", feedIdOrObj);
+    return {
+      id,
+      status: "dead",
+      fallback: false,
+      count: 0,
+      error: "INVALID_FEED",
+    };
   }
 
-  const meta = FEEDS[feedId];
-  if (!meta) {
-    console.error("[handleFeed] Unknown feedId:", feedId, "FEEDS keys:", Object.keys(FEEDS));
-    return fastFail(feedId, new Error("Unknown feed"));
-  }
+  const headTimeout = 1500;
+  const getTimeout = 3000;
 
-  try {
-    // JSON handler
-    if (meta.type === "json" && JSON_HANDLERS[feedId]) {
-      try {
-        const items = await JSON_HANDLERS[feedId](meta.url, opts);
-        return jsonResponse(200, { status: "ok", feed: feedId, items });
-      } catch (err) {
-        return fastFail(feedId, err);
-      }
-    }
-
-    // RSS parser
+  // HEAD fastFail (unless known unreliable)
+  if (!HEAD_UNRELIABLE.has(id)) {
     try {
-      const rss = await rssParser(meta.url, meta.label || feedId);
-      if (rss?.items?.length > 0) {
-        return jsonResponse(200, { status: "ok", feed: feedId, items: rss.items });
+      const head = await axios.head(url, {
+        timeout: headTimeout,
+        validateStatus: () => true,
+      });
+
+      if (head.status === 404 || head.status === 405) {
+        console.warn("[handleFeed][HEAD_UNSUPPORTED]", id, "status:", head.status);
+        // fall through to GET
+      } else if (head.status >= 400) {
+        console.warn("[handleFeed][HEAD_FAIL]", id, "status:", head.status);
+        return {
+          id,
+          status: "dead",
+          fallback: false,
+          count: 0,
+          error: `HEAD ${head.status}`,
+        };
       }
-      return fastFail(feedId, new Error("Empty RSS feed"));
     } catch (err) {
-      return fastFail(feedId, err);
+      console.error("[handleFeed][HEAD_ERROR]", id, err.code || err.message);
+      return {
+        id,
+        status: "dead",
+        fallback: false,
+        count: 0,
+        error: err.code || err.message,
+      };
+    }
+  }
+
+  // FETCH + PARSE
+  try {
+    if (type === "rss") {
+      const feedData = await parser.parseURL(url);
+      const items = Array.isArray(feedData.items) ? feedData.items : [];
+      return { id, status: "ok", fallback: false, count: items.length };
     }
 
+    if (type === "json") {
+      const res = await axios.get(url, { timeout: getTimeout });
+      const items = Array.isArray(res.data?.data) ? res.data.data : [];
+      return { id, status: "ok", fallback: false, count: items.length };
+    }
+
+    console.error("[handleFeed][INVALID_TYPE]", id, type);
+    return {
+      id,
+      status: "dead",
+      fallback: false,
+      count: 0,
+      error: "INVALID_TYPE",
+    };
   } catch (err) {
-    return fastFail(feedId, err);
+    console.error("[handleFeed][FETCH_ERROR]", id, url, err.code || err.message);
+    return {
+      id,
+      status: "dead",
+      fallback: false,
+      count: 0,
+      error: err.code || err.message,
+    };
   }
 }
 

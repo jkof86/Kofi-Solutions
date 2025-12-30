@@ -1,14 +1,5 @@
 // ------------------------------------------------------------
-// handleHealth.js — v1.180 (Stable + Normalized + FEEDS-Safe)
-// ------------------------------------------------------------
-//
-// Improvements:
-//   • Symbol normalization for market checks (BRK.B → brk-b)
-//   • FEEDS v1.180 integrity logging
-//   • Safe health objects for UI
-//   • No crashes on malformed feed/market responses
-//   • Fully aligned with handleMarket v1.180 + handleFeed v1.180
-//
+// handleHealth.js — v1.190 (Batched + Stable + FEEDS-Safe)
 // ------------------------------------------------------------
 
 const { jsonResponse } = require("../utils/jsonResponse.js");
@@ -19,7 +10,6 @@ const { handleFeed } = require("./handleFeed.js");
 
 const FEEDS = feedsModule?.FEEDS;
 
-// Normalize symbols (BRK.B → brk-b)
 function normalizeSymbol(sym) {
   return String(sym || "")
     .trim()
@@ -27,12 +17,30 @@ function normalizeSymbol(sym) {
     .replace(/\./g, "-");
 }
 
+// simple concurrency limiter (batch size 3)
+async function runBatched(items, worker, batchSize = 3) {
+  const results = {};
+  const keys = [...items];
+
+  for (let i = 0; i < keys.length; i += batchSize) {
+    const slice = keys.slice(i, i + batchSize);
+    const promises = slice.map(async (key) => {
+      try {
+        const res = await worker(key);
+        results[key] = res;
+      } catch (err) {
+        results[key] = { error: String(err) };
+      }
+    });
+    await Promise.all(promises);
+  }
+
+  return results;
+}
+
 async function handleHealth(opts = {}) {
   console.log("[handleHealth] Starting health check", opts);
 
-  // ------------------------------------------------------------
-  // FEEDS Integrity Check
-  // ------------------------------------------------------------
   if (!FEEDS || Object.keys(FEEDS).length === 0) {
     console.error("[handleHealth] FATAL: FEEDS map is empty or undefined:", FEEDS);
     return jsonResponse(200, {
@@ -40,7 +48,7 @@ async function handleHealth(opts = {}) {
       error: "FEEDS map is empty — backend misconfigured",
       feeds: {},
       markets: {},
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -48,61 +56,84 @@ async function handleHealth(opts = {}) {
   const markets = {};
 
   try {
-    // ------------------------------------------------------------
-    // FEED HEALTH
-    // ------------------------------------------------------------
-    for (const feedId of Object.keys(FEEDS)) {
-      try {
-        const result = await handleFeed(feedId, { test: "health" });
+    console.log("[health] Starting feed processing");
 
-        feeds[feedId] = {
+    // FEED HEALTH (batched, concurrency 3)
+    const feedIds = Object.keys(FEEDS);
+
+    const feedResults = await runBatched(
+      feedIds,
+      async (feedId) => {
+        const feedConfig = FEEDS[feedId];
+        const result = await handleFeed(feedConfig, { test: "health" });
+
+        return {
           status: result?.status || "error",
           fallback: result?.status === "fallback",
-          count: Array.isArray(result?.items) ? result.items.length : 0
+          count: result?.count ?? 0,
         };
-      } catch (err) {
-        console.error("[handleHealth] Feed error:", feedId, err);
-        feeds[feedId] = { status: "error", fallback: true, count: 0 };
-      }
+      },
+      3
+    );
+
+    for (const feedId of feedIds) {
+      feeds[feedId] = feedResults[feedId] || {
+        status: "error",
+        fallback: true,
+        count: 0,
+      };
     }
 
-    // ------------------------------------------------------------
-    // MARKET HEALTH
-    // ------------------------------------------------------------
-    for (const rawSym of MARKET_SYMBOLS) {
-      const sym = normalizeSymbol(rawSym);
+    console.log("[health] Starting market processing");
 
-      try {
-        const result = await handleMarket(sym);
+    // MARKET HEALTH (batched, concurrency 3)
+    const symbols = MARKET_SYMBOLS.map(normalizeSymbol);
 
-        markets[sym] = {
-          status: result?.status || "error",
-          type: result?.type || null,
-          price: result?.price ?? null
+    const marketResults = await runBatched(
+      symbols,
+      async (sym) => {
+        const res = await handleMarket(sym, { test: "health" });
+
+        // handleMarket returns jsonResponse; parse body if needed
+        let body = res;
+        if (res && typeof res.body === "string") {
+          try {
+            body = JSON.parse(res.body);
+          } catch {
+            body = res;
+          }
+        }
+
+        return {
+          status: body?.status || "error",
+          type: body?.type || null,
+          price: body?.price ?? null,
         };
-      } catch (err) {
-        console.error("[handleHealth] Market error:", sym, err);
-        markets[sym] = { status: "error", type: null, price: null };
-      }
+      },
+      3
+    );
+
+    for (const sym of symbols) {
+      markets[sym] = marketResults[sym] || {
+        status: "error",
+        type: null,
+        price: null,
+      };
     }
 
-    // ------------------------------------------------------------
-    // FINAL RESPONSE
-    // ------------------------------------------------------------
     return jsonResponse(200, {
       status: "ok",
       feeds,
       markets,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-
   } catch (err) {
     console.error("[handleHealth] FATAL ERROR:", err);
 
     return jsonResponse(200, {
       status: "error",
       error: "Health handler crashed",
-      detail: String(err)
+      detail: String(err),
     });
   }
 }

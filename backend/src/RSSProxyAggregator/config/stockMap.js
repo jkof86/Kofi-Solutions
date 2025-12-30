@@ -24,7 +24,7 @@ const STOCK_MAP = {
   pfe: "PFE",
   rum: "RUM",
   tsla: "TSLA",
-  xom: "XOM"
+  xom: "XOM",
 };
 
 // ------------------------------------------------------------
@@ -35,5 +35,7 @@ const STOCK_MAP = {
 // baba: "BABA",
 // coin: "COIN",
 // pltr: "PLTR",
+
+Object.freeze(STOCK_MAP);
 
 module.exports = { STOCK_MAP };

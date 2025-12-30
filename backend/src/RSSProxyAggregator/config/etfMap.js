@@ -39,7 +39,7 @@ const ETF_MAP = {
   xlk: "XLK",
   xlp: "XLP",
   xlu: "XLU",
-  xly: "XLY"
+  xly: "XLY",
 };
 
 // ------------------------------------------------------------
@@ -50,5 +50,7 @@ const ETF_MAP = {
 // xbi: "XBI",      // Biotech
 // tan: "TAN",      // Solar
 // soxx: "SOXX",    // Semiconductors
+
+Object.freeze(ETF_MAP);
 
 module.exports = { ETF_MAP };

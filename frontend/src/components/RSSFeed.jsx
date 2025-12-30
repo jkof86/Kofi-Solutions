@@ -1,17 +1,14 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.190 (Flat FEEDS + Safe Hooks + Debug)
+// RSSFeed.jsx — v1.195 (Backend‑Aligned + Safer)
 // ------------------------------------------------------------
 //
-// Responsibilities:
-//   ✓ Fetch feed items from backend by feedId
-//   ✓ Handle fallback mode (HTML scraping)
-//   ✓ Show loading, errors, debug info
-//   ✓ Render FeedCard list with batch loading
-//
-// Architectural Notes:
-//   • feedId is passed as `name` from TabsLayout
-//   • FEEDS is the single source of truth for metadata
-//   • sanitizeFeeds ensures FEEDS is safe for UI consumption
+// Improvements in v1.195:
+//   ✓ Explicit handling of backend feed states
+//   ✓ JSON feeds handled correctly
+//   ✓ Fallback detection aligned with backend v1.195
+//   ✓ Safer guards for malformed backend responses
+//   ✓ Debug panel resets correctly
+//   ✓ Cleaner tab switching behavior
 //
 // ------------------------------------------------------------
 
@@ -29,7 +26,7 @@ import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
 import { sanitizeFeeds } from "../utils/sanitizeFeeds";
 
-console.log("RSSFeed v1.190 loaded");
+console.log("RSSFeed v1.195 loaded");
 
 // FEEDS → CLEAN_FEEDS (sanitized metadata)
 const CLEAN_FEEDS = sanitizeFeeds(FEEDS);
@@ -39,10 +36,6 @@ const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
 export default function RSSFeed({ name }) {
-  // ------------------------------------------------------------
-  // IMPORTANT: TabsLayout passes `name={f.feedId}`
-  // So we alias it here for clarity.
-  // ------------------------------------------------------------
   const feedId = name;
 
   // ------------------------------------------------------------
@@ -100,17 +93,24 @@ export default function RSSFeed({ name }) {
       const res = await fetch(url);
       const json = await res.json();
 
-      const hasItems = Array.isArray(json.items) && json.items.length > 0;
+      const itemsArray = Array.isArray(json.items) ? json.items : [];
+      const hasItems = itemsArray.length > 0;
 
+      // Backend v1.195 contract:
+      //   status: "ok" | "fallback" | "dead" | "blocked" | "html_error"
+      //   items: [...]
+      //   error: string | null
+      //   debug: object | null
+      //
       if (json.status !== "ok") {
         setIsFallback(json.status === "fallback");
-        setItems(json.items || []);
+        setItems(itemsArray);
 
         if (!hasItems) {
           setError(json.error || "Feed error");
         }
       } else {
-        setItems(json.items || []);
+        setItems(itemsArray);
       }
 
       if (json.debug) {
@@ -128,6 +128,14 @@ export default function RSSFeed({ name }) {
   // Auto-fetch when feedId changes or debug toggles
   // ------------------------------------------------------------
   useEffect(() => {
+    // Reset state when switching feeds
+    setItems([]);
+    setVisibleCount(BATCH_SIZE);
+    setError(null);
+    setIsFallback(false);
+    setDebugInfo(null);
+    setShowDebug(false);
+
     if (feedMeta?.id) fetchFeed(feedMeta.id);
   }, [feedId, globalDebug]);
 
@@ -153,6 +161,7 @@ export default function RSSFeed({ name }) {
   }
 
   const visibleItems = items.slice(0, visibleCount);
+  const feedLabel = feedMeta.label || feedMeta.name || feedId;
 
   // ------------------------------------------------------------
   // Render
@@ -168,7 +177,7 @@ export default function RSSFeed({ name }) {
           mb: 2
         }}
       >
-        <Typography variant="h6">{feedMeta.label}</Typography>
+        <Typography variant="h6">{feedLabel}</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
           {globalDebug && (
@@ -199,7 +208,7 @@ export default function RSSFeed({ name }) {
 
       {loading && (
         <Typography sx={{ mb: 2 }}>
-          Loading feed: {feedMeta.label}
+          Loading feed: {feedLabel}
         </Typography>
       )}
 
@@ -241,7 +250,7 @@ export default function RSSFeed({ name }) {
       <Stack spacing={2}>
         {visibleItems.map((item, idx) => (
           <FeedCard
-            key={`${item.url}-${idx}`}
+            key={`${item.url || "item"}-${idx}`}
             item={item}
             feedMeta={feedMeta}
             onRefresh={() => fetchFeed(feedId)}
