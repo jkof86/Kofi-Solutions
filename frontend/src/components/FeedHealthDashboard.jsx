@@ -1,21 +1,28 @@
 // ------------------------------------------------------------
-// FeedHealthDashboard.jsx — v1.180 (FEEDS v1.180 Compatible)
+// FeedHealthDashboard.jsx — v1.190 (Context‑Driven Health Panel)
 // ------------------------------------------------------------
 //
-// Major Fixes in v1.180:
-//   • Updated to support new health response shape:
-//         feeds: { feedId: { status, fallback, count } }
-//         markets: { symbol: { status, type, price } }
-//   • Removed legacy markets array structure
-//   • Added safe rendering for missing or malformed data
-//   • Added color coding for market statuses
-//   • Preserved global debug toggle + keyboard shortcut
-//   • Preserved strict/soft mode + sample size controls
-//   • Fully compatible with handleHealth.js v1.180
+// Responsibilities:
+//   ✓ Visualize feed + market health from FeedStatusContext
+//   ✓ Expose strict/soft mode, sample size, debug mode controls
+//   ✓ Provide manual refresh + debug test chips
+//   ✓ Show last updated timestamp + raw debug payload
+//
+// Architectural Notes:
+//   • Health polling is owned by FeedStatusContext
+//   • This component SHOULD NOT own its own polling loop
+//   • It calls a one‑shot refresh when user clicks the refresh icon
+//   • Expects health shape:
+//       {
+//         status: "ok" | "error" | ...,
+//         feeds:   { [feedId]: { status, count, ... } },
+//         markets: { [symbol]: { status, type, price, ... } },
+//         debug?:  any
+//       }
 //
 // ------------------------------------------------------------
 
-import React, { useEffect, useContext, useState } from "react";
+import React, { useEffect, useContext, useState, useCallback } from "react";
 import {
   Box,
   Chip,
@@ -74,7 +81,7 @@ export default function FeedHealthDashboard() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // Sync global debug → debugMode dropdown
+  // Sync global debug ↔ debugMode
   useEffect(() => {
     if (globalDebug && debugMode !== "debug_health") {
       setDebugMode("debug_health");
@@ -82,12 +89,12 @@ export default function FeedHealthDashboard() {
     if (!globalDebug && debugMode === "debug_health") {
       setDebugMode("");
     }
-  }, [globalDebug]);
+  }, [globalDebug, debugMode, setDebugMode]);
 
   // ------------------------------------------------------------
-  // Load Health (v1.180 response shape)
+  // One‑shot health refresh (uses same contract as context polling)
   // ------------------------------------------------------------
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const res = await fetch(
         `${API}?mode=health&strict=${strictMode}&sampleSize=${sampleSize}&debug=${debugMode}`
@@ -106,14 +113,14 @@ export default function FeedHealthDashboard() {
       setError(err.message);
       setHealth(null);
     }
-  }
+  }, [strictMode, sampleSize, debugMode, setHealth, setLastUpdated]);
 
-  // Auto-refresh every 60s
+  // Initial load if context has no health yet
   useEffect(() => {
-    load();
-    const interval = setInterval(load, 60000);
-    return () => clearInterval(interval);
-  }, [strictMode, sampleSize, debugMode]);
+    if (!health) {
+      load();
+    }
+  }, [health, load]);
 
   // ------------------------------------------------------------
   // Render: Error
@@ -140,7 +147,7 @@ export default function FeedHealthDashboard() {
     );
   }
 
-  // v1.180 health response shape
+  // v1.190 health response shape
   const { feeds = {}, markets = {}, debug } = health;
 
   const formatTime = (d) =>
@@ -237,7 +244,7 @@ export default function FeedHealthDashboard() {
       <ToggleButtonGroup
         value={strictMode ? "strict" : "soft"}
         exclusive
-        onChange={(e, val) => {
+        onChange={(_, val) => {
           if (val === "strict") setStrictMode(true);
           if (val === "soft") setStrictMode(false);
         }}
@@ -269,7 +276,7 @@ export default function FeedHealthDashboard() {
       <Divider sx={{ my: 2 }} />
 
       {/* ------------------------------------------------------------
-         FEED HEALTH (v1.180)
+         FEED HEALTH
          ------------------------------------------------------------ */}
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
         Feed Health
@@ -278,9 +285,9 @@ export default function FeedHealthDashboard() {
       <Stack spacing={1} sx={{ mb: 2 }}>
         {Object.entries(feeds).map(([feedId, info]) => {
           const color =
-            info.status === "ok"
+            info.status === "ok" || info.status === "json"
               ? "success"
-              : info.status === "fallback" || info.status === "json"
+              : info.status === "fallback"
               ? "warning"
               : "error";
 
@@ -295,7 +302,7 @@ export default function FeedHealthDashboard() {
       </Stack>
 
       {/* ------------------------------------------------------------
-         MARKET HEALTH (v1.180)
+         MARKET HEALTH
          ------------------------------------------------------------ */}
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
         Market Health
@@ -304,9 +311,9 @@ export default function FeedHealthDashboard() {
       <Stack spacing={1} sx={{ mb: 2 }}>
         {Object.entries(markets).map(([symbol, m]) => {
           const color =
-            m.status === "ok"
+            m.status === "ok" || m.status === "json"
               ? "success"
-              : m.status === "fallback" || m.status === "json"
+              : m.status === "fallback"
               ? "warning"
               : "error";
 

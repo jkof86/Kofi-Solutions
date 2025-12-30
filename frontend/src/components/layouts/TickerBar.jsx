@@ -1,17 +1,19 @@
 // ------------------------------------------------------------
-// TickerBar.jsx — v1.180 (Stable Mode + Non‑Sticky Fallback)
+// TickerBar.jsx — v1.190 (Smart Mode + Non‑Sticky Fallback)
 // ------------------------------------------------------------
 //
-// Improvements in v1.180:
-//   • Smart Mode preserved
-//   • Fallback no longer overwrites category symbols
-//   • Fallback resets on tab switch
-//   • Category switching fully respected
-//   • Clean separation:
-//         symbols         → category symbols
-//         fallbackSymbols → crypto-only fallback
-//   • Guards preserved
-//   • Scroll reset preserved
+// Responsibilities:
+//   ✓ Display live market prices for the active category
+//   ✓ Auto‑fallback to crypto when >50% of category symbols fail
+//   ✓ Reset fallback when switching categories
+//   ✓ Guard against malformed symbols and empty fetches
+//   ✓ Smooth scrolling ticker with pause‑on‑hover
+//
+// Architectural Notes:
+//   • CATEGORY_SYMBOLS defines which symbols belong to each category
+//   • Smart Mode = fallback only when category is unhealthy
+//   • Fallback never overwrites primary symbols
+//   • Scroll animation resets when symbol list changes
 //
 // ------------------------------------------------------------
 
@@ -28,17 +30,19 @@ import {
 
 console.log("TickerBar v1.190 loaded");
 
-
 const API =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
 const DEFAULT_CATEGORY = "crypto";
 
 export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
+  // ------------------------------------------------------------
+  // State
+  // ------------------------------------------------------------
   const [prices, setPrices] = useState({});
   const [lastUpdated, setLastUpdated] = useState("");
 
-  // Category symbols (primary)
+  // Primary symbols for the active category
   const [symbols, setSymbols] = useState(
     CATEGORY_SYMBOLS.crypto || TICKER_SYMBOLS
   );
@@ -46,10 +50,11 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
   // Crypto fallback symbols (only used when offline)
   const [fallbackSymbols, setFallbackSymbols] = useState([]);
 
+  // Whether the ticker is in fallback mode
   const [offline, setOffline] = useState(false);
 
   // ------------------------------------------------------------
-  // Smart symbol selection with guard
+  // Smart symbol selection when category changes
   // ------------------------------------------------------------
   useEffect(() => {
     const list = CATEGORY_SYMBOLS[activeCategory];
@@ -64,13 +69,13 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
       setSymbols(CATEGORY_SYMBOLS.crypto || TICKER_SYMBOLS);
     }
 
-    // Reset fallback when switching tabs
+    // Reset fallback state when switching categories
     setFallbackSymbols([]);
     setOffline(false);
   }, [activeCategory]);
 
   // ------------------------------------------------------------
-  // Debug logging
+  // Debug logging (optional)
   // ------------------------------------------------------------
   useEffect(() => {
     console.log("Ticker activeCategory:", activeCategory);
@@ -79,7 +84,7 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
   }, [activeCategory, symbols, fallbackSymbols]);
 
   // ------------------------------------------------------------
-  // Fetch market data for current symbols (guarded)
+  // Fetch market data for current symbols (Smart Mode)
   // ------------------------------------------------------------
   useEffect(() => {
     const cleanSymbols = (symbols || []).filter(
@@ -164,13 +169,13 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
   }, [symbols, activeCategory]);
 
   // ------------------------------------------------------------
-  // Reset scroll animation when symbols change
+  // Reset scroll animation when symbol list changes
   // ------------------------------------------------------------
   useEffect(() => {
     const el = document.querySelector(".scroll");
     if (el) {
       el.style.animation = "none";
-      void el.offsetHeight;
+      void el.offsetHeight; // force reflow
       el.style.animation = "";
     }
   }, [symbols, fallbackSymbols]);
@@ -212,6 +217,7 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
         </Alert>
       )}
 
+      {/* Scrolling ticker */}
       <Box
         className="scroll"
         sx={{
@@ -224,6 +230,7 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
           const upper = String(sym || "").toUpperCase();
           const p = prices[upper];
 
+          // Resolve category for color chip
           const category =
             Object.entries(CATEGORY_SYMBOLS).find(([cat, list]) =>
               list.includes(upper)
@@ -240,6 +247,7 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
                 mx: 4
               }}
             >
+              {/* Category chip */}
               <Chip
                 label={category.toUpperCase()}
                 size="small"
@@ -251,6 +259,7 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
                 }}
               />
 
+              {/* Price or warning */}
               {!p || p.warning ? (
                 <Typography
                   variant="body2"
@@ -276,6 +285,7 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
                 </Typography>
               )}
 
+              {/* Decorative mini-bar */}
               <Box
                 sx={{
                   width: 60,
@@ -291,6 +301,7 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
         })}
       </Box>
 
+      {/* Timestamp */}
       <Typography
         variant="caption"
         sx={{
@@ -303,6 +314,7 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
         Updated: {lastUpdated}
       </Typography>
 
+      {/* Scroll animation */}
       <style>
         {`
           @keyframes scrollTicker {

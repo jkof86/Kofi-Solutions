@@ -1,13 +1,19 @@
 // ------------------------------------------------------------
-// FeedStatusContext.jsx — v1.181 (Corrected + Stable)
+// FeedStatusContext.jsx — v1.190 (Corrected + Fully Normalized)
 // ------------------------------------------------------------
 //
-// Fixes:
-//   • JSON feeds now normalize as "json" (healthy)
-//   • Health polling uses strictMode, sampleSize, debugMode
-//   • Health dashboard no longer freezes
-//   • Normalization unified across app
-//   • Full logging for backend debugging
+// Responsibilities:
+//   ✓ Poll backend health every 60s
+//   ✓ Store full health object (feeds + markets)
+//   ✓ Maintain legacy per‑feed status map for UI components
+//   ✓ Normalize backend → UI statuses consistently
+//   ✓ Expose strictMode, sampleSize, debugMode
+//
+// Architectural Notes:
+//   • This is the single source of truth for feed health
+//   • TabsLayout + FeedCard + FeedHealthDashboard all depend on it
+//   • JSON feeds must normalize as "json" (healthy)
+//   • Fallback, blocked, dead, html_error must all be preserved
 //
 // ------------------------------------------------------------
 
@@ -24,30 +30,30 @@ const BACKEND_URL =
 
 export const FeedStatusContext = createContext({
   status: {},
-  setStatus: () => { },
-  setBulkStatus: () => { },
+  setStatus: () => {},
+  setBulkStatus: () => {},
 
   health: null,
-  setHealth: () => { },
+  setHealth: () => {},
 
   strictMode: true,
-  setStrictMode: () => { },
+  setStrictMode: () => {},
 
   sampleSize: 1,
-  setSampleSize: () => { },
+  setSampleSize: () => {},
 
   debugMode: "",
-  setDebugMode: () => { },
+  setDebugMode: () => {},
 
   lastUpdated: null,
-  setLastUpdated: () => { }
+  setLastUpdated: () => {}
 });
 
 console.log("FeedStatusContext v1.190 active");
 
 export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
-  // Legacy per-feed status map
+  // Legacy per-feed status map (UI-friendly)
   // ------------------------------------------------------------
   const [status, setStatusMap] = useState({});
 
@@ -90,16 +96,33 @@ export function FeedStatusProvider({ children }) {
       const normalized = {};
 
       for (const [feedId, entry] of Object.entries(healthObj.feeds)) {
-        const s = entry.status;
+        // Backend contract:
+        //   entry.ok → boolean
+        //   entry.type → "rss" | "json"
+        //   entry.status → "fallback" | "dead" | "blocked" | "html_error" | "ok"
+        //
+        if (entry.ok) {
+          // JSON feeds must normalize as "json"
+          normalized[feedId] = entry.type === "json" ? "json" : "ok";
+          continue;
+        }
 
-        if (s === "ok") {
-          normalized[feedId] = "ok";
-        } else if (s === "fallback") {
-          normalized[feedId] = "fallback";
-        } else if (s === "dead") {
-          normalized[feedId] = "dead";
-        } else {
-          normalized[feedId] = "unknown";
+        // Non-OK statuses
+        switch (entry.status) {
+          case "fallback":
+            normalized[feedId] = "fallback";
+            break;
+          case "dead":
+            normalized[feedId] = "dead";
+            break;
+          case "blocked":
+            normalized[feedId] = "blocked";
+            break;
+          case "html_error":
+            normalized[feedId] = "html_error";
+            break;
+          default:
+            normalized[feedId] = "unknown";
         }
       }
 
@@ -120,11 +143,11 @@ export function FeedStatusProvider({ children }) {
 
         console.log("[FeedStatusContext] Raw health:", json);
 
-        // Always set health, even if status !== ok
+        // Always store full health object
         setHealth(json);
         setLastUpdated(Date.now());
 
-        // Normalize feed statuses
+        // Normalize feed statuses for UI
         normalizeHealthToStatus(json);
       } catch (err) {
         console.error("[FeedStatusContext] Health fetch error:", err);

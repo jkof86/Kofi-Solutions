@@ -1,5 +1,19 @@
 // ------------------------------------------------------------
-// FeedCard.jsx — v1.146 FINAL
+// FeedCard.jsx — v1.190 (Health‑Aware Feed Item Card)
+// ------------------------------------------------------------
+//
+// Responsibilities:
+//   ✓ Render a single feed item (title, source, date, description)
+//   ✓ Show feed health status (OK, JSON OK, Fallback, Dead, etc.)
+//   ✓ Allow manual refresh of feed content
+//   ✓ Allow manual refresh of feed health (per‑feed health check)
+//
+// Architectural Notes:
+//   • FeedStatusContext supplies health + setStatus()
+//   • feedMeta.id is the canonical feedId
+//   • onRefresh() triggers RSSFeed → fetchFeed()
+//   • Health refresh calls backend: ?mode=health&feed=<id>
+//
 // ------------------------------------------------------------
 
 import React, { useContext } from "react";
@@ -12,23 +26,28 @@ import {
   IconButton,
   Tooltip
 } from "@mui/material";
+
 import RefreshIcon from "@mui/icons-material/Refresh";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 
 import { FeedStatusContext } from "../context/FeedStatusContext";
-const BACKEND_URL = "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
+const BACKEND_URL =
+  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
 export default function FeedCard({ item, feedMeta, onRefresh }) {
   const { status: feedHealth, setStatus } = useContext(FeedStatusContext);
 
+  // Feed identifier from metadata
   const feedId = feedMeta?.id;
+
+  // Current health status from context
   const status = feedHealth[feedId] || "unknown";
 
   // ------------------------------------------------------------
-  // FeedCard.jsx — v1.181 (JSON OK Label)
+  // Status → Icon + Label mapping
   // ------------------------------------------------------------
   let statusIcon = null;
   let statusLabel = "";
@@ -69,9 +88,39 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
       statusLabel = "Unknown";
   }
 
+  // ------------------------------------------------------------
+  // Manual health refresh handler
+  // ------------------------------------------------------------
+  const refreshHealth = () => {
+    if (!feedId) return;
+
+    fetch(`${BACKEND_URL}?mode=health&feed=${feedId}`)
+      .then((res) => res.json())
+      .then((json) => {
+        const entry = json?.feeds?.[feedId];
+        if (!entry) return;
+
+        // Normalize backend → UI status
+        const newStatus = entry.ok
+          ? entry.type === "json"
+            ? "json"
+            : "ok"
+          : entry.status || "unknown";
+
+        setStatus(feedId, newStatus);
+      })
+      .catch((err) => console.error("Retry health error:", err));
+  };
+
+  // ------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------
   return (
     <Card variant="outlined">
       <CardContent>
+        {/* ------------------------------------------------------------
+            Header: Title + Source + Action Buttons + Status Chip
+           ------------------------------------------------------------ */}
         <Box
           sx={{
             display: "flex",
@@ -80,6 +129,7 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
             mb: 1
           }}
         >
+          {/* Title + Source */}
           <Box sx={{ flex: 1, pr: 1 }}>
             <Typography
               variant="subtitle1"
@@ -99,43 +149,30 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
             )}
           </Box>
 
-          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.5 }}>
-
-            {/* Refresh Feed Content */}
-            <Tooltip title='Refresh Feed Content'>
+          {/* Actions + Status */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: 0.5
+            }}
+          >
+            {/* Refresh feed content */}
+            <Tooltip title="Refresh Feed Content">
               <IconButton size="large" onClick={onRefresh}>
                 <RefreshIcon fontSize="small" />
               </IconButton>
             </Tooltip>
 
             {/* Refresh feed health */}
-            <Tooltip title='Refresh Feed Health'>
-              <IconButton
-                size="large"
-                onClick={() => {
-                  fetch(`${BACKEND_URL}?mode=health&feed=${feedId}`)
-                    .then((res) => res.json())
-                    .then((json) => {
-                      if (json?.feeds?.[feedId]) {
-                        // Update context with the new status
-                        const entry = json.feeds[feedId];
-                        const newStatus = entry.ok
-                          ? entry.type === "json"
-                            ? "json"
-                            : "ok"
-                          : entry.status || "unknown";
-
-                        setStatus(feedId, newStatus);
-                      }
-                    })
-                    .catch((err) => console.error("Retry health error:", err));
-                }}
-              >
+            <Tooltip title="Refresh Feed Health">
+              <IconButton size="large" onClick={refreshHealth}>
                 <RefreshIcon fontSize="small" color="primary" />
               </IconButton>
             </Tooltip>
 
-
+            {/* Health status chip */}
             <Chip
               size="small"
               icon={statusIcon}
@@ -145,12 +182,18 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
           </Box>
         </Box>
 
+        {/* ------------------------------------------------------------
+            Description
+           ------------------------------------------------------------ */}
         {item.description && (
           <Typography variant="body2" sx={{ mb: 1 }}>
             {item.description}
           </Typography>
         )}
 
+        {/* ------------------------------------------------------------
+            Timestamp
+           ------------------------------------------------------------ */}
         {item.date && (
           <Typography variant="caption" color="text.secondary">
             {new Date(item.date).toLocaleString()}

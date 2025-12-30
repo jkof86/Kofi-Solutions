@@ -2,23 +2,44 @@
 // TabsLayout.jsx — v1.190 (Backend‑Driven Categories + Feeds)
 // ------------------------------------------------------------
 //
-// • Dynamically builds categories from FEEDS (backend map)
-// • Filters feeds by health (strict/soft mode)
-// • Auto-selects first healthy feed
-// • Works with RSSFeed.jsx + FeedStatusContext
-// • Replaces legacy CategoryTabs.jsx entirely
+// This component is the heart of the RSS dashboard UI.
+//
+// Responsibilities:
+//   ✓ Build categories dynamically from FEEDS map
+//   ✓ Render category tabs (top row)
+//   ✓ Render feed tabs (second row)
+//   ✓ Auto‑select first healthy feed when switching categories
+//   ✓ Filter feeds by health (strict/soft mode)
+//   ✓ Render RSSFeed panels for each feed
+//
+// Architectural Notes:
+//   • FEEDS is the single source of truth for categories + metadata
+//   • FeedStatusContext supplies health + strictMode
+//   • RSSFeed handles loading + fallback for each feedId
+//   • This replaces all legacy CategoryTabs.jsx logic
 //
 // ------------------------------------------------------------
 
-import React, { useContext, useMemo, useState, useEffect } from "react";
+import React, {
+  useContext,
+  useMemo,
+  useState,
+  useEffect
+} from "react";
+
 import { Box, Tabs, Tab, Typography } from "@mui/material";
 
 import { FeedStatusContext } from "../../context/FeedStatusContext";
-import { FEEDS } from "../../data/feedsMap";   // ✅ FIXED: named import
+import { FEEDS } from "../../data/feedsMap";   // FEEDS = { feedId: { name, url, category, ... } }
 import RSSFeed from "../RSSFeed";
 
 console.log("TabsLayout v1.190 loaded");
 
+/**
+ * TabPanel
+ * Simple wrapper for MUI tab content.
+ * Only renders children when the tab is active.
+ */
 function TabPanel({ children, value, index }) {
   return (
     <div role="tabpanel" hidden={value !== index} style={{ width: "100%" }}>
@@ -33,6 +54,17 @@ export default function TabsLayout() {
   // ------------------------------------------------------------
   // Build categories dynamically from FEEDS map
   // ------------------------------------------------------------
+  //
+  // FEEDS is a flat object:
+  //   { "cnn": { name, url, category: "news" }, ... }
+  //
+  // We convert it into:
+  //   {
+  //     news: [ { feedId, name, url, ... }, ... ],
+  //     tech: [ ... ],
+  //     crypto: [ ... ]
+  //   }
+  //
   const categories = useMemo(() => {
     const map = {};
 
@@ -42,7 +74,7 @@ export default function TabsLayout() {
       map[cat].push({ feedId, ...meta });
     }
 
-    // Sort categories alphabetically
+    // Sort categories alphabetically for consistent UI
     return Object.keys(map)
       .sort()
       .reduce((acc, key) => {
@@ -56,6 +88,10 @@ export default function TabsLayout() {
   // ------------------------------------------------------------
   // UI state
   // ------------------------------------------------------------
+  //
+  // categoryIndex → which category tab is active
+  // feedIndex     → which feed tab inside that category is active
+  //
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [feedIndex, setFeedIndex] = useState(0);
 
@@ -63,8 +99,15 @@ export default function TabsLayout() {
   const feedsInCategory = categories[currentCategory] || [];
 
   // ------------------------------------------------------------
-  // Filter feeds by health (strict/soft)
+  // Filter feeds by health (strict/soft mode)
   // ------------------------------------------------------------
+  //
+  // strictMode = true:
+  //   Only show feeds with status "ok" or "json"
+  //
+  // strictMode = false:
+  //   Show all feeds regardless of health
+  //
   const filteredFeeds = useMemo(() => {
     if (!strictMode) return feedsInCategory;
 
@@ -77,6 +120,11 @@ export default function TabsLayout() {
   // ------------------------------------------------------------
   // Auto-select first healthy feed when category changes
   // ------------------------------------------------------------
+  //
+  // When switching categories:
+  //   - Always reset feedIndex to 0
+  //   - This ensures RSSFeed loads the first available feed
+  //
   useEffect(() => {
     setFeedIndex(0);
   }, [categoryIndex, filteredFeeds.length]);
@@ -86,7 +134,10 @@ export default function TabsLayout() {
   // ------------------------------------------------------------
   return (
     <Box sx={{ width: "100%" }}>
-      {/* Category Tabs */}
+
+      {/* ------------------------------------------------------------
+          Category Tabs (top row)
+         ------------------------------------------------------------ */}
       <Box sx={{ mb: 1 }}>
         <Typography variant="h5" sx={{ mb: 1 }}>
           {currentCategory.toUpperCase()}
@@ -104,7 +155,9 @@ export default function TabsLayout() {
         </Tabs>
       </Box>
 
-      {/* Feed Tabs */}
+      {/* ------------------------------------------------------------
+          Feed Tabs (second row)
+         ------------------------------------------------------------ */}
       <Tabs
         value={feedIndex}
         onChange={(_, v) => setFeedIndex(v)}
@@ -117,14 +170,21 @@ export default function TabsLayout() {
         ))}
       </Tabs>
 
-      {/* Feed Panels */}
+      {/* ------------------------------------------------------------
+          Feed Panels (RSSFeed instances)
+         ------------------------------------------------------------ */}
       {filteredFeeds.map((f, i) => (
         <TabPanel key={f.feedId} value={feedIndex} index={i}>
-          <RSSFeed name={f.feedId} categoryLabel={currentCategory} />
+          <RSSFeed
+            name={f.feedId}
+            categoryLabel={currentCategory}
+          />
         </TabPanel>
       ))}
 
-      {/* If no feeds available */}
+      {/* ------------------------------------------------------------
+          Empty State (no healthy feeds)
+         ------------------------------------------------------------ */}
       {filteredFeeds.length === 0 && (
         <Box sx={{ p: 2 }}>
           <Typography>No healthy feeds in this category.</Typography>

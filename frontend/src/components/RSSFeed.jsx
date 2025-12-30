@@ -1,9 +1,29 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.180 (Flat FEEDS + Safe Hooks + Debug)
+// RSSFeed.jsx — v1.190 (Flat FEEDS + Safe Hooks + Debug)
+// ------------------------------------------------------------
+//
+// Responsibilities:
+//   ✓ Fetch feed items from backend by feedId
+//   ✓ Handle fallback mode (HTML scraping)
+//   ✓ Show loading, errors, debug info
+//   ✓ Render FeedCard list with batch loading
+//
+// Architectural Notes:
+//   • feedId is passed as `name` from TabsLayout
+//   • FEEDS is the single source of truth for metadata
+//   • sanitizeFeeds ensures FEEDS is safe for UI consumption
+//
 // ------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Button, Stack, Collapse, Chip } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Stack,
+  Collapse,
+  Chip
+} from "@mui/material";
 
 import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
@@ -11,15 +31,23 @@ import { sanitizeFeeds } from "../utils/sanitizeFeeds";
 
 console.log("RSSFeed v1.190 loaded");
 
-
+// FEEDS → CLEAN_FEEDS (sanitized metadata)
 const CLEAN_FEEDS = sanitizeFeeds(FEEDS);
 
 const BATCH_SIZE = 4;
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
-export default function RSSFeed({ feedId }) {
-  // Hooks must run first
+export default function RSSFeed({ name }) {
+  // ------------------------------------------------------------
+  // IMPORTANT: TabsLayout passes `name={f.feedId}`
+  // So we alias it here for clarity.
+  // ------------------------------------------------------------
+  const feedId = name;
+
+  // ------------------------------------------------------------
+  // Local state
+  // ------------------------------------------------------------
   const [items, setItems] = useState([]);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const [loading, setLoading] = useState(false);
@@ -28,12 +56,13 @@ export default function RSSFeed({ feedId }) {
   const [debugInfo, setDebugInfo] = useState(null);
   const [showDebug, setShowDebug] = useState(false);
 
+  // Global debug toggle (URL param or keyboard shortcut)
   const [globalDebug, setGlobalDebug] = useState(() => {
     const urlParam = new URLSearchParams(window.location.search).get("debug");
     return urlParam === "true";
   });
 
-  // Keyboard shortcut
+  // Keyboard shortcut: Ctrl + Shift + D
   useEffect(() => {
     const handler = (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === "D") {
@@ -44,10 +73,14 @@ export default function RSSFeed({ feedId }) {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  // ------------------------------------------------------------
   // Resolve feed metadata
+  // ------------------------------------------------------------
   const feedMeta = FEEDS[feedId];
 
-  // Fetch function
+  // ------------------------------------------------------------
+  // Fetch feed items from backend
+  // ------------------------------------------------------------
   const fetchFeed = async (id = feedId, debug = false) => {
     if (!feedMeta?.url) return;
 
@@ -91,16 +124,22 @@ export default function RSSFeed({ feedId }) {
     }
   };
 
-  // Auto-fetch
+  // ------------------------------------------------------------
+  // Auto-fetch when feedId changes or debug toggles
+  // ------------------------------------------------------------
   useEffect(() => {
     if (feedMeta?.id) fetchFeed(feedMeta.id);
   }, [feedId, globalDebug]);
 
-  // Early returns (safe)
+  // ------------------------------------------------------------
+  // Early returns (invalid feed)
+  // ------------------------------------------------------------
   if (!feedMeta) {
     return (
       <Box sx={{ p: 2 }}>
-        <Typography color="error">This feed is no longer available.</Typography>
+        <Typography color="error">
+          This feed is no longer available.
+        </Typography>
       </Box>
     );
   }
@@ -115,6 +154,9 @@ export default function RSSFeed({ feedId }) {
 
   const visibleItems = items.slice(0, visibleCount);
 
+  // ------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------
   return (
     <Box>
       {/* Header */}
@@ -156,7 +198,9 @@ export default function RSSFeed({ feedId }) {
       </Box>
 
       {loading && (
-        <Typography sx={{ mb: 2 }}>Loading feed: {feedMeta.label}</Typography>
+        <Typography sx={{ mb: 2 }}>
+          Loading feed: {feedMeta.label}
+        </Typography>
       )}
 
       {error && items.length === 0 && (
@@ -193,6 +237,7 @@ export default function RSSFeed({ feedId }) {
         </Box>
       </Collapse>
 
+      {/* Feed items */}
       <Stack spacing={2}>
         {visibleItems.map((item, idx) => (
           <FeedCard
@@ -204,6 +249,7 @@ export default function RSSFeed({ feedId }) {
         ))}
       </Stack>
 
+      {/* Load more */}
       {visibleCount < items.length && (
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Button
