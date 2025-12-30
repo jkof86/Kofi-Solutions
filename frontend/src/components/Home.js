@@ -1,57 +1,33 @@
+// ------------------------------------------------------------
+// Home.jsx — v1.190 (Clean + Context‑Driven)
+// ------------------------------------------------------------
+//
+// • Removes old health fetch
+// • Uses FeedStatusContext for all health + status
+// • Renders TabsLayout + FeedHealthDashboard correctly
+// • Fixes health loading, tabs, RSSFeed, ticker
+//
+// ------------------------------------------------------------
+
 import { useEffect, useState } from "react";
 import {
   Container,
   Typography,
   Box,
-  CircularProgress,
   Tooltip
 } from "@mui/material";
+
 import RssFeedIcon from "@mui/icons-material/RssFeed";
 import TabsLayout from "./layouts/TabsLayout";
 import FeedHealthDashboard from "./FeedHealthDashboard";
 import { useNavigate } from "react-router-dom";
 import MainContainer from "./layouts/MainContainer";
 import HeaderShell from "./layouts/HeaderShell";
-import Drawer from '@mui/material/Drawer';
-
-import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
-
-
+import Drawer from "@mui/material/Drawer";
 
 export default function Home() {
-  const [feedHealth, setFeedHealth] = useState(null);
-  const [loadingHealth, setLoadingHealth] = useState(true);
-  const [healthError, setHealthError] = useState(null);
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(null);
-
-
-
-  // ------------------------------------------------------------
-  // Fetch feed health
-  // ------------------------------------------------------------
-  useEffect(() => {
-    async function fetchHealth() {
-      try {
-        const res = await fetch(
-          "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator?mode=health"
-        );
-        const json = await res.json();
-
-        if (json.status === "ok") {
-          setFeedHealth(json.feeds || {});
-        } else {
-          setHealthError(json.error || "Health error");
-        }
-      } catch (err) {
-        setHealthError(err.message);
-      } finally {
-        setLoadingHealth(false);
-      }
-    }
-
-    fetchHealth();
-  }, []);
 
   // ------------------------------------------------------------
   // Login validation
@@ -73,8 +49,8 @@ export default function Home() {
       <HeaderShell
         onHeightChange={setHeaderHeight}
         isHealthOpen={isHealthOpen}
-        setIsHealthOpen={setIsHealthOpen} 
-        />
+        setIsHealthOpen={setIsHealthOpen}
+      />
 
       <MainContainer headerHeight={headerHeight}>
         <Container maxWidth="xl" sx={{ mt: 2, mb: 6 }}>
@@ -98,8 +74,7 @@ export default function Home() {
                 py: 2,
                 borderRadius: 2,
                 boxShadow: 3,
-                mb: 3,
-                zIndex: 2500
+                mb: 3
               }}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -108,14 +83,12 @@ export default function Home() {
                   News Feeds (RSS)
                 </Typography>
               </Box>
-              
             </Box>
 
             {/* Tabs */}
             <TabsLayout />
 
-            {/* Feed Health */}
-
+            {/* System Health Drawer */}
             <Drawer
               anchor="right"
               open={isHealthOpen}
@@ -134,8 +107,6 @@ export default function Home() {
 
               <FeedHealthDashboard />
             </Drawer>
-
-
           </Box>
         </Container>
       </MainContainer>

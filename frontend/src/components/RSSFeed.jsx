@@ -9,6 +9,9 @@ import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
 import { sanitizeFeeds } from "../utils/sanitizeFeeds";
 
+console.log("RSSFeed v1.190 loaded");
+
+
 const CLEAN_FEEDS = sanitizeFeeds(FEEDS);
 
 const BATCH_SIZE = 4;

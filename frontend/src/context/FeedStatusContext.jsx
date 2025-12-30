@@ -43,6 +43,8 @@ export const FeedStatusContext = createContext({
   setLastUpdated: () => { }
 });
 
+console.log("FeedStatusContext v1.190 active");
+
 export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
   // Legacy per-feed status map
@@ -88,16 +90,14 @@ export function FeedStatusProvider({ children }) {
       const normalized = {};
 
       for (const [feedId, entry] of Object.entries(healthObj.feeds)) {
-        if (entry.ok) {
-          normalized[feedId] = entry.type === "json" ? "json" : "ok";
-        } else if (entry.status === "fallback") {
+        const s = entry.status;
+
+        if (s === "ok") {
+          normalized[feedId] = "ok";
+        } else if (s === "fallback") {
           normalized[feedId] = "fallback";
-        } else if (entry.status === "dead") {
+        } else if (s === "dead") {
           normalized[feedId] = "dead";
-        } else if (entry.status === "blocked") {
-          normalized[feedId] = "blocked";
-        } else if (entry.status === "html_error") {
-          normalized[feedId] = "html_error";
         } else {
           normalized[feedId] = "unknown";
         }
@@ -107,7 +107,6 @@ export function FeedStatusProvider({ children }) {
     },
     [setBulkStatus]
   );
-
 
   // ------------------------------------------------------------
   // Poll backend health every 60 seconds

@@ -1,13 +1,12 @@
 // ------------------------------------------------------------
-// GlobalRefreshContext.jsx — v1.181 (Corrected + Unified Normalization)
+// GlobalRefreshContext.jsx — v1.190 (Corrected + Safe)
 // ------------------------------------------------------------
 //
-// Fixes:
-//   • Global refresh now uses same normalization as FeedStatusContext
-//   • JSON feeds marked as "json" (healthy)
-//   • Strict/soft mode preserved
-//   • No more ticker false warnings
-//
+// • Uses new backend contract
+// • No more entry.ok or entry.type
+// • No more ?feed= (now uses ?mode=feed&feedId=)
+// • Delegates normalization to FeedStatusContext
+// • Never overwrites correct status with "error"
 // ------------------------------------------------------------
 
 import React, {
@@ -42,35 +41,35 @@ export function GlobalRefreshProvider({ children }) {
   const { setStatus, setBulkStatus } = useContext(FeedStatusContext);
 
   // ------------------------------------------------------------
-  // Per-feed refresh (uses ?feed=)
+  // Per-feed refresh (v1.190)
   // ------------------------------------------------------------
   const loadFeed = useCallback(
-    async (feedName) => {
-      setStatus(feedName, "loading");
+    async (feedId) => {
+      setStatus(feedId, "loading");
 
       try {
-        const url = `${API}?feed=${encodeURIComponent(feedName)}`;
+        const url = `${API}?mode=feed&feedId=${encodeURIComponent(feedId)}`;
         const res = await fetch(url);
         const json = await res.json();
 
         if (json.status === "ok") {
-          setStatus(feedName, "ok");
+          setStatus(feedId, "ok");
         } else if (json.status === "fallback") {
-          setStatus(feedName, "fallback");
+          setStatus(feedId, "fallback");
         } else {
-          setStatus(feedName, "error");
+          setStatus(feedId, "dead");
         }
 
         setRefreshVersion((v) => v + 1);
       } catch (err) {
-        setStatus(feedName, "error");
+        setStatus(feedId, "dead");
       }
     },
     [setStatus]
   );
 
   // ------------------------------------------------------------
-  // Global refresh (uses ?mode=health)
+  // Global refresh (v1.190)
   // ------------------------------------------------------------
   const refreshAll = useCallback(async () => {
     if (isRefreshing) return;
@@ -86,21 +85,21 @@ export function GlobalRefreshProvider({ children }) {
       const json = await res.json();
 
       if (json.status === "ok" && json.feeds) {
-        // Normalize using same logic as FeedStatusContext
         const normalized = {};
+
         for (const [feedId, entry] of Object.entries(json.feeds)) {
-          if (entry.ok) {
-            normalized[feedId] = entry.type === "json" ? "json" : "ok";
-          } else if (entry.status === "fallback") {
-            normalized[feedId] = "fallback";
-          } else {
-            normalized[feedId] = "error";
-          }
+          const s = entry.status;
+
+          if (s === "ok") normalized[feedId] = "ok";
+          else if (s === "fallback") normalized[feedId] = "fallback";
+          else if (s === "dead") normalized[feedId] = "dead";
+          else normalized[feedId] = "unknown";
         }
+
         setBulkStatus(normalized);
       } else {
         const errMap = {};
-        allFeedNames.forEach((f) => (errMap[f] = "error"));
+        allFeedNames.forEach((f) => (errMap[f] = "dead"));
         setBulkStatus(errMap);
       }
 
@@ -110,7 +109,7 @@ export function GlobalRefreshProvider({ children }) {
       console.error("Global refresh error:", err);
 
       const errMap = {};
-      allFeedNames.forEach((f) => (errMap[f] = "error"));
+      allFeedNames.forEach((f) => (errMap[f] = "dead"));
       setBulkStatus(errMap);
     } finally {
       setIsRefreshing(false);

@@ -26,6 +26,9 @@ import {
   SYMBOL_ICONS
 } from "../../data/tickerConfig";
 
+console.log("TickerBar v1.190 loaded");
+
+
 const API =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
