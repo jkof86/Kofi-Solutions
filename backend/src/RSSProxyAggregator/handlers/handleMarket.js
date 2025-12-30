@@ -1,5 +1,14 @@
 // ------------------------------------------------------------
-// handleMarket.js — v1.172 (Modular + History-Safe)
+// handleMarket.js — v1.180 (Normalized + History-Safe)
+// ------------------------------------------------------------
+//
+// Improvements:
+//   • Symbol normalization (BRK.B → brk-b)
+//   • Crypto restored (fetchCryptoPrice active again)
+//   • Unified lookup layer
+//   • History-safe responses for charts
+//   • Clean error handling + logging
+//
 // ------------------------------------------------------------
 
 const { jsonResponse } = require("../utils/jsonResponse.js");
@@ -7,9 +16,17 @@ const { CRYPTO_MAP } = require("../config/cryptoMap.js");
 const { STOCK_MAP } = require("../config/stockMap.js");
 const { ETF_MAP } = require("../config/etfMap.js");
 
-// const { fetchCryptoPrice } = require("../market/fetchCryptoPrice.js");
+const { fetchCryptoPrice } = require("../market/fetchCryptoPrice.js");
 const { fetchYahooStock } = require("../market/stockYahoo.js");
 const { fetchYahooEtf } = require("../market/etfYahoo.js");
+
+// Normalize symbols (BRK.B → brk-b)
+function normalizeSymbol(sym) {
+  return String(sym || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\./g, "-");
+}
 
 async function handleMarket(symbol, opts = {}) {
   console.log("[handleMarket] Incoming symbol:", symbol, opts);
@@ -23,7 +40,8 @@ async function handleMarket(symbol, opts = {}) {
       });
     }
 
-    const lower = symbol.toLowerCase();
+    const lower = normalizeSymbol(symbol);
+
     const cryptoId = CRYPTO_MAP[lower];
     const stockId = STOCK_MAP[lower];
     const etfId = ETF_MAP[lower];

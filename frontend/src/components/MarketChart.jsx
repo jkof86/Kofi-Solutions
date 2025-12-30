@@ -1,4 +1,11 @@
-// MarketChart.jsx — v1.2
+// ------------------------------------------------------------
+// MarketChart.jsx — v1.180 (Stable + Normalized)
+// ------------------------------------------------------------
+// • Supports crypto + stock formats
+// • Normalizes symbols (BRK.B → brk-b)
+// • Guards against malformed history
+// • Prevents chart collapse on single-point data
+// ------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
@@ -19,13 +26,21 @@ export default function MarketChart({ symbol }) {
   const [data, setData] = useState([]);
   const [error, setError] = useState("");
 
+  // Normalize symbols (BRK.B → brk-b)
+  const normalize = (s) =>
+    String(s || "")
+      .toLowerCase()
+      .replace(/\./g, "-");
+
   useEffect(() => {
     if (!symbol) return;
 
     const fetchData = async () => {
       try {
+        const normalized = normalize(symbol);
+
         const res = await fetch(
-          `${API}?mode=market&symbol=${encodeURIComponent(symbol.toLowerCase())}`
+          `${API}?mode=market&symbol=${encodeURIComponent(normalized)}`
         );
         const json = await res.json();
 
@@ -35,12 +50,20 @@ export default function MarketChart({ symbol }) {
           return;
         }
 
-        setData(
-          json.history.map((p) => ({
-            time: p.time,
-            price: p.price
+        const cleaned = json.history
+          .map((p) => ({
+            time: p.time || "",
+            price: typeof p.price === "number" ? p.price : null
           }))
-        );
+          .filter((p) => p.time && p.price != null);
+
+        if (cleaned.length === 0) {
+          setError("No chart data");
+          setData([]);
+          return;
+        }
+
+        setData(cleaned);
         setError("");
       } catch (e) {
         setError("Chart error");
@@ -70,7 +93,7 @@ export default function MarketChart({ symbol }) {
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="time" hide />
-            <YAxis domain={["auto", "auto"]} />
+            <YAxis domain={["auto", "auto"]} allowDecimals />
             <Tooltip />
             <Line
               type="monotone"

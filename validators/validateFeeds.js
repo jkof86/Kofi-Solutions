@@ -3,15 +3,6 @@
 // ------------------------------------------------------------
 // validateFeeds.js — CLI Entrypoint for Full FEEDS Validator
 // ------------------------------------------------------------
-//
-// Responsibilities:
-//   - Parse CLI flags
-//   - Call orchestrator (feeds/index.js)
-//   - Print summary table
-//   - Exit with correct code
-//
-// This file contains NO validation logic.
-// ------------------------------------------------------------
 
 const path = require("path");
 const { runValidation } = require("./feeds");
@@ -34,7 +25,7 @@ const args = process.argv.slice(2);
 const ENABLE_NETWORK = args.includes("--network") || args.includes("-n");
 const ENABLE_SUMMARY = args.includes("--summary") || args.includes("-s");
 const ENABLE_JSON = args.includes("--json") || args.includes("-j");
-const ENABLE_FIX = args.includes("--fix");
+const ENABLE_FIX = args.includes("--fix") || args.includes("-f");
 const STRICT_MODE = args.includes("--strict");
 
 // FEEDS map paths
@@ -62,9 +53,6 @@ const FRONTEND_PATH = path.resolve(
     enableFix: ENABLE_FIX,
   });
 
-  // ------------------------------------------------------------
-  // SUMMARY TABLE
-  // ------------------------------------------------------------
   if (ENABLE_SUMMARY) {
     console.log(info("\n----------------------"));
     console.log(info(" SUMMARY"));
@@ -90,9 +78,6 @@ const FRONTEND_PATH = path.resolve(
     console.log("");
   }
 
-  // ------------------------------------------------------------
-  // JSON OUTPUT
-  // ------------------------------------------------------------
   if (ENABLE_JSON) {
     console.log(
       JSON.stringify(
@@ -108,9 +93,6 @@ const FRONTEND_PATH = path.resolve(
     );
   }
 
-  // ------------------------------------------------------------
-  // EXIT CODE
-  // ------------------------------------------------------------
   if (!result.ok) {
     console.log(error("\nValidation completed with issues.\n"));
     process.exit(1);

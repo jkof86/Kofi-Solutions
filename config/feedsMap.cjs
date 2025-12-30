@@ -1,119 +1,419 @@
-// frontend/config/feedsMap.cjs
-// CommonJS mirror of FEEDS v1.178 for validator use
-
-const FEEDS = {
-  crypto: [
-    { id: "coindesk", name: "CoinDesk", url: "https://www.coindesk.com/arc/outboundfeeds/rss/", type: "rss" },
-    { id: "cointelegraph", name: "CoinTelegraph", url: "https://cointelegraph.com/rss", type: "rss" },
-    { id: "decrypt", name: "Decrypt", url: "https://decrypt.co/feed", type: "rss" },
-    { id: "the_block", name: "The Block", url: "https://www.theblock.co/rss", type: "rss" },
-    { id: "cryptoslate", name: "CryptoSlate", url: "https://cryptoslate.com/feed/", type: "rss" },
-    { id: "messari", name: "Messari News", url: "https://data.messari.io/api/v1/news", type: "json" }
-  ],
-
-  finance: [
-    { id: "marketwatch", name: "MarketWatch Top Stories", url: "https://www.marketwatch.com/feeds/topstories", type: "rss" },
-    { id: "yahoo_finance", name: "Yahoo Finance News", url: "https://finance.yahoo.com/news/rssindex", type: "rss" },
-    { id: "investing", name: "Investing.com News", url: "https://www.investing.com/rss/news.rss", type: "rss" },
-    { id: "wsj_markets", name: "WSJ Markets", url: "https://feeds.a.dj.com/rss/RSSMarketsMain.xml", type: "rss" },
-    { id: "cnbc_markets", name: "CNBC Markets", url: "https://www.cnbc.com/id/100003114/device/rss/rss.html", type: "rss" },
-    { id: "ft_markets", name: "Financial Times Markets", url: "https://www.ft.com/markets/rss", type: "rss" }
-  ],
-
-  news: [
-    { id: "reuters_top", name: "Reuters Top News", url: "http://feeds.reuters.com/reuters/topNews", type: "rss" },
-    { id: "ap_news", name: "AP News", url: "https://apnews.com/rss", type: "rss" },
-    { id: "bbc_world", name: "BBC World", url: "http://feeds.bbci.co.uk/news/world/rss.xml", type: "rss" },
-    { id: "fox_latest", name: "Fox News Latest", url: "http://feeds.foxnews.com/foxnews/latest", type: "rss" },
-    { id: "nyt_home", name: "NY Times Home Page", url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml", type: "rss" },
-    { id: "npr_world", name: "NPR World", url: "https://feeds.npr.org/1004/rss.xml", type: "rss" },
-    { id: "aljazeera_world", name: "Al Jazeera World", url: "https://www.aljazeera.com/xml/rss/all.xml", type: "rss" }
-  ],
-
-  alternative_news: [
-    { id: "intercept", name: "The Intercept", url: "https://theintercept.com/feed/?lang=en", type: "rss" },
-    { id: "propublica", name: "ProPublica", url: "https://www.propublica.org/feeds/propublica/main", type: "rss" },
-    { id: "reason", name: "Reason Magazine", url: "https://reason.com/feed/", type: "rss" },
-    { id: "atlantic", name: "The Atlantic", url: "https://www.theatlantic.com/feed/all/", type: "rss" },
-    { id: "the_hill", name: "The Hill", url: "https://thehill.com/feed/", type: "rss" },
-    { id: "axios", name: "Axios", url: "https://www.axios.com/feed", type: "rss" },
-    { id: "vice_world", name: "Vice World News", url: "https://www.vice.com/en/rss?locale=en_us&vertical=news", type: "rss" }
-  ],
-
-  java: [
-    { id: "infoq_java", name: "InfoQ Java", url: "https://feed.infoq.com/java", type: "rss" },
-    { id: "baeldung", name: "Baeldung", url: "https://www.baeldung.com/feed", type: "rss" },
-    { id: "jetbrains_java", name: "JetBrains Java", url: "https://blog.jetbrains.com/java/feed/", type: "rss" },
-    { id: "dzone_java", name: "DZone Java", url: "https://feeds.dzone.com/java", type: "rss" }
-  ],
-
-  spring: [
-    { id: "spring_blog", name: "Spring Blog", url: "https://spring.io/blog.atom", type: "rss" },
-    { id: "spring_releases", name: "Spring Releases", url: "https://spring.io/blog/category/releases.atom", type: "rss" },
-    { id: "spring_security_blog", name: "Spring Security Blog", url: "https://spring.io/blog/category/security.atom", type: "rss" },
-    { id: "spring_cloud_blog", name: "Spring Cloud Blog", url: "https://spring.io/blog/category/spring-cloud.atom", type: "rss" }
-  ],
-
-  aws: [
-    { id: "aws_news", name: "AWS News Blog", url: "https://aws.amazon.com/about-aws/whats-new/recent/feed/", type: "rss" },
-    { id: "aws_official_blog", name: "AWS Official Blog", url: "https://aws.amazon.com/blogs/aws/feed/", type: "rss" },
-    { id: "aws_security_blog", name: "AWS Security Blog", url: "https://aws.amazon.com/blogs/security/feed/", type: "rss" },
-    { id: "aws_compute_blog", name: "AWS Compute Blog", url: "https://aws.amazon.com/blogs/compute/feed/", type: "rss" }
-  ],
-
-  react: [
-    { id: "react_blog", name: "React Blog", url: "https://react.dev/feed.xml", type: "rss" },
-    { id: "javascript_weekly", name: "JavaScript Weekly", url: "https://javascriptweekly.com/rss", type: "rss" },
-    { id: "logrocket_react", name: "LogRocket React", url: "https://blog.logrocket.com/tag/react/feed/", type: "rss" },
-    { id: "overreacted", name: "Overreacted", url: "https://overreacted.io/rss.xml", type: "rss" },
-    { id: "devto_react", name: "Dev.to React", url: "https://dev.to/feed/tag/react", type: "rss" }
-  ],
-
-  iot: [
-    { id: "iot_world_today", name: "IoT World Today", url: "https://www.iotworldtoday.com/feed/", type: "rss" },
-    { id: "stacey_iot", name: "Stacey on IoT", url: "https://staceyoniot.com/feed/", type: "rss" },
-    { id: "industrial_iot_news", name: "Industrial IoT News", url: "https://www.iiot-world.com/feed/", type: "rss" },
-    { id: "postscapes_iot", name: "Postscapes IoT", url: "https://www.postscapes.com/feed/", type: "rss" },
-    { id: "connected_world", name: "Connected World", url: "https://connectedworld.com/feed/", type: "rss" }
-  ],
-
-  cybersecurity: [
-    { id: "krebs_security", name: "Krebs on Security", url: "https://krebsonsecurity.com/feed/", type: "rss" },
-    { id: "darkreading", name: "Dark Reading", url: "https://www.darkreading.com/rss.xml", type: "rss" },
-    { id: "the_hacker_news", name: "The Hacker News", url: "https://feeds.feedburner.com/TheHackersNews", type: "rss" },
-    { id: "bleepingcomputer", name: "BleepingComputer Security", url: "https://www.bleepingcomputer.com/feed/", type: "rss" },
-    { id: "threatpost", name: "ThreatPost", url: "https://threatpost.com/feed/", type: "rss" },
-    { id: "securityweek", name: "SecurityWeek Cyber", url: "https://www.securityweek.com/rss", type: "rss" },
-    { id: "naosec_threatintel", name: "NaoSec Threat Intel", url: "https://nao-sec.org/feed/", type: "rss" }
-  ],
-
-  sports: [
-    { id: "espn", name: "ESPN Top Headlines", url: "https://www.espn.com/espn/rss/news", type: "rss" },
-    { id: "bleacher_report", name: "Bleacher Report", url: "https://bleacherreport.com/articles/feed", type: "rss" },
-    { id: "bbc_sport", name: "BBC Sport", url: "http://feeds.bbci.co.uk/sport/rss.xml?edition=uk", type: "rss" },
-    { id: "sky_sports", name: "Sky Sports", url: "https://www.skysports.com/rss/12040", type: "rss" },
-    { id: "yahoo_sports", name: "Yahoo Sports", url: "https://sports.yahoo.com/top/rss.xml", type: "rss" }
-  ],
-
-  infowars: [
-    { id: "alex_jones_show", name: "Alex Jones Show", url: "http://rss.infowars.com/Alex.rss", type: "rss" },
-    { id: "infowars_news", name: "Infowars News", url: "http://rss.infowars.com/Infowars.rss", type: "rss" },
-    { id: "war_room", name: "War Room with Owen Shroyer", url: "http://rss.infowars.com/WarRoom.rss", type: "rss" },
-    { id: "david_knight", name: "David Knight Show", url: "https://feeds.feedburner.com/davidknight", type: "rss" },
-    { id: "banned_video_clips", name: "Banned.Video Featured Clips", url: "https://banned.video/feeds/rss.xml", type: "rss" }
-  ]
-};
-
-function getFeedsForCategory(categoryId) {
-  return FEEDS[categoryId] || [];
-}
-
-function getLegacyCryptoFeeds() {
-  return FEEDS.crypto.filter((f) => f.type === "rss");
-}
-
+// Auto-generated by auto-fix engine
 module.exports = {
-  FEEDS,
-  getFeedsForCategory,
-  getLegacyCryptoFeeds
+  FEEDS: {
+  "crypto": [
+    {
+      "id": "coindesk",
+      "name": "CoinDesk",
+      "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+      "type": "rss"
+    },
+    {
+      "id": "cointelegraph",
+      "name": "CoinTelegraph",
+      "url": "https://cointelegraph.com/rss",
+      "type": "rss"
+    },
+    {
+      "id": "decrypt",
+      "name": "Decrypt",
+      "url": "https://decrypt.co/feed",
+      "type": "rss"
+    },
+    {
+      "id": "the_block",
+      "name": "The Block",
+      "url": "https://www.theblock.co/rss",
+      "type": "rss"
+    },
+    {
+      "id": "cryptoslate",
+      "name": "CryptoSlate",
+      "url": "https://cryptoslate.com/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "messari",
+      "name": "Messari News",
+      "url": "https://data.messari.io/api/v1/news",
+      "type": "json"
+    }
+  ],
+  "finance": [
+    {
+      "id": "marketwatch",
+      "name": "MarketWatch Top Stories",
+      "url": "https://www.marketwatch.com/feeds/topstories",
+      "type": "rss"
+    },
+    {
+      "id": "yahoo_finance",
+      "name": "Yahoo Finance News",
+      "url": "https://finance.yahoo.com/news/rssindex",
+      "type": "rss"
+    },
+    {
+      "id": "investing",
+      "name": "Investing.com News",
+      "url": "https://www.investing.com/rss/news.rss",
+      "type": "rss"
+    },
+    {
+      "id": "wsj_markets",
+      "name": "WSJ Markets",
+      "url": "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",
+      "type": "rss"
+    },
+    {
+      "id": "cnbc_markets",
+      "name": "CNBC Markets",
+      "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+      "type": "rss"
+    },
+    {
+      "id": "ft_markets",
+      "name": "Financial Times Markets",
+      "url": "https://www.ft.com/markets/rss",
+      "type": "rss"
+    }
+  ],
+  "news": [
+    {
+      "id": "reuters_top",
+      "name": "Reuters Top News",
+      "url": "http://feeds.reuters.com/reuters/topNews",
+      "type": "rss"
+    },
+    {
+      "id": "ap_news",
+      "name": "AP News",
+      "url": "https://apnews.com/rss",
+      "type": "rss"
+    },
+    {
+      "id": "bbc_world",
+      "name": "BBC World",
+      "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
+      "type": "rss"
+    },
+    {
+      "id": "fox_latest",
+      "name": "Fox News Latest",
+      "url": "http://feeds.foxnews.com/foxnews/latest",
+      "type": "rss"
+    },
+    {
+      "id": "nyt_home",
+      "name": "NY Times Home Page",
+      "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+      "type": "rss"
+    },
+    {
+      "id": "npr_world",
+      "name": "NPR World",
+      "url": "https://feeds.npr.org/1004/rss.xml",
+      "type": "rss"
+    },
+    {
+      "id": "aljazeera_world",
+      "name": "Al Jazeera World",
+      "url": "https://www.aljazeera.com/xml/rss/all.xml",
+      "type": "rss"
+    }
+  ],
+  "alternative_news": [
+    {
+      "id": "intercept",
+      "name": "The Intercept",
+      "url": "https://theintercept.com/feed/?lang=en",
+      "type": "rss"
+    },
+    {
+      "id": "propublica",
+      "name": "ProPublica",
+      "url": "https://www.propublica.org/feeds/propublica/main",
+      "type": "rss"
+    },
+    {
+      "id": "reason",
+      "name": "Reason Magazine",
+      "url": "https://reason.com/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "atlantic",
+      "name": "The Atlantic",
+      "url": "https://www.theatlantic.com/feed/all/",
+      "type": "rss"
+    },
+    {
+      "id": "the_hill",
+      "name": "The Hill",
+      "url": "https://thehill.com/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "axios",
+      "name": "Axios",
+      "url": "https://www.axios.com/feed",
+      "type": "rss"
+    },
+    {
+      "id": "vice_world",
+      "name": "Vice World News",
+      "url": "https://www.vice.com/en/rss?locale=en_us&vertical=news",
+      "type": "rss"
+    }
+  ],
+  "java": [
+    {
+      "id": "infoq_java",
+      "name": "InfoQ Java",
+      "url": "https://feed.infoq.com/java",
+      "type": "rss"
+    },
+    {
+      "id": "baeldung",
+      "name": "Baeldung",
+      "url": "https://www.baeldung.com/feed",
+      "type": "rss"
+    },
+    {
+      "id": "jetbrains_java",
+      "name": "JetBrains Java",
+      "url": "https://blog.jetbrains.com/java/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "dzone_java",
+      "name": "DZone Java",
+      "url": "https://feeds.dzone.com/java",
+      "type": "rss"
+    }
+  ],
+  "spring": [
+    {
+      "id": "spring_blog",
+      "name": "Spring Blog",
+      "url": "https://spring.io/blog.atom",
+      "type": "rss"
+    },
+    {
+      "id": "spring_releases",
+      "name": "Spring Releases",
+      "url": "https://spring.io/blog/category/releases.atom",
+      "type": "rss"
+    },
+    {
+      "id": "spring_security_blog",
+      "name": "Spring Security Blog",
+      "url": "https://spring.io/blog/category/security.atom",
+      "type": "rss"
+    },
+    {
+      "id": "spring_cloud_blog",
+      "name": "Spring Cloud Blog",
+      "url": "https://spring.io/blog/category/spring-cloud.atom",
+      "type": "rss"
+    }
+  ],
+  "aws": [
+    {
+      "id": "aws_news",
+      "name": "AWS News Blog",
+      "url": "https://aws.amazon.com/about-aws/whats-new/recent/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "aws_official_blog",
+      "name": "AWS Official Blog",
+      "url": "https://aws.amazon.com/blogs/aws/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "aws_security_blog",
+      "name": "AWS Security Blog",
+      "url": "https://aws.amazon.com/blogs/security/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "aws_compute_blog",
+      "name": "AWS Compute Blog",
+      "url": "https://aws.amazon.com/blogs/compute/feed/",
+      "type": "rss"
+    }
+  ],
+  "react": [
+    {
+      "id": "react_blog",
+      "name": "React Blog",
+      "url": "https://react.dev/feed.xml",
+      "type": "rss"
+    },
+    {
+      "id": "javascript_weekly",
+      "name": "JavaScript Weekly",
+      "url": "https://javascriptweekly.com/rss",
+      "type": "rss"
+    },
+    {
+      "id": "logrocket_react",
+      "name": "LogRocket React",
+      "url": "https://blog.logrocket.com/tag/react/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "overreacted",
+      "name": "Overreacted",
+      "url": "https://overreacted.io/rss.xml",
+      "type": "rss"
+    },
+    {
+      "id": "devto_react",
+      "name": "Dev.to React",
+      "url": "https://dev.to/feed/tag/react",
+      "type": "rss"
+    }
+  ],
+  "iot": [
+    {
+      "id": "iot_world_today",
+      "name": "IoT World Today",
+      "url": "https://www.iotworldtoday.com/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "stacey_iot",
+      "name": "Stacey on IoT",
+      "url": "https://staceyoniot.com/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "industrial_iot_news",
+      "name": "Industrial IoT News",
+      "url": "https://www.iiot-world.com/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "postscapes_iot",
+      "name": "Postscapes IoT",
+      "url": "https://www.postscapes.com/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "connected_world",
+      "name": "Connected World",
+      "url": "https://connectedworld.com/feed/",
+      "type": "rss"
+    }
+  ],
+  "cybersecurity": [
+    {
+      "id": "krebs_security",
+      "name": "Krebs on Security",
+      "url": "https://krebsonsecurity.com/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "darkreading",
+      "name": "Dark Reading",
+      "url": "https://www.darkreading.com/rss.xml",
+      "type": "rss"
+    },
+    {
+      "id": "the_hacker_news",
+      "name": "The Hacker News",
+      "url": "https://feeds.feedburner.com/TheHackersNews",
+      "type": "rss"
+    },
+    {
+      "id": "bleepingcomputer",
+      "name": "BleepingComputer Security",
+      "url": "https://www.bleepingcomputer.com/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "threatpost",
+      "name": "ThreatPost",
+      "url": "https://threatpost.com/feed/",
+      "type": "rss"
+    },
+    {
+      "id": "securityweek",
+      "name": "SecurityWeek Cyber",
+      "url": "https://www.securityweek.com/rss",
+      "type": "rss"
+    },
+    {
+      "id": "naosec_threatintel",
+      "name": "NaoSec Threat Intel",
+      "url": "https://nao-sec.org/feed/",
+      "type": "rss"
+    }
+  ],
+  "sports": [
+    {
+      "id": "espn",
+      "name": "ESPN Top Headlines",
+      "url": "https://www.espn.com/espn/rss/news",
+      "type": "rss"
+    },
+    {
+      "id": "bleacher_report",
+      "name": "Bleacher Report",
+      "url": "https://bleacherreport.com/articles/feed",
+      "type": "rss"
+    },
+    {
+      "id": "bbc_sport",
+      "name": "BBC Sport",
+      "url": "http://feeds.bbci.co.uk/sport/rss.xml?edition=uk",
+      "type": "rss"
+    },
+    {
+      "id": "sky_sports",
+      "name": "Sky Sports",
+      "url": "https://www.skysports.com/rss/12040",
+      "type": "rss"
+    },
+    {
+      "id": "yahoo_sports",
+      "name": "Yahoo Sports",
+      "url": "https://sports.yahoo.com/top/rss.xml",
+      "type": "rss"
+    }
+  ],
+  "infowars": [
+    {
+      "id": "alex_jones_show",
+      "name": "Alex Jones Show",
+      "url": "http://rss.infowars.com/Alex.rss",
+      "type": "rss"
+    },
+    {
+      "id": "infowars_news",
+      "name": "Infowars News",
+      "url": "http://rss.infowars.com/Infowars.rss",
+      "type": "rss"
+    },
+    {
+      "id": "war_room",
+      "name": "War Room with Owen Shroyer",
+      "url": "http://rss.infowars.com/WarRoom.rss",
+      "type": "rss"
+    },
+    {
+      "id": "david_knight",
+      "name": "David Knight Show",
+      "url": "https://feeds.feedburner.com/davidknight",
+      "type": "rss"
+    },
+    {
+      "id": "banned_video_clips",
+      "name": "Banned.Video Featured Clips",
+      "url": "https://banned.video/feeds/rss.xml",
+      "type": "rss"
+    }
+  ]
+}
 };

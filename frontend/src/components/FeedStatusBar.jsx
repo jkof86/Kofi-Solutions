@@ -1,11 +1,21 @@
 // ------------------------------------------------------------
-// FeedStatusBar.jsx — Bottom Status Drawer (Pulse + Health)
+// FeedStatusBar.jsx — v1.180 (Flat FEEDS + Correct Status Parsing)
+// ------------------------------------------------------------
+//
+// Fixes:
+//   • Correctly reads v1.180 health shape:
+//         feeds[feedId] = { status, fallback, count }
+//   • Proper color mapping
+//   • Shows fallback + count
+//   • Prevents "unknown" spam
+//
 // ------------------------------------------------------------
 
 import React, { useContext } from "react";
 import { Box, Chip, Stack } from "@mui/material";
 import { FeedStatusContext } from "../context/FeedStatusContext";
 
+// Future‑proof status → color mapping
 const STATUS_COLOR = {
   ok: "success",
   json: "warning",
@@ -17,7 +27,7 @@ const STATUS_COLOR = {
 };
 
 export default function FeedStatusBar() {
-  const { health, lastUpdated } = useContext(FeedStatusContext);
+  const { health } = useContext(FeedStatusContext);
 
   if (!health || !health.feeds) return null;
 
@@ -36,7 +46,7 @@ export default function FeedStatusBar() {
         zIndex: 10,
         display: "flex",
         alignItems: "center",
-        gap: 1
+        gap: 1,
       }}
     >
       {/* Pulse indicator */}
@@ -47,24 +57,27 @@ export default function FeedStatusBar() {
           borderRadius: "50%",
           bgcolor: "#4caf50",
           boxShadow: "0 0 0 0 rgba(76, 175, 80, 0.7)",
-          animation: "healthPulse 1.5s infinite"
+          animation: "healthPulse 1.5s infinite",
         }}
       />
 
+      {/* Feed chips */}
       <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ flex: 1 }}>
-        {Object.entries(feeds).map(([feed, status]) => {
-          const color =
-            status === "ok"
-              ? "success"
-              : status === "fallback" || status === "json"
-                ? "warning"
-                : "error";
+        {Object.entries(feeds).map(([feedId, info]) => {
+          if (!info || !info.status) return null;
 
+          const status = info.status;
+          const color = STATUS_COLOR[status] || "error";
+
+          const label =
+            info.fallback
+              ? `${feedId} (fallback)`
+              : `${feedId} (${info.count})`;
 
           return (
             <Chip
-              key={feed}
-              label={feed}
+              key={feedId}
+              label={label}
               color={color}
               size="small"
               sx={{ fontWeight: 600 }}

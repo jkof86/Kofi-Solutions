@@ -1,18 +1,17 @@
 // ------------------------------------------------------------
-// TickerBar.jsx — v1.160 (Smart Mode + Guards + Offline Banner)
+// TickerBar.jsx — v1.180 (Stable Mode + Non‑Sticky Fallback)
 // ------------------------------------------------------------
 //
-// Features:
-//   • Smart Mode:
-//       - Try active category symbols
-//       - If >50% fail → fallback to crypto
-//   • Market Offline Banner:
-//       - Shows when category market data is failing
-//   • Guards:
-//       - Never calls backend with missing/invalid symbol
-//       - Never loops on empty symbol lists
-//       - Never sends malformed URLs
-//   • Category-aware, but resilient when backend is flaky
+// Improvements in v1.180:
+//   • Smart Mode preserved
+//   • Fallback no longer overwrites category symbols
+//   • Fallback resets on tab switch
+//   • Category switching fully respected
+//   • Clean separation:
+//         symbols         → category symbols
+//         fallbackSymbols → crypto-only fallback
+//   • Guards preserved
+//   • Scroll reset preserved
 //
 // ------------------------------------------------------------
 
@@ -35,7 +34,15 @@ const DEFAULT_CATEGORY = "crypto";
 export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
   const [prices, setPrices] = useState({});
   const [lastUpdated, setLastUpdated] = useState("");
-  const [symbols, setSymbols] = useState(CATEGORY_SYMBOLS.crypto || TICKER_SYMBOLS);
+
+  // Category symbols (primary)
+  const [symbols, setSymbols] = useState(
+    CATEGORY_SYMBOLS.crypto || TICKER_SYMBOLS
+  );
+
+  // Crypto fallback symbols (only used when offline)
+  const [fallbackSymbols, setFallbackSymbols] = useState([]);
+
   const [offline, setOffline] = useState(false);
 
   // ------------------------------------------------------------
@@ -47,20 +54,26 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
     if (Array.isArray(list) && list.length > 0) {
       setSymbols(list);
     } else {
-      console.warn("[Ticker] Invalid or empty category symbols, falling back to crypto:", activeCategory);
+      console.warn(
+        "[Ticker] Invalid or empty category symbols, falling back to crypto:",
+        activeCategory
+      );
       setSymbols(CATEGORY_SYMBOLS.crypto || TICKER_SYMBOLS);
     }
+
+    // Reset fallback when switching tabs
+    setFallbackSymbols([]);
+    setOffline(false);
   }, [activeCategory]);
 
-    // ------------------------------------------------------------
-  // Category tab switch Debug
   // ------------------------------------------------------------
-
+  // Debug logging
+  // ------------------------------------------------------------
   useEffect(() => {
-  console.log("Ticker activeCategory:", activeCategory);
-  console.log("Ticker symbols:", symbols);
-}, [activeCategory, symbols]);
-
+    console.log("Ticker activeCategory:", activeCategory);
+    console.log("Ticker symbols:", symbols);
+    console.log("Ticker fallbackSymbols:", fallbackSymbols);
+  }, [activeCategory, symbols, fallbackSymbols]);
 
   // ------------------------------------------------------------
   // Fetch market data for current symbols (guarded)
@@ -123,19 +136,21 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
       const failCount = SUPPORTED.length - successCount;
       const failRatio = failCount / SUPPORTED.length;
 
-      // Smart fallback: if category is failing, drop to crypto
+      // Smart fallback: if category is failing, show crypto fallback
       if (failRatio > 0.5 && activeCategory !== "crypto") {
         console.warn(
           "[Ticker] Market offline for category:",
           activeCategory,
-          "→ Falling back to crypto"
+          "→ Showing crypto fallback"
         );
         setOffline(true);
-        setSymbols(CATEGORY_SYMBOLS.crypto || TICKER_SYMBOLS);
+        setFallbackSymbols(CATEGORY_SYMBOLS.crypto || TICKER_SYMBOLS);
         return;
       }
 
-      setOffline(failRatio > 0.5);
+      // Category is healthy
+      setOffline(false);
+      setFallbackSymbols([]);
       setPrices(results);
       setLastUpdated(new Date().toLocaleTimeString());
     };
@@ -155,11 +170,13 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
       void el.offsetHeight;
       el.style.animation = "";
     }
-  }, [symbols]);
+  }, [symbols, fallbackSymbols]);
 
   // ------------------------------------------------------------
   // Render ticker
   // ------------------------------------------------------------
+  const renderSymbols = offline ? fallbackSymbols : symbols;
+
   return (
     <Box
       sx={{
@@ -200,7 +217,7 @@ export default function TickerBar({ activeCategory = DEFAULT_CATEGORY }) {
           animation: "scrollTicker 25s linear infinite"
         }}
       >
-        {symbols.map((sym, idx) => {
+        {renderSymbols.map((sym, idx) => {
           const upper = String(sym || "").toUpperCase();
           const p = prices[upper];
 

@@ -1,12 +1,17 @@
 // ------------------------------------------------------------
-// FeedHealthDashboard.jsx — v1.148 (Global Debug Toggle Integrated)
+// FeedHealthDashboard.jsx — v1.180 (FEEDS v1.180 Compatible)
 // ------------------------------------------------------------
 //
-// Enhancements:
-//   • Global debug toggle (URL param + keyboard shortcut)
-//   • Global debug indicator chip
-//   • Debug mode auto-syncs with global toggle
-//   • No breaking changes to existing debugMode dropdown
+// Major Fixes in v1.180:
+//   • Updated to support new health response shape:
+//         feeds: { feedId: { status, fallback, count } }
+//         markets: { symbol: { status, type, price } }
+//   • Removed legacy markets array structure
+//   • Added safe rendering for missing or malformed data
+//   • Added color coding for market statuses
+//   • Preserved global debug toggle + keyboard shortcut
+//   • Preserved strict/soft mode + sample size controls
+//   • Fully compatible with handleHealth.js v1.180
 //
 // ------------------------------------------------------------
 
@@ -25,6 +30,7 @@ import {
   Divider,
   IconButton
 } from "@mui/material";
+
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { FeedStatusContext } from "../context/FeedStatusContext";
 import { debugRequest } from "../utils/debugApi";
@@ -50,7 +56,7 @@ export default function FeedHealthDashboard() {
   const [error, setError] = useState(null);
 
   // ------------------------------------------------------------
-  // NEW: Global Debug Toggle (URL param + keyboard shortcut)
+  // Global Debug Toggle (URL param + keyboard shortcut)
   // ------------------------------------------------------------
   const [globalDebug, setGlobalDebug] = useState(() => {
     const urlParam = new URLSearchParams(window.location.search).get("debug");
@@ -79,7 +85,7 @@ export default function FeedHealthDashboard() {
   }, [globalDebug]);
 
   // ------------------------------------------------------------
-  // Load Health
+  // Load Health (v1.180 response shape)
   // ------------------------------------------------------------
   async function load() {
     try {
@@ -102,9 +108,7 @@ export default function FeedHealthDashboard() {
     }
   }
 
-  // ------------------------------------------------------------
-  // Auto-refresh
-  // ------------------------------------------------------------
+  // Auto-refresh every 60s
   useEffect(() => {
     load();
     const interval = setInterval(load, 60000);
@@ -136,7 +140,8 @@ export default function FeedHealthDashboard() {
     );
   }
 
-  const { feeds = {}, markets = [], debug } = health;
+  // v1.180 health response shape
+  const { feeds = {}, markets = {}, debug } = health;
 
   const formatTime = (d) =>
     d
@@ -162,7 +167,7 @@ export default function FeedHealthDashboard() {
         <Typography variant="h6">System Health</Typography>
 
         <Stack direction="row" spacing={1} alignItems="center">
-          {/* NEW: Global Debug Indicator */}
+          {/* Global Debug Indicator */}
           {globalDebug && (
             <Chip
               label="Global Debug ON"
@@ -178,7 +183,7 @@ export default function FeedHealthDashboard() {
         </Stack>
       </Stack>
 
-      {/* Debug Controls */}
+      {/* Debug Tools */}
       <Box sx={{ mb: 2 }}>
         <Typography variant="subtitle2" sx={{ mb: 1 }}>
           Debug Tools
@@ -206,7 +211,7 @@ export default function FeedHealthDashboard() {
         </Stack>
       </Box>
 
-      {/* Debug Mode */}
+      {/* Debug Mode Dropdown */}
       <FormControl fullWidth size="small" sx={{ mb: 2 }}>
         <InputLabel>Debug Mode</InputLabel>
         <Select
@@ -263,31 +268,53 @@ export default function FeedHealthDashboard() {
 
       <Divider sx={{ my: 2 }} />
 
-      {/* Feed Health */}
+      {/* ------------------------------------------------------------
+         FEED HEALTH (v1.180)
+         ------------------------------------------------------------ */}
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
         Feed Health
       </Typography>
+
       <Stack spacing={1} sx={{ mb: 2 }}>
-        {Object.entries(feeds).map(([feed, status]) => {
+        {Object.entries(feeds).map(([feedId, info]) => {
           const color =
-            status === "ok"
+            info.status === "ok"
               ? "success"
-              : status === "fallback" || status === "json"
+              : info.status === "fallback" || info.status === "json"
               ? "warning"
               : "error";
 
-          return <Chip key={feed} label={`${feed}: ${status}`} color={color} />;
+          return (
+            <Chip
+              key={feedId}
+              label={`${feedId}: ${info.status} (${info.count})`}
+              color={color}
+            />
+          );
         })}
       </Stack>
 
-      {/* Market Health */}
+      {/* ------------------------------------------------------------
+         MARKET HEALTH (v1.180)
+         ------------------------------------------------------------ */}
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
         Market Health
       </Typography>
+
       <Stack spacing={1} sx={{ mb: 2 }}>
-        {markets.map((m) => {
-          const label = `${m.symbol.toUpperCase()} — crypto:${m.crypto.ok}, stock:${m.stock.ok}, etf:${m.etf.ok}`;
-          return <Chip key={m.symbol} label={label} color="error" />;
+        {Object.entries(markets).map(([symbol, m]) => {
+          const color =
+            m.status === "ok"
+              ? "success"
+              : m.status === "fallback" || m.status === "json"
+              ? "warning"
+              : "error";
+
+          const label = `${symbol.toUpperCase()} — ${m.type || "unknown"}: ${
+            m.price != null ? `$${m.price.toFixed(2)}` : "no data"
+          }`;
+
+          return <Chip key={symbol} label={label} color={color} />;
         })}
       </Stack>
 

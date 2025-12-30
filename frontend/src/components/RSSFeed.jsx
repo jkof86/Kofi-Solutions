@@ -1,22 +1,22 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.173 (Debug Toggle Enhanced)
+// RSSFeed.jsx — v1.180 (Flat FEEDS + Safe Hooks + Debug)
 // ------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Button, Stack, Collapse, Chip } from "@mui/material";
+
 import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
-
 import { sanitizeFeeds } from "../utils/sanitizeFeeds";
+
 const CLEAN_FEEDS = sanitizeFeeds(FEEDS);
-
-
 
 const BATCH_SIZE = 4;
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
 export default function RSSFeed({ feedId }) {
+  // Hooks must run first
   const [items, setItems] = useState([]);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const [loading, setLoading] = useState(false);
@@ -25,41 +25,12 @@ export default function RSSFeed({ feedId }) {
   const [debugInfo, setDebugInfo] = useState(null);
   const [showDebug, setShowDebug] = useState(false);
 
-  // NEW: global debug toggle
   const [globalDebug, setGlobalDebug] = useState(() => {
     const urlParam = new URLSearchParams(window.location.search).get("debug");
     return urlParam === "true";
   });
 
-  const feedMeta = Object.values(CLEAN_FEEDS)
-    .flat()
-    .find((f) => f.id === feedId);
-
-  if (!feedMeta) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error">
-          This feed is no longer available.
-        </Typography>
-      </Box>
-    );
-  }
-
-  // fetch guard
-  if (!feedMeta.url) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography color="error">
-          Invalid feed: missing URL.
-        </Typography>
-      </Box>
-    );
-  }
-
-
-
-
-  // NEW: keyboard shortcut for debug mode
+  // Keyboard shortcut
   useEffect(() => {
     const handler = (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === "D") {
@@ -70,9 +41,13 @@ export default function RSSFeed({ feedId }) {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  // Resolve feed metadata
+  const feedMeta = FEEDS[feedId];
 
-
+  // Fetch function
   const fetchFeed = async (id = feedId, debug = false) => {
+    if (!feedMeta?.url) return;
+
     setLoading(true);
     setError(null);
     setIsFallback(false);
@@ -82,8 +57,9 @@ export default function RSSFeed({ feedId }) {
     const debugFlag = debug || globalDebug;
 
     try {
-      const url = `${BACKEND_URL}?mode=feed&feed=${encodeURIComponent(feedMeta.id)}${debugFlag ? "&debug=debug_feeds" : ""
-        }`;
+      const url = `${BACKEND_URL}?mode=feed&feed=${encodeURIComponent(
+        feedMeta.id
+      )}${debugFlag ? "&debug=debug_feeds" : ""}`;
 
       const res = await fetch(url);
       const json = await res.json();
@@ -112,16 +88,27 @@ export default function RSSFeed({ feedId }) {
     }
   };
 
-  const refreshAll = () => fetchFeed(feedId);
-  const refreshWithDebug = () => {
-    fetchFeed(feedId, true);
-    setShowDebug(true);
-  };
-  const refreshFeedItem = () => fetchFeed(feedId);
-
+  // Auto-fetch
   useEffect(() => {
-    if (feedId) fetchFeed(feedId);
+    if (feedMeta?.id) fetchFeed(feedMeta.id);
   }, [feedId, globalDebug]);
+
+  // Early returns (safe)
+  if (!feedMeta) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error">This feed is no longer available.</Typography>
+      </Box>
+    );
+  }
+
+  if (!feedMeta.url) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error">Invalid feed: missing URL.</Typography>
+      </Box>
+    );
+  }
 
   const visibleItems = items.slice(0, visibleCount);
 
@@ -136,12 +123,9 @@ export default function RSSFeed({ feedId }) {
           mb: 2
         }}
       >
-        <Typography variant="h6">
-          {feedMeta ? feedMeta.label : feedId}
-        </Typography>
+        <Typography variant="h6">{feedMeta.label}</Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
-          {/* NEW: Global debug indicator */}
           {globalDebug && (
             <Chip
               label="Global Debug ON"
@@ -151,22 +135,26 @@ export default function RSSFeed({ feedId }) {
             />
           )}
 
-          <Button variant="outlined" onClick={refreshAll}>
+          <Button variant="outlined" onClick={() => fetchFeed(feedId)}>
             Refresh All
           </Button>
 
-          <Button variant="outlined" color="secondary" onClick={refreshWithDebug}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => {
+              fetchFeed(feedId, true);
+              setShowDebug(true);
+            }}
+          >
             Debug
           </Button>
         </Box>
       </Box>
 
       {loading && (
-        <Typography sx={{ mb: 2 }}>
-          Loading feed: {feedMeta.label}
-        </Typography>
+        <Typography sx={{ mb: 2 }}>Loading feed: {feedMeta.label}</Typography>
       )}
-
 
       {error && items.length === 0 && (
         <Typography color="error" sx={{ mb: 2 }}>
@@ -208,7 +196,7 @@ export default function RSSFeed({ feedId }) {
             key={`${item.url}-${idx}`}
             item={item}
             feedMeta={feedMeta}
-            onRefresh={refreshFeedItem}
+            onRefresh={() => fetchFeed(feedId)}
           />
         ))}
       </Stack>

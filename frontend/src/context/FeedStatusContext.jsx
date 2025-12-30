@@ -24,23 +24,23 @@ const BACKEND_URL =
 
 export const FeedStatusContext = createContext({
   status: {},
-  setStatus: () => {},
-  setBulkStatus: () => {},
+  setStatus: () => { },
+  setBulkStatus: () => { },
 
   health: null,
-  setHealth: () => {},
+  setHealth: () => { },
 
   strictMode: true,
-  setStrictMode: () => {},
+  setStrictMode: () => { },
 
   sampleSize: 1,
-  setSampleSize: () => {},
+  setSampleSize: () => { },
 
   debugMode: "",
-  setDebugMode: () => {},
+  setDebugMode: () => { },
 
   lastUpdated: null,
-  setLastUpdated: () => {}
+  setLastUpdated: () => { }
 });
 
 export function FeedStatusProvider({ children }) {
@@ -86,13 +86,20 @@ export function FeedStatusProvider({ children }) {
       if (!healthObj?.feeds) return;
 
       const normalized = {};
+
       for (const [feedId, entry] of Object.entries(healthObj.feeds)) {
         if (entry.ok) {
           normalized[feedId] = entry.type === "json" ? "json" : "ok";
         } else if (entry.status === "fallback") {
           normalized[feedId] = "fallback";
+        } else if (entry.status === "dead") {
+          normalized[feedId] = "dead";
+        } else if (entry.status === "blocked") {
+          normalized[feedId] = "blocked";
+        } else if (entry.status === "html_error") {
+          normalized[feedId] = "html_error";
         } else {
-          normalized[feedId] = "error";
+          normalized[feedId] = "unknown";
         }
       }
 
@@ -100,6 +107,7 @@ export function FeedStatusProvider({ children }) {
     },
     [setBulkStatus]
   );
+
 
   // ------------------------------------------------------------
   // Poll backend health every 60 seconds

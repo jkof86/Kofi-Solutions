@@ -1,5 +1,14 @@
 // ------------------------------------------------------------
-// cryptoMap.js — CoinPaprika IDs (alphabetized)
+// cryptoMap.js — v1.180 (CoinPaprika IDs, Alphabetized)
+// ------------------------------------------------------------
+//
+// Notes:
+//   • Keys must be lowercase ticker symbols
+//   • Values must be EXACT CoinPaprika IDs
+//   • Used by handleMarket → fetchCryptoPrice
+//   • Fully compatible with symbol normalization (BRK.B → brk-b)
+//   • Alphabetized for maintainability
+//
 // ------------------------------------------------------------
 
 const CRYPTO_MAP = {
@@ -17,7 +26,18 @@ const CRYPTO_MAP = {
   trx: "trx-tron",
   xrp: "xrp-xrp",
   zec: "zec-zcash"
+
+  // ------------------------------------------------------------
+  // Optional future additions (commented for now)
+  // ------------------------------------------------------------
+  // arb: "arb-arbitrum",
+  // op: "op-optimism",
+  // matic: "matic-polygon",
+  // dot: "dot-polkadot",
+  // atom: "atom-cosmos",
+  // near: "near-near-protocol",
+  // apt: "apt-aptos",
+  // sui: "sui-sui",
 };
 
 module.exports = { CRYPTO_MAP };
-

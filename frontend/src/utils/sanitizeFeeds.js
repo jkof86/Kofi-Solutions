@@ -1,41 +1,58 @@
 // ------------------------------------------------------------
-// sanitizeFeeds.js — Frontend FEEDS Normalizer
+// sanitizeFeeds.js — v1.180 (Correct Flattening + Safe Builder)
 // ------------------------------------------------------------
 //
-// Purpose:
-//   - Ensure FEEDS is always safe for UI rendering
-//   - Remove invalid categories
-//   - Remove invalid feed objects
-//   - Hide "dead_feeds" category from UI
-//   - Guarantee FEEDS[category] is always an array
+// Input FEEDS shape (frontend):
+//   {
+//     crypto: [ { id, name, url, type }, ... ],
+//     finance: [ ... ],
+//     ...
+//   }
 //
-// This prevents UI crashes when auto-fix rewrites FEEDS.
+// Output CLEAN_FEEDS shape (flat):
+//   {
+//     coindesk: { id, name, label, url, type, category, categories },
+//     cointelegraph: { ... },
+//     ...
+//   }
+//
+// This is the format TabsLayout, FeedStatusBar, and MarketChart expect.
+//
 // ------------------------------------------------------------
 
-export function sanitizeFeeds(FEEDS) {
-  const clean = {};
+export function sanitizeFeeds(nestedFeeds) {
+  if (!nestedFeeds || typeof nestedFeeds !== "object") return {};
 
-  for (const category of Object.keys(FEEDS)) {
-    const feeds = FEEDS[category];
+  const flat = {};
 
-    // Hide dead feeds from UI
-    if (category === "dead_feeds") continue;
+  for (const category of Object.keys(nestedFeeds)) {
+    const arr = nestedFeeds[category];
 
-    // Ensure category is an array
-    if (!Array.isArray(feeds)) {
-      clean[category] = [];
-      continue;
+    if (!Array.isArray(arr)) continue;
+
+    for (const f of arr) {
+      if (!f || typeof f !== "object") continue;
+
+      // Required fields
+      if (!f.id || !f.url || !f.type) continue;
+
+      // Valid type
+      if (!["rss", "json"].includes(f.type)) continue;
+
+      // Normalize label/name
+      const label = f.label || f.name || f.id;
+
+      flat[f.id] = {
+        id: f.id,
+        label,
+        name: f.name || label,
+        url: f.url,
+        type: f.type,
+        category,
+        categories: f.categories || [category]
+      };
     }
-
-    // Filter out invalid feed objects
-    clean[category] = feeds.filter(
-      (f) =>
-        f &&
-        typeof f.id === "string" &&
-        typeof f.url === "string" &&
-        f.url.length > 0
-    );
   }
 
-  return clean;
+  return flat;
 }

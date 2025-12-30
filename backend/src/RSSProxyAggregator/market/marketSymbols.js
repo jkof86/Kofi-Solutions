@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// marketSymbols.js — v1.160 (Recreated)
+// marketSymbols.js — v1.180 (Aligned + Stable)
 // ------------------------------------------------------------
 //
 // This file defines the full list of symbols that the health
@@ -18,25 +18,26 @@ const MARKET_SYMBOLS = [
   // -------------------------
   // CRYPTO (from CRYPTO_MAP)
   // -------------------------
-  "btc",
-  "eth",
-  "sol",
-  "xrp",
   "ada",
   "avax",
   "bch",
+  "bonk",
+  "btc",
   "doge",
+  "eth",
+  "icp",
   "ltc",
   "shib",
+  "sol",
   "trx",
-  "icp",
+  "xrp",
   "zec",
-  "bonk",
 
   // -------------------------
   // STOCKS (from STOCK_MAP)
   // -------------------------
   "amzn",
+  "brk-b",
   "djt",
   "gme",
   "goog",
@@ -52,36 +53,36 @@ const MARKET_SYMBOLS = [
   // -------------------------
   // ETFs (from ETF_MAP)
   // -------------------------
-  "spy",
-  "qqq",
-  "dia",
-  "vti",
-  "voo",
-  "iwf",
-  "iwd",
-  "ijr",
-  "xlf",
-  "xle",
-  "xlk",
-  "xlv",
-  "xly",
-  "xlp",
-  "xli",
-  "xlb",
-  "xlc",
-  "xlu",
+  "arkg",
   "arkk",
   "arkw",
-  "arkg",
+  "bnd",
+  "dia",
+  "gdx",
+  "ijr",
+  "iwd",
+  "iwf",
+  "qqq",
   "schd",
-  "vym",
+  "slv",
+  "spy",
+  "tlt",
   "vgt",
   "vht",
+  "vti",
   "vnq",
-  "gdx",
-  "slv",
-  "tlt",
-  "bnd"
+  "voo",
+  "vym",
+  "xlb",
+  "xlc",
+  "xle",
+  "xlf",
+  "xli",
+  "xlk",
+  "xlp",
+  "xlu",
+  "xlv",
+  "xly"
 ];
 
 module.exports = { MARKET_SYMBOLS };
