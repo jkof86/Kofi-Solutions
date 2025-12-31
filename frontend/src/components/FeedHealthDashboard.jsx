@@ -114,7 +114,7 @@ export default function FeedHealthDashboard() {
 
   const copyDebug = () => {
     if (!debugOutput) return;
-    navigator.clipboard.writeText(debugOutput).catch(() => {});
+    navigator.clipboard.writeText(debugOutput).catch(() => { });
   };
 
   const formatTime = (d) => {
@@ -201,8 +201,8 @@ export default function FeedHealthDashboard() {
                 info.status === "ok" || info.status === "json"
                   ? "success"
                   : info.status === "fallback"
-                  ? "warning"
-                  : "error";
+                    ? "warning"
+                    : "error";
 
               return (
                 <Chip
@@ -225,12 +225,11 @@ export default function FeedHealthDashboard() {
                 m.status === "ok" || m.status === "json"
                   ? "success"
                   : m.status === "fallback"
-                  ? "warning"
-                  : "error";
+                    ? "warning"
+                    : "error";
 
-              const label = `${symbol.toUpperCase()} — ${
-                m.type || "unknown"
-              }: ${m.price != null ? `$${m.price.toFixed(2)}` : "no data"}`;
+              const label = `${symbol.toUpperCase()} — ${m.type || "unknown"
+                }: ${m.price != null ? `$${m.price.toFixed(2)}` : "no data"}`;
 
               return (
                 <Chip
@@ -253,13 +252,16 @@ export default function FeedHealthDashboard() {
           </Typography>
 
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mb: 2 }}>
-            <Chip label="Ping" color="info" onClick={() => runDebug("?debug=ping")} clickable />
-            <Chip label="Echo" color="info" onClick={() => runDebug("?debug=echo")} clickable />
-            <Chip label="Feeds" color="info" onClick={() => runDebug("?debug=debug_feeds")} clickable />
-            <Chip label="Market" color="info" onClick={() => runDebug("?debug=debug_market")} clickable />
-            <Chip label="Health" color="info" onClick={() => runDebug("?debug=debug_health")} clickable />
-            <Chip label="Env" color="info" onClick={() => runDebug("?debug=debug_env")} clickable />
-            <Chip label="Router Error" color="warning" onClick={() => runDebug("?unknown=123")} clickable />
+            <Chip label="Ping" color="info" onClick={() => runDebug("?mode=debug&debug=ping")} clickable />
+            <Chip label="Echo" color="info" onClick={() => runDebug("?mode=debug&debug=echo")} clickable />
+            <Chip label="Env" color="info" onClick={() => runDebug("?mode=env&debug=debug_env")} clickable />
+            {/* <Chip label="Router Error" color="warning" onClick={() => runDebug("?mode=debug&unknown=123")} clickable /> */}
+            <Chip label="Feeds" color="info" onClick={() => runDebug("?mode=feeds&debug=debug_feeds")} clickable />
+            <Chip label="Market" color="info" onClick={() => runDebug("?mode=market&debug=debug_market")} clickable />
+            <Chip label="Health" color="info" onClick={() => runDebug("?mode=health&debug=debug_health")} clickable />
+            
+            <Chip label="Clear" color="warning" onClick={() => (setDebugOutput(""))} clickable />
+
           </Stack>
 
           {/* Custom Query Runner */}
