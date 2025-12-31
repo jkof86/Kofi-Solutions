@@ -1,68 +1,85 @@
 /**
- * index.js
+ * index.js — v1.198
  * ---------------------------------------------------------
  * Application entry point for the Kofi Solutions frontend.
  *
- * This file mounts the React application and defines the
- * top‑level provider tree:
+ * This file defines the **true top‑level provider tree**.
+ * All global contexts MUST be registered here so that every
+ * page, route, and component receives consistent state.
  *
- *  - React.StrictMode: dev‑only checks for unsafe patterns
- *  - GoogleOAuthProvider: enables Google login
- *  - AppProvider: global UI/app state (non‑feed related)
- *  - BrowserRouter: routing layer for all pages
+ * Provider Order (outer → inner):
+ *
+ *   1. React.StrictMode
+ *   2. GoogleOAuthProvider      → Google login
+ *   3. AppProvider              → global UI state (theme/layout)
+ *   4. FeedStatusProvider       → feed + market health (POLLING)
+ *   5. GlobalRefreshProvider    → manual refresh + retry logic
+ *   6. BrowserRouter            → routing layer
+ *   7. <App />                  → all pages (Home, Login, etc.)
  *
  * IMPORTANT:
- * FeedStatusProvider and GlobalRefreshProvider are NOT here.
- * They wrap <App /> inside Home.js This file should remain minimal.
+ * FeedStatusProvider MUST wrap the entire app so that:
+ *   • FeedHealthDashboard receives live health updates
+ *   • TabsLayout receives feed status
+ *   • TickerBar receives market status
+ *
+ * If this provider is missing or mis‑nested, the UI will
+ * freeze on “Loading health…” even if the backend works.
+ * ---------------------------------------------------------
  */
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import "./index.css";
 
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
 
-import { BrowserRouter } from 'react-router-dom';
-import AppProvider from './components/providers/AppContext';
+import { BrowserRouter } from "react-router-dom";
+import AppProvider from "./components/providers/AppContext";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
-// Google OAuth client ID (injected via .env)
+// NEW: Feed + Market Health Context
+import { FeedStatusProvider } from "./context/FeedStatusContext";
+
+// NEW: Manual Refresh / Retry Context
+import { GlobalRefreshProvider } from "./context/GlobalRefreshContext";
+
+// Google OAuth client ID (from .env)
 const clientId = process.env.REACT_APP_CLIENT_ID;
 
 // Create the root React mount point
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 
-// Render the application
+// ---------------------------------------------------------
+// Render Application
+// ---------------------------------------------------------
 root.render(
   <React.StrictMode>
     {/* Google OAuth must wrap the entire app */}
     <GoogleOAuthProvider clientId={clientId}>
-
-      {/**
-       * AppProvider:
-       * Global UI state (theme, layout prefs, etc.)
-       * Does NOT handle feed health or refresh logic.
-       */}
+      
+      {/* Global UI state (theme, layout prefs, etc.) */}
       <AppProvider>
 
-        {/**
-         * BrowserRouter:
-         * Enables all <Route> definitions inside App.jsx.
-         * Must wrap <App /> so routing works everywhere.
-         */}
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        {/* Feed + Market health (polling every 60s) */}
+        <FeedStatusProvider>
 
+          {/* Manual refresh + retry logic */}
+          <GlobalRefreshProvider>
+
+            {/* Routing layer */}
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+
+          </GlobalRefreshProvider>
+        </FeedStatusProvider>
       </AppProvider>
     </GoogleOAuthProvider>
   </React.StrictMode>
 );
 
-/**
- * Optional performance analytics.
- * Safe to leave as-is; does nothing unless configured.
- */
+// Optional performance analytics
 reportWebVitals();

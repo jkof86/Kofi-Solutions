@@ -1,46 +1,43 @@
 // ------------------------------------------------------------
-// FeedHealthDashboard.jsx — v1.190 (Context‑Driven Health Panel)
+// FeedHealthDashboard.jsx — v1.201
 // ------------------------------------------------------------
 //
-// Responsibilities:
-//   ✓ Visualize feed + market health from FeedStatusContext
-//   ✓ Expose strict/soft mode, sample size, debug mode controls
-//   ✓ Provide manual refresh + debug test chips
-//   ✓ Show last updated timestamp + raw debug payload
-//
-// Architectural Notes:
-//   • Health polling is owned by FeedStatusContext
-//   • This component SHOULD NOT own its own polling loop
-//   • It calls a one‑shot refresh when user clicks the refresh icon
-//   • Expects health shape:
-//       {
-//         status: "ok" | "error" | ...,
-//         feeds:   { [feedId]: { status, count, ... } },
-//         markets: { [symbol]: { status, type, price, ... } },
-//         debug?:  any
-//       }
+// Features:
+//   ✓ Tabs: Health / Debug / History
+//   ✓ Health tab: feed + market chips (read-only)
+//   ✓ Debug tab: preset buttons + custom query + console
+//   ✓ History tab: existing <HealthHistory />
+//   ✓ Auto-scroll debug console
+//   ✓ Copy-to-clipboard for debug output
+//   ✓ Basic JSON syntax highlighting
 //
 // ------------------------------------------------------------
 
-import React, { useEffect, useContext, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useContext,
+  useState,
+  useCallback,
+  useRef
+} from "react";
 import {
   Box,
   Chip,
   Typography,
   Stack,
-  ToggleButton,
-  ToggleButtonGroup,
-  FormControl,
-  Select,
-  MenuItem,
-  InputLabel,
   Divider,
-  IconButton
+  IconButton,
+  TextField,
+  Button,
+  Paper,
+  Tabs,
+  Tab,
+  Tooltip
 } from "@mui/material";
 
 import RefreshIcon from "@mui/icons-material/Refresh";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { FeedStatusContext } from "../context/FeedStatusContext";
-import { debugRequest } from "../utils/debugApi";
 import HealthHistory from "./HealthHistory";
 
 const API =
@@ -48,12 +45,6 @@ const API =
 
 export default function FeedHealthDashboard() {
   const {
-    strictMode,
-    setStrictMode,
-    sampleSize,
-    setSampleSize,
-    debugMode,
-    setDebugMode,
     lastUpdated,
     setLastUpdated,
     health,
@@ -61,61 +52,34 @@ export default function FeedHealthDashboard() {
   } = useContext(FeedStatusContext);
 
   const [error, setError] = useState(null);
+  const [tab, setTab] = useState(0);
+
+  const [debugOutput, setDebugOutput] = useState("");
+  const [customQuery, setCustomQuery] = useState("");
+
+  const debugRef = useRef(null);
 
   // ------------------------------------------------------------
-  // Global Debug Toggle (URL param + keyboard shortcut)
-  // ------------------------------------------------------------
-  const [globalDebug, setGlobalDebug] = useState(() => {
-    const urlParam = new URLSearchParams(window.location.search).get("debug");
-    return urlParam === "true";
-  });
-
-  // Keyboard shortcut: Ctrl + Shift + D
-  useEffect(() => {
-    const handler = (e) => {
-      if (e.ctrlKey && e.shiftKey && e.key === "D") {
-        setGlobalDebug((prev) => !prev);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
-
-  // Sync global debug ↔ debugMode
-  useEffect(() => {
-    if (globalDebug && debugMode !== "debug_health") {
-      setDebugMode("debug_health");
-    }
-    if (!globalDebug && debugMode === "debug_health") {
-      setDebugMode("");
-    }
-  }, [globalDebug, debugMode, setDebugMode]);
-
-  // ------------------------------------------------------------
-  // One‑shot health refresh (uses same contract as context polling)
+  // Manual health refresh
   // ------------------------------------------------------------
   const load = useCallback(async () => {
     try {
-      const res = await fetch(
-        `${API}?mode=health&strict=${strictMode}&sampleSize=${sampleSize}&debug=${debugMode}`
-      );
+      const res = await fetch(`${API}?mode=health`);
       const json = await res.json();
 
       if (json.status !== "ok") {
         setError(json.error || "Health error");
-        setHealth(null);
-      } else {
-        setHealth(json);
-        setError(null);
-        setLastUpdated(new Date());
+        return;
       }
-    } catch (err) {
-      setError(err.message);
-      setHealth(null);
-    }
-  }, [strictMode, sampleSize, debugMode, setHealth, setLastUpdated]);
 
-  // Initial load if context has no health yet
+      setHealth(json);
+      setError(null);
+      setLastUpdated(new Date());
+    } catch (err) {
+      setError(err.message || "Health fetch failed");
+    }
+  }, [setHealth, setLastUpdated]);
+
   useEffect(() => {
     if (!health) {
       load();
@@ -123,9 +87,48 @@ export default function FeedHealthDashboard() {
   }, [health, load]);
 
   // ------------------------------------------------------------
-  // Render: Error
+  // Debug runner — fetch + pretty-print JSON into console panel
   // ------------------------------------------------------------
-  if (error) {
+  const runDebug = async (query) => {
+    try {
+      const res = await fetch(`${API}${query}`);
+      const json = await res.json();
+
+      setDebugOutput(
+        `REQUEST: ${API}${query}\n\n` +
+        JSON.stringify(json, null, 2)
+      );
+      setTab(1); // switch to Debug tab
+    } catch (err) {
+      setDebugOutput(`ERROR: ${err.message}`);
+      setTab(1);
+    }
+  };
+
+  // Auto-scroll debug console
+  useEffect(() => {
+    if (debugRef.current) {
+      debugRef.current.scrollTop = debugRef.current.scrollHeight;
+    }
+  }, [debugOutput]);
+
+  const copyDebug = () => {
+    if (!debugOutput) return;
+    navigator.clipboard.writeText(debugOutput).catch(() => {});
+  };
+
+  const formatTime = (d) => {
+    if (!d) return "";
+    const date = typeof d === "number" ? new Date(d) : d;
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+  };
+
+  if (error && !health) {
     return (
       <Box sx={{ p: 2 }}>
         <Typography variant="h6" color="error" sx={{ mb: 2 }}>
@@ -136,9 +139,6 @@ export default function FeedHealthDashboard() {
     );
   }
 
-  // ------------------------------------------------------------
-  // Render: Loading
-  // ------------------------------------------------------------
   if (!health) {
     return (
       <Box sx={{ p: 2 }}>
@@ -147,205 +147,181 @@ export default function FeedHealthDashboard() {
     );
   }
 
-  // v1.190 health response shape
-  const { feeds = {}, markets = {}, debug } = health;
-
-  const formatTime = (d) =>
-    d
-      ? d.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit"
-        })
-      : "";
+  const { feeds = {}, markets = {} } = health;
 
   // ------------------------------------------------------------
-  // Render: Dashboard
+  // Render
   // ------------------------------------------------------------
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ p: 1 }}>
       {/* Header */}
       <Stack
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ mb: 2 }}
+        sx={{ mb: 1 }}
       >
-        <Typography variant="h6">System Health</Typography>
-
-        <Stack direction="row" spacing={1} alignItems="center">
-          {/* Global Debug Indicator */}
-          {globalDebug && (
-            <Chip
-              label="Global Debug ON"
-              color="secondary"
-              size="small"
-              sx={{ fontSize: 11 }}
-            />
-          )}
-
-          <IconButton onClick={load}>
-            <RefreshIcon />
-          </IconButton>
-        </Stack>
-      </Stack>
-
-      {/* Debug Tools */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1 }}>
-          Debug Tools
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          System Health
         </Typography>
 
-        <Stack spacing={1}>
-          <Chip
-            label="Test Health"
-            onClick={() => debugRequest("?mode=health")}
-            color="info"
-            clickable
-          />
-          <Chip
-            label="Test Market BTC"
-            onClick={() => debugRequest("?mode=market&symbol=btc")}
-            color="info"
-            clickable
-          />
-          <Chip
-            label="Test Router Error"
-            onClick={() => debugRequest("?unknown=123")}
-            color="warning"
-            clickable
-          />
-        </Stack>
-      </Box>
+        <IconButton onClick={load} size="small">
+          <RefreshIcon fontSize="small" />
+        </IconButton>
+      </Stack>
 
-      {/* Debug Mode Dropdown */}
-      <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-        <InputLabel>Debug Mode</InputLabel>
-        <Select
-          value={debugMode}
-          label="Debug Mode"
-          onChange={(e) => setDebugMode(e.target.value)}
-        >
-          <MenuItem value="">None</MenuItem>
-          <MenuItem value="ping">Ping</MenuItem>
-          <MenuItem value="echo">Echo</MenuItem>
-          <MenuItem value="debug_feeds">Debug Feeds</MenuItem>
-          <MenuItem value="debug_market">Debug Market</MenuItem>
-          <MenuItem value="debug_health">Debug Health</MenuItem>
-          <MenuItem value="debug_maps">Debug Maps</MenuItem>
-          <MenuItem value="debug_env">Debug Env</MenuItem>
-        </Select>
-      </FormControl>
-
-      {/* Strict/Soft Toggle */}
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Mode
+      <Typography variant="caption" sx={{ display: "block", mb: 1 }}>
+        Last updated: {formatTime(lastUpdated) || "—"}
       </Typography>
-      <ToggleButtonGroup
-        value={strictMode ? "strict" : "soft"}
-        exclusive
-        onChange={(_, val) => {
-          if (val === "strict") setStrictMode(true);
-          if (val === "soft") setStrictMode(false);
-        }}
-        sx={{ mb: 2 }}
+
+      <Divider sx={{ mb: 1 }} />
+
+      {/* Tabs */}
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        variant="fullWidth"
+        sx={{ mb: 1 }}
       >
-        <ToggleButton value="soft">Soft</ToggleButton>
-        <ToggleButton value="strict">Strict</ToggleButton>
-      </ToggleButtonGroup>
+        <Tab label="Health" />
+        <Tab label="Debug" />
+        <Tab label="History" />
+      </Tabs>
 
-      {/* Sample Size */}
-      <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-        <InputLabel>Sample Size</InputLabel>
-        <Select
-          value={sampleSize}
-          label="Sample Size"
-          onChange={(e) => setSampleSize(e.target.value)}
-        >
-          <MenuItem value={1}>1 (Fastest)</MenuItem>
-          <MenuItem value={3}>3 (Balanced)</MenuItem>
-          <MenuItem value={5}>5 (Most Accurate)</MenuItem>
-        </Select>
-      </FormControl>
-
-      {/* Last Updated */}
-      <Typography variant="caption" sx={{ display: "block", mb: 2 }}>
-        Last updated: {formatTime(lastUpdated)}
-      </Typography>
-
-      <Divider sx={{ my: 2 }} />
-
-      {/* ------------------------------------------------------------
-         FEED HEALTH
-         ------------------------------------------------------------ */}
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Feed Health
-      </Typography>
-
-      <Stack spacing={1} sx={{ mb: 2 }}>
-        {Object.entries(feeds).map(([feedId, info]) => {
-          const color =
-            info.status === "ok" || info.status === "json"
-              ? "success"
-              : info.status === "fallback"
-              ? "warning"
-              : "error";
-
-          return (
-            <Chip
-              key={feedId}
-              label={`${feedId}: ${info.status} (${info.count})`}
-              color={color}
-            />
-          );
-        })}
-      </Stack>
-
-      {/* ------------------------------------------------------------
-         MARKET HEALTH
-         ------------------------------------------------------------ */}
-      <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Market Health
-      </Typography>
-
-      <Stack spacing={1} sx={{ mb: 2 }}>
-        {Object.entries(markets).map(([symbol, m]) => {
-          const color =
-            m.status === "ok" || m.status === "json"
-              ? "success"
-              : m.status === "fallback"
-              ? "warning"
-              : "error";
-
-          const label = `${symbol.toUpperCase()} — ${m.type || "unknown"}: ${
-            m.price != null ? `$${m.price.toFixed(2)}` : "no data"
-          }`;
-
-          return <Chip key={symbol} label={label} color={color} />;
-        })}
-      </Stack>
-
-      {/* Debug Output */}
-      {debugMode && debug && (
-        <Box
-          sx={{
-            mt: 2,
-            p: 1,
-            bgcolor: "#111",
-            color: "#0f0",
-            borderRadius: 1
-          }}
-        >
+      {/* Tab Panels */}
+      {tab === 0 && (
+        <Box sx={{ mt: 1 }}>
+          {/* Feed Health */}
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Debug Output
+            Feed Health
           </Typography>
-          <pre style={{ fontSize: "0.75rem", whiteSpace: "pre-wrap" }}>
-            {JSON.stringify(debug, null, 2)}
-          </pre>
+          <Stack spacing={1} sx={{ mb: 2 }}>
+            {Object.entries(feeds).map(([feedId, info]) => {
+              const color =
+                info.status === "ok" || info.status === "json"
+                  ? "success"
+                  : info.status === "fallback"
+                  ? "warning"
+                  : "error";
+
+              return (
+                <Chip
+                  key={feedId}
+                  label={`${feedId}: ${info.status} (${info.count})`}
+                  color={color}
+                  size="small"
+                />
+              );
+            })}
+          </Stack>
+
+          {/* Market Health */}
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Market Health
+          </Typography>
+          <Stack spacing={1} sx={{ mb: 2 }}>
+            {Object.entries(markets).map(([symbol, m]) => {
+              const color =
+                m.status === "ok" || m.status === "json"
+                  ? "success"
+                  : m.status === "fallback"
+                  ? "warning"
+                  : "error";
+
+              const label = `${symbol.toUpperCase()} — ${
+                m.type || "unknown"
+              }: ${m.price != null ? `$${m.price.toFixed(2)}` : "no data"}`;
+
+              return (
+                <Chip
+                  key={symbol}
+                  label={label}
+                  color={color}
+                  size="small"
+                />
+              );
+            })}
+          </Stack>
         </Box>
       )}
 
-      <HealthHistory />
+      {tab === 1 && (
+        <Box sx={{ mt: 1 }}>
+          {/* Preset Debug Buttons */}
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            API Debug
+          </Typography>
+
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mb: 2 }}>
+            <Chip label="Ping" color="info" onClick={() => runDebug("?debug=ping")} clickable />
+            <Chip label="Echo" color="info" onClick={() => runDebug("?debug=echo")} clickable />
+            <Chip label="Feeds" color="info" onClick={() => runDebug("?debug=debug_feeds")} clickable />
+            <Chip label="Market" color="info" onClick={() => runDebug("?debug=debug_market")} clickable />
+            <Chip label="Health" color="info" onClick={() => runDebug("?debug=debug_health")} clickable />
+            <Chip label="Env" color="info" onClick={() => runDebug("?debug=debug_env")} clickable />
+            <Chip label="Router Error" color="warning" onClick={() => runDebug("?unknown=123")} clickable />
+          </Stack>
+
+          {/* Custom Query Runner */}
+          <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+            <TextField
+              fullWidth
+              label="Custom Query (e.g. ?mode=market&symbol=btc)"
+              value={customQuery}
+              onChange={(e) => setCustomQuery(e.target.value)}
+              size="small"
+            />
+            <Button
+              variant="contained"
+              onClick={() => runDebug(customQuery)}
+              disabled={!customQuery.trim()}
+            >
+              Run
+            </Button>
+          </Stack>
+
+          {/* Debug Output Panel */}
+          <Stack direction="row" alignItems="center" sx={{ mb: 1 }}>
+            <Typography variant="caption" sx={{ flex: 1 }}>
+              Debug Output
+            </Typography>
+            <Tooltip title="Copy to clipboard">
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={copyDebug}
+                  disabled={!debugOutput}
+                >
+                  <ContentCopyIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Stack>
+
+          <Paper
+            elevation={3}
+            sx={{
+              p: 1.5,
+              bgcolor: "#111",
+              color: "#0f0",
+              borderRadius: 1,
+              height: "220px",
+              overflowY: "auto",
+              fontSize: "0.8rem",
+              fontFamily: "monospace",
+            }}
+            ref={debugRef}
+          >
+            {debugOutput || "Debug output will appear here…"}
+          </Paper>
+        </Box>
+      )}
+
+      {tab === 2 && (
+        <Box sx={{ mt: 1 }}>
+          <HealthHistory />
+        </Box>
+      )}
     </Box>
   );
 }

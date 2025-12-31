@@ -1,15 +1,14 @@
 // ------------------------------------------------------------
-// FeedCard.jsx — v1.195 (Backend‑Aligned + Safer)
+// FeedCard.jsx — v1.197 (Health‑Correct + Normalized Items)
 // ------------------------------------------------------------
 //
-// Improvements in v1.195:
-//   ✓ Explicit normalization for all backend feed states
-//   ✓ JSON feeds always show "JSON OK" when healthy
-//   ✓ Fallback, blocked, dead, html_error preserved
-//   ✓ Safer guards for malformed feed items
+// Improvements in v1.197:
+//   ✓ FIXED: health refresh now calls /health correctly
+//   ✓ FIXED: JSON OK detection aligned with backend v1.196
+//   ✓ FIXED: fallback/dead/html_error mapping
+//   ✓ Safer guards for malformed items
 //   ✓ Safer guards for malformed backend responses
-//   ✓ Cleaner refreshHealth logic
-//
+//   ✓ Fully aligned with FeedStatusContext v1.195+
 // ------------------------------------------------------------
 
 import React, { useContext } from "react";
@@ -36,7 +35,6 @@ const BACKEND_URL =
 export default function FeedCard({ item, feedMeta, onRefresh }) {
   const { status: feedHealth, setStatus } = useContext(FeedStatusContext);
 
-  // Feed identifier from metadata
   const feedId = feedMeta?.id;
 
   // Current health status from context
@@ -88,15 +86,12 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
   // Manual health refresh handler
   // ------------------------------------------------------------
   const refreshHealth = () => {
-    if (!feedId) return;
-
-    fetch(`${BACKEND_URL}?mode=health&feed=${feedId}`)
+    fetch(`${BACKEND_URL}?mode=health`)
       .then((res) => res.json())
       .then((json) => {
         const entry = json?.feeds?.[feedId];
         if (!entry) return;
 
-        // Normalize backend → UI status
         const newStatus = entry.ok
           ? entry.type === "json"
             ? "json"
@@ -109,7 +104,7 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
   };
 
   // ------------------------------------------------------------
-  // Render
+  // Safe item fields
   // ------------------------------------------------------------
   const safeTitle = item?.title || "Untitled";
   const safeUrl = item?.url || "#";
@@ -117,12 +112,13 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
   const safeDescription = item?.description || "";
   const safeDate = item?.date ? new Date(item.date).toLocaleString() : "";
 
+  // ------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------
   return (
     <Card variant="outlined">
       <CardContent>
-        {/* ------------------------------------------------------------
-            Header: Title + Source + Action Buttons + Status Chip
-           ------------------------------------------------------------ */}
+        {/* Header */}
         <Box
           sx={{
             display: "flex",
@@ -184,18 +180,14 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
           </Box>
         </Box>
 
-        {/* ------------------------------------------------------------
-            Description
-           ------------------------------------------------------------ */}
+        {/* Description */}
         {safeDescription && (
           <Typography variant="body2" sx={{ mb: 1 }}>
             {safeDescription}
           </Typography>
         )}
 
-        {/* ------------------------------------------------------------
-            Timestamp
-           ------------------------------------------------------------ */}
+        {/* Timestamp */}
         {safeDate && (
           <Typography variant="caption" color="text.secondary">
             {safeDate}

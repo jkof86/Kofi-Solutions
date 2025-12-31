@@ -1,14 +1,28 @@
 // ------------------------------------------------------------
-// FeedStatusContext.jsx — v1.195 (Backend‑Aligned + Safer)
+// FeedStatusContext.jsx — v1.198 (Stable + Timestamp‑Correct)
 // ------------------------------------------------------------
 //
-// Improvements in v1.195:
-//   ✓ Explicit normalization for all backend feed states
-//   ✓ JSON feeds always normalize as "json"
-//   ✓ Fallback, blocked, dead, html_error preserved
-//   ✓ Safer guards for malformed backend responses
-//   ✓ Optional deep debug logging
-//   ✓ More stable memoization
+// Improvements in v1.198:
+//   ✓ Ensures lastUpdated is ALWAYS a Date object
+//     (fixes .toLocaleTimeString crash in dashboard)
+//   ✓ Calls /health with NO unsupported params
+//   ✓ Validates backend response before updating state
+//   ✓ Never wipes status/health on backend failure
+//   ✓ Normalizes only when json.status === "ok"
+//   ✓ Stable strictMode behavior
+//   ✓ Stable memoization
+//
+// Architectural Notes:
+//   • This context is the SINGLE source of truth for:
+//       - feed health
+//       - market health
+//       - normalized feed status map
+//       - strict/soft mode
+//       - lastUpdated timestamp
+//
+//   • FeedHealthDashboard and other components MUST NOT
+//     fetch /health directly except for manual refresh.
+//     They should rely on this context for all state.
 //
 // ------------------------------------------------------------
 
@@ -23,6 +37,9 @@ import React, {
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
+// ------------------------------------------------------------
+// Default context shape
+// ------------------------------------------------------------
 export const FeedStatusContext = createContext({
   status: {},
   setStatus: () => {},
@@ -34,21 +51,15 @@ export const FeedStatusContext = createContext({
   strictMode: true,
   setStrictMode: () => {},
 
-  sampleSize: 1,
-  setSampleSize: () => {},
-
-  debugMode: "",
-  setDebugMode: () => {},
-
   lastUpdated: null,
   setLastUpdated: () => {}
 });
 
-console.log("FeedStatusContext v1.195 active");
+console.log("FeedStatusContext v1.198 active");
 
 export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
-  // Legacy per-feed status map (UI-friendly)
+  // Legacy per-feed status map (normalized from backend)
   // ------------------------------------------------------------
   const [status, setStatusMap] = useState({});
 
@@ -70,19 +81,17 @@ export function FeedStatusProvider({ children }) {
   const [health, setHealth] = useState(null);
 
   // ------------------------------------------------------------
-  // Modes + settings
+  // Strict mode toggle
   // ------------------------------------------------------------
   const [strictMode, setStrictMode] = useState(true);
-  const [sampleSize, setSampleSize] = useState(1);
-  const [debugMode, setDebugMode] = useState("");
 
   // ------------------------------------------------------------
-  // Timestamp
+  // Timestamp (ALWAYS a Date object in v1.198)
   // ------------------------------------------------------------
   const [lastUpdated, setLastUpdated] = useState(null);
 
   // ------------------------------------------------------------
-  // Normalize backend health → legacy status map
+  // Normalize backend health → UI status map
   // ------------------------------------------------------------
   const normalizeHealthToStatus = useCallback(
     (healthObj) => {
@@ -99,23 +108,14 @@ export function FeedStatusProvider({ children }) {
           continue;
         }
 
-        // Backend contract:
-        //   entry.ok → boolean
-        //   entry.type → "rss" | "json"
-        //   entry.status → "fallback" | "dead" | "blocked" | "html_error" | "ok"
-        //   entry.error → string | null
-
+        // Backend marks ok feeds with ok: true
         if (entry.ok === true) {
-          // JSON feeds must normalize as "json"
-          if (entry.type === "json") {
-            normalized[feedId] = "json";
-          } else {
-            normalized[feedId] = "ok";
-          }
+          normalized[feedId] =
+            entry.type === "json" ? "json" : "ok";
           continue;
         }
 
-        // Non-OK statuses
+        // Otherwise rely on backend status field
         switch (entry.status) {
           case "fallback":
             normalized[feedId] = "fallback";
@@ -130,8 +130,8 @@ export function FeedStatusProvider({ children }) {
             normalized[feedId] = "html_error";
             break;
           case "ok":
-            // Rare case: ok=false but status="ok"
-            normalized[feedId] = entry.type === "json" ? "json" : "ok";
+            normalized[feedId] =
+              entry.type === "json" ? "json" : "ok";
             break;
           default:
             normalized[feedId] = "unknown";
@@ -149,29 +149,39 @@ export function FeedStatusProvider({ children }) {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const url = `${BACKEND_URL}?mode=health&strict=${strictMode}&sampleSize=${sampleSize}&debug=${debugMode}`;
+        // ⭐ FIX: No unsupported params
+        const url = `${BACKEND_URL}?mode=health`;
+
         const res = await fetch(url);
         const json = await res.json();
 
-        if (debugMode) {
-          console.log("[FeedStatusContext] Raw health:", json);
+        // ⭐ Validate backend response
+        if (json?.status !== "ok") {
+          console.warn("[FeedStatusContext] Health returned error:", json);
+          return; // Do NOT overwrite state
         }
 
-        // Always store full health object
+        // Store full health object
         setHealth(json);
-        setLastUpdated(Date.now());
 
-        // Normalize feed statuses for UI
+        // ⭐ CRITICAL FIX:
+        // Always store a REAL Date object to prevent UI crashes
+        setLastUpdated(new Date());
+
+        // Normalize feed statuses
         normalizeHealthToStatus(json);
       } catch (err) {
         console.error("[FeedStatusContext] Health fetch error:", err);
       }
     };
 
+    // Initial fetch
     fetchHealth();
+
+    // Poll every 60s
     const interval = setInterval(fetchHealth, 60000);
     return () => clearInterval(interval);
-  }, [strictMode, sampleSize, debugMode, normalizeHealthToStatus]);
+  }, [normalizeHealthToStatus]);
 
   // ------------------------------------------------------------
   // Memoized context value
@@ -188,14 +198,8 @@ export function FeedStatusProvider({ children }) {
       strictMode,
       setStrictMode,
 
-      sampleSize,
-      setSampleSize,
-
-      debugMode,
-      setDebugMode,
-
       lastUpdated,
-      setLastUpdated
+      setLastUpdated // used by manual refresh in dashboard
     }),
     [
       status,
@@ -204,8 +208,6 @@ export function FeedStatusProvider({ children }) {
       health,
       setHealth,
       strictMode,
-      sampleSize,
-      debugMode,
       lastUpdated
     ]
   );

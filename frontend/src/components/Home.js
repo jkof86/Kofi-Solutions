@@ -1,23 +1,5 @@
 // ------------------------------------------------------------
-// Home.jsx — v1.190 (Context‑Driven Dashboard Shell)
-// ------------------------------------------------------------
-//
-// This component renders the main RSS Intelligence Dashboard UI.
-// It assumes the following providers wrap <App /> in index.js:
-//
-//   • FeedStatusProvider      → supplies feed + market health
-//   • GlobalRefreshProvider   → manual refresh + retry logic
-//
-// Home.jsx itself does NOT fetch health data. All health/state
-// flows come from context, ensuring a single source of truth.
-//
-// Responsibilities:
-//   ✓ Validate login state
-//   ✓ Render header + layout shell
-//   ✓ Render TabsLayout (categories + feeds)
-//   ✓ Render System Health drawer
-//   ✓ Provide spacing + layout for the dashboard
-//
+// Home.jsx — v1.202 (TickerBar Restored)
 // ------------------------------------------------------------
 
 import { useEffect, useState } from "react";
@@ -29,30 +11,21 @@ import {
 
 import RssFeedIcon from "@mui/icons-material/RssFeed";
 import TabsLayout from "./layouts/TabsLayout";
+import FeedStatusBar from "./FeedStatusBar";
+import MarketStatusBar from "./MarketStatusBar";
+import HealthSummaryCard from "./HealthSummaryCard";
 import FeedHealthDashboard from "./FeedHealthDashboard";
+import TickerBar from "./layouts/TickerBar";
 import { useNavigate } from "react-router-dom";
 import MainContainer from "./layouts/MainContainer";
 import HeaderShell from "./layouts/HeaderShell";
 import Drawer from "@mui/material/Drawer";
 
 export default function Home() {
-  // Controls whether the System Health drawer is open
   const [isHealthOpen, setIsHealthOpen] = useState(false);
-
-  // HeaderShell reports its height so MainContainer can offset content
   const [headerHeight, setHeaderHeight] = useState(null);
+  const [activeCategory, setActiveCategory] = useState("aws"); // ⭐ NEW
 
-  // ------------------------------------------------------------
-  // Login validation
-  // ------------------------------------------------------------
-  //
-  // This ensures users cannot access /home without being logged in.
-  // The login flag is stored in localStorage by LoginComponent.
-  //
-  // NOTE:
-  // If login state becomes more complex later (tokens, expiry),
-  // this should be replaced with a proper auth context.
-  //
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -66,33 +39,14 @@ export default function Home() {
     }
   }, [navigate]);
 
-  // ------------------------------------------------------------
-  // Render
-  // ------------------------------------------------------------
-  //
-  // Layout structure:
-  //
-  //   <HeaderShell />
-  //   <MainContainer>
-  //     <Container>
-  //       <Banner />
-  //       <TabsLayout />          ← categories + feed tabs
-  //       <Drawer>Health</Drawer> ← feed + market health
-  //     </Container>
-  //   </MainContainer>
-  //
-  // ------------------------------------------------------------
-
   return (
     <>
-      {/* Fixed header with health toggle + height reporting */}
       <HeaderShell
         onHeightChange={setHeaderHeight}
         isHealthOpen={isHealthOpen}
         setIsHealthOpen={setIsHealthOpen}
       />
 
-      {/* Main content area, offset by header height */}
       <MainContainer headerHeight={headerHeight}>
         <Container maxWidth="xl" sx={{ mt: 2, mb: 6 }}>
           <Box
@@ -103,9 +57,7 @@ export default function Home() {
               p: 3,
             }}
           >
-            {/* ------------------------------------------------------------
-                Banner — static title bar for the RSS dashboard
-               ------------------------------------------------------------ */}
+            {/* Banner */}
             <Box
               sx={{
                 display: "flex",
@@ -128,26 +80,30 @@ export default function Home() {
               </Box>
             </Box>
 
-            {/* ------------------------------------------------------------
-                TabsLayout
-                - Builds categories dynamically from FEEDS map
-                - Auto-selects first healthy feed
-                - Renders RSSFeed internally
-               ------------------------------------------------------------ */}
-            <TabsLayout />
+            {/* Tabs + Feed + Market Status */}
+            <TabsLayout
+              activeCategory={activeCategory}
+              setActiveCategory={setActiveCategory}
+            />
 
-            {/* ------------------------------------------------------------
-                System Health Drawer
-                - Shows feed + market health
-                - Debug tools included in FeedHealthDashboard
-               ------------------------------------------------------------ */}
+            {/* Health Summary */}
+            <HealthSummaryCard />
+
+            {/* Status Bars */}
+            <FeedStatusBar />
+            <MarketStatusBar />
+
+            {/* TickerBar (NEW) */}
+            <TickerBar activeCategory={activeCategory} />
+
+            {/* System Health Drawer */}
             <Drawer
               anchor="right"
               open={isHealthOpen}
               onClose={() => setIsHealthOpen(false)}
               PaperProps={{
                 sx: {
-                  width: "22rem",
+                  width: "26rem",
                   padding: 2,
                   backgroundColor: "#fafafa",
                 },

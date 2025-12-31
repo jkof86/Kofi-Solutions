@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// TabsLayout.jsx — v1.196 (Optimistic Strict Mode)
+// TabsLayout.jsx — v1.197 (Controlled Category)
 // ------------------------------------------------------------
 
 import React, {
@@ -15,7 +15,7 @@ import { FeedStatusContext } from "../../context/FeedStatusContext";
 import { FEEDS } from "../../data/feedsMap";
 import RSSFeed from "../RSSFeed";
 
-console.log("TabsLayout v1.196 loaded");
+console.log("TabsLayout v1.197 loaded");
 
 function TabPanel({ children, value, index }) {
   return (
@@ -25,7 +25,7 @@ function TabPanel({ children, value, index }) {
   );
 }
 
-export default function TabsLayout() {
+export default function TabsLayout({ activeCategory, setActiveCategory }) {
   const { status, strictMode } = useContext(FeedStatusContext);
 
   // ------------------------------------------------------------
@@ -49,15 +49,13 @@ export default function TabsLayout() {
   }, []);
 
   const categoryList = Object.keys(categories);
+  const categoryIndex = categoryList.indexOf(activeCategory);
+  const feedsInCategory = categories[activeCategory] || [];
 
   // ------------------------------------------------------------
-  // UI state
+  // Feed tab state
   // ------------------------------------------------------------
-  const [categoryIndex, setCategoryIndex] = useState(0);
   const [feedIndex, setFeedIndex] = useState(0);
-
-  const currentCategory = categoryList[categoryIndex];
-  const feedsInCategory = categories[currentCategory] || [];
 
   // ------------------------------------------------------------
   // Filter feeds by health (strict/soft mode)
@@ -67,16 +65,8 @@ export default function TabsLayout() {
 
     return feedsInCategory.filter((f) => {
       const s = status[f.feedId];
-
-      // ⭐ Optimistic strict mode:
-      // If we don't have a status yet, show the feed.
       if (!s) return true;
-
-      return (
-        s === "ok" ||
-        s === "json" ||
-        s === "fallback"
-      );
+      return s === "ok" || s === "json" || s === "fallback";
     });
   }, [feedsInCategory, status, strictMode]);
 
@@ -85,23 +75,22 @@ export default function TabsLayout() {
   // ------------------------------------------------------------
   useEffect(() => {
     setFeedIndex(0);
-  }, [categoryIndex, filteredFeeds.length]);
+  }, [activeCategory, filteredFeeds.length]);
 
   // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
   return (
     <Box sx={{ width: "100%" }}>
-
       {/* Category Tabs */}
       <Box sx={{ mb: 1 }}>
         <Typography variant="h5" sx={{ mb: 1 }}>
-          {currentCategory.toUpperCase()}
+          {activeCategory.toUpperCase()}
         </Typography>
 
         <Tabs
           value={categoryIndex}
-          onChange={(_, v) => setCategoryIndex(v)}
+          onChange={(_, v) => setActiveCategory(categoryList[v])}
           variant="scrollable"
           scrollButtons="auto"
         >
@@ -127,7 +116,7 @@ export default function TabsLayout() {
       {/* Feed Panels */}
       {filteredFeeds.map((f, i) => (
         <TabPanel key={f.feedId} value={feedIndex} index={i}>
-          <RSSFeed name={f.feedId} categoryLabel={currentCategory} />
+          <RSSFeed name={f.feedId} categoryLabel={activeCategory} />
         </TabPanel>
       ))}
 

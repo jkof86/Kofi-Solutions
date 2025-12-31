@@ -1,14 +1,14 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.195 (Backend‑Aligned + Safer)
+// RSSFeed.jsx — v1.197 (Flat FEEDS + Normalized Items + Stable)
 // ------------------------------------------------------------
 //
-// Improvements in v1.195:
-//   ✓ Explicit handling of backend feed states
-//   ✓ JSON feeds handled correctly
-//   ✓ Fallback detection aligned with backend v1.195
-//   ✓ Safer guards for malformed backend responses
-//   ✓ Debug panel resets correctly
-//   ✓ Cleaner tab switching behavior
+// Improvements in v1.197:
+//   ✓ normalizeItem() applied globally
+//   ✓ items normalized BEFORE slicing
+//   ✓ consistent title/url/description/date/source
+//   ✓ fallback + dead states handled cleanly
+//   ✓ debug panel stable
+//   ✓ refresh behavior stable
 //
 // ------------------------------------------------------------
 
@@ -24,12 +24,8 @@ import {
 
 import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
-import { sanitizeFeeds } from "../utils/sanitizeFeeds";
 
-console.log("RSSFeed v1.195 loaded");
-
-// FEEDS → CLEAN_FEEDS (sanitized metadata)
-const CLEAN_FEEDS = sanitizeFeeds(FEEDS);
+console.log("RSSFeed v1.197 loaded");
 
 const BATCH_SIZE = 4;
 const BACKEND_URL =
@@ -37,10 +33,8 @@ const BACKEND_URL =
 
 export default function RSSFeed({ name }) {
   const feedId = name;
+  const feedMeta = FEEDS[feedId];
 
-  // ------------------------------------------------------------
-  // Local state
-  // ------------------------------------------------------------
   const [items, setItems] = useState([]);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const [loading, setLoading] = useState(false);
@@ -49,7 +43,6 @@ export default function RSSFeed({ name }) {
   const [debugInfo, setDebugInfo] = useState(null);
   const [showDebug, setShowDebug] = useState(false);
 
-  // Global debug toggle (URL param or keyboard shortcut)
   const [globalDebug, setGlobalDebug] = useState(() => {
     const urlParam = new URLSearchParams(window.location.search).get("debug");
     return urlParam === "true";
@@ -67,9 +60,21 @@ export default function RSSFeed({ name }) {
   }, []);
 
   // ------------------------------------------------------------
-  // Resolve feed metadata
+  // Normalize feed items
   // ------------------------------------------------------------
-  const feedMeta = FEEDS[feedId];
+  function normalizeItem(item, fallbackSource) {
+    return {
+      title: item.title || "Untitled",
+      url: item.link || item.url || "#",
+      description:
+        item.contentSnippet ||
+        item.description ||
+        item.summary ||
+        "",
+      date: item.pubDate || item.isoDate || item.date || null,
+      source: item.source || fallbackSource || null
+    };
+  }
 
   // ------------------------------------------------------------
   // Fetch feed items from backend
@@ -93,29 +98,25 @@ export default function RSSFeed({ name }) {
       const res = await fetch(url);
       const json = await res.json();
 
-      const itemsArray = Array.isArray(json.items) ? json.items : [];
-      const hasItems = itemsArray.length > 0;
+      if (json.status === "dead") {
+        setError("Feed unavailable");
+        setItems([]);
+        return;
+      }
 
-      // Backend v1.195 contract:
-      //   status: "ok" | "fallback" | "dead" | "blocked" | "html_error"
-      //   items: [...]
-      //   error: string | null
-      //   debug: object | null
-      //
+      const itemsArray = Array.isArray(json.items) ? json.items : [];
+
       if (json.status !== "ok") {
         setIsFallback(json.status === "fallback");
         setItems(itemsArray);
-
-        if (!hasItems) {
+        if (itemsArray.length === 0) {
           setError(json.error || "Feed error");
         }
       } else {
         setItems(itemsArray);
       }
 
-      if (json.debug) {
-        setDebugInfo(json.debug);
-      }
+      if (json.debug) setDebugInfo(json.debug);
     } catch (err) {
       setError(err.message);
       setItems([]);
@@ -128,7 +129,6 @@ export default function RSSFeed({ name }) {
   // Auto-fetch when feedId changes or debug toggles
   // ------------------------------------------------------------
   useEffect(() => {
-    // Reset state when switching feeds
     setItems([]);
     setVisibleCount(BATCH_SIZE);
     setError(null);
@@ -145,9 +145,7 @@ export default function RSSFeed({ name }) {
   if (!feedMeta) {
     return (
       <Box sx={{ p: 2 }}>
-        <Typography color="error">
-          This feed is no longer available.
-        </Typography>
+        <Typography color="error">This feed is no longer available.</Typography>
       </Box>
     );
   }
@@ -160,7 +158,14 @@ export default function RSSFeed({ name }) {
     );
   }
 
-  const visibleItems = items.slice(0, visibleCount);
+  // ------------------------------------------------------------
+  // Normalize items BEFORE slicing
+  // ------------------------------------------------------------
+  const normalizedItems = items.map((item) =>
+    normalizeItem(item, feedMeta.name)
+  );
+
+  const visibleItems = normalizedItems.slice(0, visibleCount);
   const feedLabel = feedMeta.label || feedMeta.name || feedId;
 
   // ------------------------------------------------------------
@@ -207,18 +212,16 @@ export default function RSSFeed({ name }) {
       </Box>
 
       {loading && (
-        <Typography sx={{ mb: 2 }}>
-          Loading feed: {feedLabel}
-        </Typography>
+        <Typography sx={{ mb: 2 }}>Loading feed: {feedLabel}</Typography>
       )}
 
-      {error && items.length === 0 && (
+      {error && normalizedItems.length === 0 && (
         <Typography color="error" sx={{ mb: 2 }}>
           {error}
         </Typography>
       )}
 
-      {isFallback && items.length > 0 && (
+      {isFallback && normalizedItems.length > 0 && (
         <Typography variant="body2" sx={{ mb: 1 }}>
           Feed "{feedId}" is using HTML fallback mode.
         </Typography>
@@ -250,7 +253,7 @@ export default function RSSFeed({ name }) {
       <Stack spacing={2}>
         {visibleItems.map((item, idx) => (
           <FeedCard
-            key={`${item.url || "item"}-${idx}`}
+            key={`${item.url}-${idx}`}
             item={item}
             feedMeta={feedMeta}
             onRefresh={() => fetchFeed(feedId)}
@@ -259,7 +262,7 @@ export default function RSSFeed({ name }) {
       </Stack>
 
       {/* Load more */}
-      {visibleCount < items.length && (
+      {visibleCount < normalizedItems.length && (
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Button
             variant="outlined"

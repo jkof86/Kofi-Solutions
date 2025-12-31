@@ -77,7 +77,7 @@ export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
         {/* CLICKABLE PROFILE BOX */}
         <Box
           component={Link}
-          to="/about"
+          to="/professional/about"
           sx={{
             cursor: "pointer",
             textDecoration: "none",
