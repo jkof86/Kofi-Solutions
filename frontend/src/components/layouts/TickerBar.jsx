@@ -1,19 +1,19 @@
 // ------------------------------------------------------------
-// TickerBar.jsx — v1.20 (Cleaned + 3‑Category Routing)
+// TickerBar.jsx — v1.20 (Always Show All 9 Symbols + Category Colors)
 // ------------------------------------------------------------
 // This version:
-//   ✓ Maps ANY incoming feed category → crypto | finance | tech
-//   ✓ Loads symbols safely
-//   ✓ Removes broken setActiveCategory calls
-//   ✓ Removes duplicate switch cases
-//   ✓ Adds clean comments + stable logic
+//   ✓ Ignores activeCategory entirely
+//   ✓ Always loads all 9 market symbols
+//   ✓ Uses crypto/finance/tech colors per symbol
+//   ✓ Keeps UI identical (scrolling ticker, icons, formatting)
+//   ✓ Removes all broken logic + undefined variables
 // ------------------------------------------------------------
 
 import React, { useEffect, useState, useContext } from "react";
 import { Box, Typography, Chip } from "@mui/material";
 
 import {
-  CATEGORY_SYMBOLS,
+  ALL_MARKET_SYMBOLS,
   CATEGORY_COLORS,
   SYMBOL_ICONS
 } from "../../data/tickerConfig";
@@ -22,69 +22,43 @@ import { FeedStatusContext } from "../../context/FeedStatusContext";
 
 console.log("TickerBar v1.20 loaded");
 
-export default function TickerBar({ activeCategory }) {
+// ------------------------------------------------------------
+// Symbol → Category mapping (for chip colors)
+// ------------------------------------------------------------
+const SYMBOL_CATEGORY = {
+  btc: "crypto",
+  eth: "crypto",
+  sol: "crypto",
+
+  aapl: "tech",
+  msft: "tech",
+  amzn: "tech",
+
+  spy: "finance",
+  vti: "finance",
+  voo: "finance"
+};
+
+export default function TickerBar() {
   const { health } = useContext(FeedStatusContext);
 
   const [symbols, setSymbols] = useState([]);
   const [lastUpdated, setLastUpdated] = useState("");
 
   // ------------------------------------------------------------
-  // 1. Map ANY feed category → one of the 3 master categories
-  // ------------------------------------------------------------
-  const resolveMasterCategory = (cat) => {
-    switch (cat) {
-      case "crypto":
-        return "crypto";
-
-      // Finance umbrella
-      case "finance":
-      case "alternative_news":
-      case "news":
-      case "sports":
-        return "finance";
-
-      // Tech umbrella
-      case "tech":
-      case "aws":
-      case "react":
-      case "spring":
-      case "java":
-        return "tech";
-
-      default:
-        return "finance"; // fallback
-    }
-  };
-
-  // ------------------------------------------------------------
-  // 2. Load symbols whenever activeCategory changes
+  // 1. Always load all 9 symbols
   // ------------------------------------------------------------
   useEffect(() => {
-    if (!activeCategory) {
-      console.warn("[Ticker] No activeCategory provided");
-      setSymbols([]);
-      return;
-    }
-
-    const master = resolveMasterCategory(activeCategory);
-    const list = CATEGORY_SYMBOLS[master];
-
-    if (!Array.isArray(list)) {
-      console.warn(`[Ticker] No symbol list for category '${master}'`);
-      setSymbols([]);
-      return;
-    }
-
-    const cleaned = list
-      .map((s) => String(s).trim().toLowerCase())
-      .filter(Boolean);
+    const cleaned = ALL_MARKET_SYMBOLS.map((s) =>
+      String(s).trim().toLowerCase()
+    );
 
     setSymbols(cleaned);
     setLastUpdated(new Date().toLocaleTimeString());
-  }, [activeCategory]);
+  }, []);
 
   // ------------------------------------------------------------
-  // 3. Reset scroll animation when symbols change
+  // 2. Reset scroll animation when symbols change
   // ------------------------------------------------------------
   useEffect(() => {
     const el = document.querySelector(".scroll");
@@ -96,11 +70,10 @@ export default function TickerBar({ activeCategory }) {
   }, [symbols]);
 
   // ------------------------------------------------------------
-  // 4. Render
+  // 3. Render
   // ------------------------------------------------------------
   const markets = health?.markets || {};
 
-  // Loading state
   if (!health || !health.markets || Object.keys(markets).length === 0) {
     return (
       <Box sx={{ py: 1, px: 2 }}>
@@ -122,8 +95,6 @@ export default function TickerBar({ activeCategory }) {
     );
   });
 
-  const masterCategory = resolveMasterCategory(activeCategory);
-
   return (
     <Box
       sx={{
@@ -138,7 +109,7 @@ export default function TickerBar({ activeCategory }) {
     >
       {visible.length === 0 && (
         <Typography variant="body2" color="warning.main">
-          No valid market data for category: {masterCategory}
+          No valid market data available
         </Typography>
       )}
 
@@ -156,6 +127,9 @@ export default function TickerBar({ activeCategory }) {
           const upper = sym.toUpperCase();
           const icon = SYMBOL_ICONS[upper] || "";
 
+          // Determine chip color category
+          const cat = SYMBOL_CATEGORY[sym] || "finance";
+
           return (
             <Box
               key={`${upper}-${idx}`}
@@ -163,12 +137,11 @@ export default function TickerBar({ activeCategory }) {
             >
               {/* Category Chip */}
               <Chip
-                label={masterCategory.toUpperCase()}
+                label={cat.toUpperCase()}
                 size="small"
                 sx={{
                   mr: 1,
-                  backgroundColor:
-                    CATEGORY_COLORS[masterCategory] || "#666",
+                  backgroundColor: CATEGORY_COLORS[cat] || "#666",
                   color: "#fff",
                   fontWeight: 600
                 }}

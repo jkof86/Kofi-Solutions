@@ -14,14 +14,18 @@
 // These are the ONLY symbols the backend tracks in v1.205+.
 // All other symbols are commented out below in Section B.
 //
+
 export const CATEGORY_SYMBOLS = {
   crypto: ["BTC", "ETH", "SOL"],
-
   finance: ["SPY", "VTI", "VOO"],
-
   tech: ["AAPL", "MSFT", "AMZN"]
-
 };
+
+export const ALL_MARKET_SYMBOLS = [
+  "BTC", "ETH", "SOL",
+  "AAPL", "MSFT", "AMZN",
+  "SPY", "VTI", "VOO"
+];
 
 
 // ------------------------------------------------------------
