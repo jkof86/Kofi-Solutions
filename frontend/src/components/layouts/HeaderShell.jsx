@@ -28,22 +28,11 @@ import { useState, useEffect, useRef } from "react";
 
 import { googleLogout } from "@react-oauth/google";
 
-// //debug
-// const TICKER_DATA = [
-//   { label: "BITCOIN", value: 87841.0, change: -0.95 },
-//   { label: "ETHEREUM", value: 2940.71, change: -1.95 },
-//   { label: "SOLANA", value: 124.08, change: -1.45 },
-//   { label: "AAPL", value: 190.12, change: 0.8 },
-//   { label: "MSFT", value: 410.55, change: -0.3 },
-//   { label: "AMZN", value: 175.44, change: 1.2 }
-// ];
-
-export default function HeaderShell({ onHeightChange }) {
+export default function HeaderShell({ onHeightChange, activeCategory }) {
 
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [strictMode, setStrictMode] = useState(true);
-  const [activeCategory, setActiveCategory] = useState("crypto");
 
 
   const navigate = useNavigate();

@@ -15,7 +15,6 @@ import FeedStatusBar from "./FeedStatusBar";
 import MarketStatusBar from "./MarketStatusBar";
 import HealthSummaryCard from "./HealthSummaryCard";
 import FeedHealthDashboard from "./FeedHealthDashboard";
-import TickerBar from "./layouts/TickerBar";
 import { useNavigate } from "react-router-dom";
 import MainContainer from "./layouts/MainContainer";
 import HeaderShell from "./layouts/HeaderShell";
@@ -24,7 +23,7 @@ import Drawer from "@mui/material/Drawer";
 export default function Home() {
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(null);
-  const [activeCategory, setActiveCategory] = useState("crypto");
+  const [activeCategory, setActiveCategory] = useState(null);
 
 
   const navigate = useNavigate();
@@ -46,6 +45,7 @@ export default function Home() {
         onHeightChange={setHeaderHeight}
         isHealthOpen={isHealthOpen}
         setIsHealthOpen={setIsHealthOpen}
+        activeCategory={activeCategory}
       />
 
       <MainContainer headerHeight={headerHeight}>
