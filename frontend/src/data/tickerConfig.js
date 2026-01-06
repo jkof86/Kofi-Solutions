@@ -17,9 +17,10 @@
 export const CATEGORY_SYMBOLS = {
   crypto: ["BTC", "ETH", "SOL"],
 
-  tech: ["AAPL", "MSFT", "AMZN"],
+  finance: ["SPY", "VTI", "VOO"],
 
-  finance: ["SPY", "VTI", "VOO"]
+  tech: ["AAPL", "MSFT", "AMZN"]
+
 };
 
 

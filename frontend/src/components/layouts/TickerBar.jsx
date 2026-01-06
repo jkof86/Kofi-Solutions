@@ -1,6 +1,16 @@
+// ------------------------------------------------------------
+// TickerBar.jsx — v1.20 (Cleaned + 3‑Category Routing)
+// ------------------------------------------------------------
+// This version:
+//   ✓ Maps ANY incoming feed category → crypto | finance | tech
+//   ✓ Loads symbols safely
+//   ✓ Removes broken setActiveCategory calls
+//   ✓ Removes duplicate switch cases
+//   ✓ Adds clean comments + stable logic
+// ------------------------------------------------------------
+
 import React, { useEffect, useState, useContext } from "react";
 import { Box, Typography, Chip } from "@mui/material";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 import {
   CATEGORY_SYMBOLS,
@@ -10,19 +20,44 @@ import {
 
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 
-console.log("TickerBar v1.9 loaded");
+console.log("TickerBar v1.20 loaded");
 
 export default function TickerBar({ activeCategory }) {
-
-  console.log("TICKER ACTIVE CATEGORY:", activeCategory);
-  console.log("TICKER SYMBOLS:", CATEGORY_SYMBOLS[activeCategory?.toLowerCase()]);
-
   const { health } = useContext(FeedStatusContext);
+
   const [symbols, setSymbols] = useState([]);
   const [lastUpdated, setLastUpdated] = useState("");
 
   // ------------------------------------------------------------
-  // Validate category + load symbols
+  // 1. Map ANY feed category → one of the 3 master categories
+  // ------------------------------------------------------------
+  const resolveMasterCategory = (cat) => {
+    switch (cat) {
+      case "crypto":
+        return "crypto";
+
+      // Finance umbrella
+      case "finance":
+      case "alternative_news":
+      case "news":
+      case "sports":
+        return "finance";
+
+      // Tech umbrella
+      case "tech":
+      case "aws":
+      case "react":
+      case "spring":
+      case "java":
+        return "tech";
+
+      default:
+        return "finance"; // fallback
+    }
+  };
+
+  // ------------------------------------------------------------
+  // 2. Load symbols whenever activeCategory changes
   // ------------------------------------------------------------
   useEffect(() => {
     if (!activeCategory) {
@@ -31,17 +66,11 @@ export default function TickerBar({ activeCategory }) {
       return;
     }
 
-    const key = activeCategory.toLowerCase(); // normalize
-    const list = CATEGORY_SYMBOLS[key];
+    const master = resolveMasterCategory(activeCategory);
+    const list = CATEGORY_SYMBOLS[master];
 
     if (!Array.isArray(list)) {
-      console.warn(`[Ticker] Category '${activeCategory}' not found in CATEGORY_SYMBOLS`);
-      setSymbols([]);
-      return;
-    }
-
-    if (list.length === 0) {
-      console.warn(`[Ticker] Category '${activeCategory}' has no symbols`);
+      console.warn(`[Ticker] No symbol list for category '${master}'`);
       setSymbols([]);
       return;
     }
@@ -55,24 +84,24 @@ export default function TickerBar({ activeCategory }) {
   }, [activeCategory]);
 
   // ------------------------------------------------------------
-  // Reset scroll animation on symbol change
+  // 3. Reset scroll animation when symbols change
   // ------------------------------------------------------------
   useEffect(() => {
     const el = document.querySelector(".scroll");
     if (el) {
       el.style.animation = "none";
-      void el.offsetHeight;
+      void el.offsetHeight; // force reflow
       el.style.animation = "";
     }
   }, [symbols]);
 
   // ------------------------------------------------------------
-  // Render
+  // 4. Render
   // ------------------------------------------------------------
   const markets = health?.markets || {};
 
-  // If markets haven't loaded yet, show loading state
-  if (!health || !health.markets || Object.keys(health.markets).length === 0) {
+  // Loading state
+  if (!health || !health.markets || Object.keys(markets).length === 0) {
     return (
       <Box sx={{ py: 1, px: 2 }}>
         <Typography variant="body2" sx={{ opacity: 0.6 }}>
@@ -82,7 +111,7 @@ export default function TickerBar({ activeCategory }) {
     );
   }
 
-  // Filter: only show symbols with valid price + status
+  // Only show valid market entries
   const visible = symbols.filter((sym) => {
     const m = markets[sym];
     return (
@@ -93,9 +122,7 @@ export default function TickerBar({ activeCategory }) {
     );
   });
 
-  console.log("MARKETS:", markets);
-  console.log("SYMBOLS:", symbols);
-  console.log("VISIBLE:", visible);
+  const masterCategory = resolveMasterCategory(activeCategory);
 
   return (
     <Box
@@ -111,10 +138,11 @@ export default function TickerBar({ activeCategory }) {
     >
       {visible.length === 0 && (
         <Typography variant="body2" color="warning.main">
-          No valid market data for category: {activeCategory}
+          No valid market data for category: {masterCategory}
         </Typography>
       )}
 
+      {/* Scrolling ticker */}
       <Box
         className="scroll"
         sx={{
@@ -135,18 +163,19 @@ export default function TickerBar({ activeCategory }) {
             >
               {/* Category Chip */}
               <Chip
-                label={activeCategory.toUpperCase()}
+                label={masterCategory.toUpperCase()}
                 size="small"
                 sx={{
                   mr: 1,
-                  backgroundColor: CATEGORY_COLORS[activeCategory.toLowerCase()] || "#666",
+                  backgroundColor:
+                    CATEGORY_COLORS[masterCategory] || "#666",
                   color: "#fff",
                   fontWeight: 600
                 }}
               />
 
               {/* Market Data */}
-              {m.type === "crypto" ? (
+              {["crypto", "stock", "etf"].includes(m.type) ? (
                 <Typography
                   variant="body2"
                   sx={{
@@ -159,7 +188,9 @@ export default function TickerBar({ activeCategory }) {
                 >
                   {icon} {upper}: ${m.price.toFixed(2)} (
                   {typeof m.change_24h === "number"
-                    ? `${m.change_24h >= 0 ? "+" : ""}${m.change_24h.toFixed(2)}%`
+                    ? `${m.change_24h >= 0 ? "+" : ""}${m.change_24h.toFixed(
+                        2
+                      )}%`
                     : "0.00%"}
                   )
                 </Typography>
@@ -176,6 +207,7 @@ export default function TickerBar({ activeCategory }) {
         })}
       </Box>
 
+      {/* Timestamp */}
       <Typography
         variant="caption"
         sx={{
@@ -188,6 +220,7 @@ export default function TickerBar({ activeCategory }) {
         Updated: {lastUpdated}
       </Typography>
 
+      {/* Animation */}
       <style>
         {`
           @keyframes scrollTicker {

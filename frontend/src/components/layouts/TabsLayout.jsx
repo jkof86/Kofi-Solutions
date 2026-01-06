@@ -107,7 +107,10 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
 
         <Tabs
           value={categoryIndex === -1 ? 0 : categoryIndex}
-          onChange={(_, v) => setActiveCategory(categoryList[v])}
+          onChange={(_, v) => {
+            setActiveCategory(categoryList[v]);
+        
+         }}
           variant="scrollable"
           scrollButtons="auto"
         >
