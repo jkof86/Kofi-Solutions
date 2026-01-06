@@ -1,14 +1,13 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.197 (Flat FEEDS + Normalized Items + Stable)
+// RSSFeed.jsx — v1.198 (Prop Fix + Stable + Debug)
 // ------------------------------------------------------------
 //
-// Improvements in v1.197:
-//   ✓ normalizeItem() applied globally
-//   ✓ items normalized BEFORE slicing
-//   ✓ consistent title/url/description/date/source
-//   ✓ fallback + dead states handled cleanly
-//   ✓ debug panel stable
-//   ✓ refresh behavior stable
+// Fixes in v1.198:
+//   ✓ Accepts `feedId` instead of `name`
+//   ✓ Fully compatible with TabsLayout v1.204
+//   ✓ feedMeta lookup now correct
+//   ✓ Added debug logs for feedId + URL
+//   ✓ All previous stability improvements preserved
 //
 // ------------------------------------------------------------
 
@@ -25,14 +24,16 @@ import {
 import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
 
-console.log("RSSFeed v1.197 loaded");
+console.log("RSSFeed v1.198 loaded");
 
 const BATCH_SIZE = 4;
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
-export default function RSSFeed({ name }) {
-  const feedId = name;
+export default function RSSFeed({ feedId }) {
+  // ------------------------------------------------------------
+  // Feed metadata lookup
+  // ------------------------------------------------------------
   const feedMeta = FEEDS[feedId];
 
   const [items, setItems] = useState([]);
@@ -80,7 +81,10 @@ export default function RSSFeed({ name }) {
   // Fetch feed items from backend
   // ------------------------------------------------------------
   const fetchFeed = async (id = feedId, debug = false) => {
-    if (!feedMeta?.url) return;
+    if (!feedMeta?.url) {
+      console.warn("RSSFeed: Missing URL for feed:", feedId);
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -95,8 +99,12 @@ export default function RSSFeed({ name }) {
         feedMeta.id
       )}${debugFlag ? "&debug=debug_feeds" : ""}`;
 
+      console.log("Fetching feed:", feedId, "URL:", url);
+
       const res = await fetch(url);
       const json = await res.json();
+
+      console.log("Feed response:", json);
 
       if (json.status === "dead") {
         setError("Feed unavailable");
@@ -118,6 +126,7 @@ export default function RSSFeed({ name }) {
 
       if (json.debug) setDebugInfo(json.debug);
     } catch (err) {
+      console.error("Feed fetch error:", err);
       setError(err.message);
       setItems([]);
     } finally {
@@ -145,7 +154,9 @@ export default function RSSFeed({ name }) {
   if (!feedMeta) {
     return (
       <Box sx={{ p: 2 }}>
-        <Typography color="error">This feed is no longer available.</Typography>
+        <Typography color="error">
+          This feed (“{feedId}”) is not defined in FEEDS.
+        </Typography>
       </Box>
     );
   }
@@ -153,7 +164,9 @@ export default function RSSFeed({ name }) {
   if (!feedMeta.url) {
     return (
       <Box sx={{ p: 2 }}>
-        <Typography color="error">Invalid feed: missing URL.</Typography>
+        <Typography color="error">
+          Invalid feed (“{feedId}”): missing URL.
+        </Typography>
       </Box>
     );
   }
@@ -162,7 +175,7 @@ export default function RSSFeed({ name }) {
   // Normalize items BEFORE slicing
   // ------------------------------------------------------------
   const normalizedItems = items.map((item) =>
-    normalizeItem(item, feedMeta.name)
+    normalizeItem(item, feedMeta.label)
   );
 
   const visibleItems = normalizedItems.slice(0, visibleCount);

@@ -121,7 +121,7 @@ export default function NavDrawerGaming() {
 
                 {item === 'Back' ? <ListItemButton sx={{ textAlign: 'left' }}
                   component={Link}
-                  to='/gaming/about'
+                  to='/gaming/contact'
                   onClick={() => {
                     console.info("BACK BUTTON TEST");
                     setIsDrawerOpen(false);
@@ -153,7 +153,7 @@ export default function NavDrawerGaming() {
                   textAlign: 'left'
                 }}
                   component={Link}
-                  to='/gaming/about'
+                  to='/gaming/contact'
                   onClick={() => {
                     console.info("ABOUT BUTTON TEST");
                     setIsDrawerOpen(false);

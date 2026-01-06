@@ -35,7 +35,7 @@ import avatarImage from '../../images/icons/avatar_full.jpg';
 // ------------------------------
 const navItems = [
   { label: "Home", icon: <HomeIcon />, to: "/home" },
-  { label: "Gaming", icon: <SportsEsportsIcon />, to: "/gaming/about" },
+  { label: "Gaming", icon: <SportsEsportsIcon />, to: "/gaming/contact" },
   {
     label: "WordPress",
     icon: <NewspaperIcon />,

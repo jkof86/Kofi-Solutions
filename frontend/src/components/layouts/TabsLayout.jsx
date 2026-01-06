@@ -12,7 +12,7 @@ import { FEEDS } from "../../data/feedsMap";
 import RSSFeed from "../RSSFeed";
 import MarketChart from "../MarketChart";
 
-console.log("TabsLayout v1.204 + Chart loaded");
+console.log("TabsLayout v1.204 + Chart + Symbol Fix loaded");
 
 function TabPanel({ children, value, index }) {
   return (
@@ -61,13 +61,17 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
     setFeedIndex(0);
   }, [safeCategory, filteredFeeds.length]);
 
-  // ✅ Get active feed + symbol
   const activeFeed = filteredFeeds[feedIndex] || null;
-  const activeSymbol = activeFeed?.symbol || "";
+  const activeSymbol =
+    typeof activeFeed?.symbol === "string" && activeFeed.symbol.trim()
+      ? activeFeed.symbol.trim().toLowerCase()
+      : "btc";
+
+  console.log("Active feed:", activeFeed);
+  console.log("Active symbol:", activeSymbol);
 
   return (
     <Box sx={{ width: "100%" }}>
-      {/* Category Header */}
       <Box sx={{ mb: 1 }}>
         <Typography variant="h5" sx={{ mb: 1 }}>
           {safeCategory.toUpperCase()}
@@ -94,7 +98,6 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
         </Tabs>
       </Box>
 
-      {/* Feed Tabs */}
       <Tabs
         value={feedIndex}
         onChange={(_, v) => setFeedIndex(v)}
@@ -121,15 +124,14 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
         ))}
       </Tabs>
 
-      {/* Feed Panels + Chart */}
       {filteredFeeds.map((f, i) => (
         <TabPanel key={f.feedId} value={feedIndex} index={i}>
           <Box sx={{ display: "flex", flexDirection: "row", gap: 3 }}>
             <Box sx={{ flex: 2 }}>
-              <RSSFeed name={f.feedId} categoryLabel={safeCategory} />
+              <RSSFeed feedId={f.feedId} categoryLabel={safeCategory} />
             </Box>
             <Box sx={{ flex: 1 }}>
-              <MarketChart symbol={f.symbol} />
+              <MarketChart symbol={f.symbol || "btc"} />
             </Box>
           </Box>
         </TabPanel>

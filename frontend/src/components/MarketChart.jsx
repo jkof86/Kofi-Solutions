@@ -1,12 +1,3 @@
-// ------------------------------------------------------------
-// MarketChart.jsx — v1.180 (Stable + Normalized)
-// ------------------------------------------------------------
-// • Supports crypto + stock formats
-// • Normalizes symbols (BRK.B → brk-b)
-// • Guards against malformed history
-// • Prevents chart collapse on single-point data
-// ------------------------------------------------------------
-
 import React, { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import {
@@ -26,23 +17,30 @@ export default function MarketChart({ symbol }) {
   const [data, setData] = useState([]);
   const [error, setError] = useState("");
 
-  // Normalize symbols (BRK.B → brk-b)
   const normalize = (s) =>
     String(s || "")
       .toLowerCase()
       .replace(/\./g, "-");
 
   useEffect(() => {
-    if (!symbol) return;
+    if (!symbol || typeof symbol !== "string") {
+      setError("No valid symbol");
+      setData([]);
+      return;
+    }
 
     const fetchData = async () => {
       try {
         const normalized = normalize(symbol);
+        const url = `${API}?mode=market&symbol=${encodeURIComponent(normalized)}`;
 
-        const res = await fetch(
-          `${API}?mode=market&symbol=${encodeURIComponent(normalized)}`
-        );
+        console.log("Fetching chart for:", normalized);
+        console.log("Chart URL:", url);
+
+        const res = await fetch(url);
         const json = await res.json();
+
+        console.log("Chart response:", json);
 
         if (json.status !== "ok" || !Array.isArray(json.history)) {
           setError("No chart data");
@@ -66,6 +64,7 @@ export default function MarketChart({ symbol }) {
         setData(cleaned);
         setError("");
       } catch (e) {
+        console.error("Chart fetch error:", e);
         setError("Chart error");
         setData([]);
       }
@@ -74,10 +73,10 @@ export default function MarketChart({ symbol }) {
     fetchData();
   }, [symbol]);
 
-  if (!symbol) {
+  if (!symbol || typeof symbol !== "string" || symbol.trim() === "") {
     return (
       <Typography variant="body2" sx={{ opacity: 0.7 }}>
-        No symbol selected
+        No valid symbol provided
       </Typography>
     );
   }
