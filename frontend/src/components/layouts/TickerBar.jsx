@@ -10,9 +10,13 @@ import {
 
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 
-console.log("TickerBar v1.206 loaded");
+console.log("TickerBar v1.9 loaded");
 
 export default function TickerBar({ activeCategory }) {
+
+  console.log("TICKER ACTIVE CATEGORY:", activeCategory);
+  console.log("TICKER SYMBOLS:", CATEGORY_SYMBOLS[activeCategory?.toLowerCase()]);
+
   const { health } = useContext(FeedStatusContext);
   const [symbols, setSymbols] = useState([]);
   const [lastUpdated, setLastUpdated] = useState("");

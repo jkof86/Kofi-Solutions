@@ -170,9 +170,9 @@ export default function HeaderShell({ onHeightChange }) {
             />
 
             <Box>
-              <Typography variant="h3" sx={{ fontWeight: 600 }}>
+              {/* <Typography variant="h3" sx={{ fontWeight: 600 }}>
                 Dashboard
-              </Typography>
+              </Typography> */}
               <Chip
                 label="v1.19"
                 size="large"

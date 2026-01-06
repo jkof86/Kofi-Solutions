@@ -148,26 +148,26 @@ export function FeedStatusProvider({ children }) {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        // ⭐ FIX: No unsupported params
+        // FIX: No unsupported params
         const url = `${BACKEND_URL}?mode=health`;
 
         const res = await fetch(url);
         const json = await res.json();
 
-        // ⭐ Validate backend response
+        // Validate backend response
         if (json?.status !== "ok") {
           console.warn("[FeedStatusContext] Health returned error:", json);
           return; // Do NOT overwrite state
         }
 
-        // ⭐ Ensure feeds + markets always exist
+        // Ensure feeds + markets always exist
         json.feeds = json.feeds || {};
         json.markets = json.markets || {};
 
         // Store full health object
         setHealth(json);
 
-        // ⭐ Always store a REAL Date object
+        // Always store a REAL Date object
         setLastUpdated(new Date());
 
         // Normalize feed statuses
