@@ -128,6 +128,52 @@ export const FEEDS = {
   },
 
   // ------------------------------------------------------------
+  // ⭐ NEW CATEGORY — Alternative News
+  // ------------------------------------------------------------
+  intercept: {
+    id: "intercept",
+    category: "alternative_news",
+    label: "The Intercept",
+    url: "https://theintercept.com/feed/?rss"
+  },
+  propublica: {
+    id: "propublica",
+    category: "alternative_news",
+    label: "ProPublica",
+    url: "https://www.propublica.org/feeds/propublica/main"
+  },
+  reason: {
+    id: "reason",
+    category: "alternative_news",
+    label: "Reason Magazine",
+    url: "https://reason.com/feed/"
+  },
+  atlantic: {
+    id: "atlantic",
+    category: "alternative_news",
+    label: "The Atlantic",
+    url: "https://www.theatlantic.com/feed/all/"
+  },
+  the_hill: {
+    id: "the_hill",
+    category: "alternative_news",
+    label: "The Hill",
+    url: "https://thehill.com/feed/"
+  },
+  axios: {
+    id: "axios",
+    category: "alternative_news",
+    label: "Axios",
+    url: "https://www.axios.com/rss"
+  },
+  vice_world: {
+    id: "vice_world",
+    category: "alternative_news",
+    label: "VICE World News",
+    url: "https://www.vice.com/en/rss"
+  },
+  
+  // ------------------------------------------------------------
   // AWS
   // ------------------------------------------------------------
   aws_news: {

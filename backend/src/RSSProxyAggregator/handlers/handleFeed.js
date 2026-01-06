@@ -1,134 +1,199 @@
 // ------------------------------------------------------------
-// handleFeed.js — v1.190 (HEAD-Smart + AWS-Safe)
+// handleFeed.js — v1.196 (Full Payload + Items Included)
+// ------------------------------------------------------------
+//
+// Standardized return shape:
+//
+//   {
+//     id,
+//     status: "ok" | "fallback" | "dead",
+//     fallback: Boolean,
+//     count: Number,
+//     type: "rss" | "json",
+//     ok: Boolean,
+//     items: Array,
+//     error: String | null,
+//     debug: Object | null
+//   }
+//
+// Fixes in v1.196:
+//   ✓ items returned for ALL states (ok, fallback, dead)
+//   ✓ RSS parser errors fall back to HTML scraper
+//   ✓ JSON feeds normalized safely
+//   ✓ HEAD failures no longer kill feeds prematurely
+//   ✓ Fully aligned with frontend RSSFeed v1.196
 // ------------------------------------------------------------
 
-const https = require("https");
-const dns = require("dns");
 const Parser = require("rss-parser");
 const axios = require("axios");
+const { htmlFallback } = require("../utils/htmlFallback.js");
 
 const parser = new Parser();
 
-// Optional: one-time DNS test
-dns.lookup("google.com", (err, addr) => {
-  console.log("[dns test]", err, addr);
-});
-
-function testConnectivity() {
-  return new Promise((resolve) => {
-    const req = https.get("https://www.google.com", (res) => {
-      console.log("[net-test] status:", res.statusCode);
-      res.resume();
-      resolve();
-    });
-    req.on("error", (err) => {
-      console.error("[net-test][ERROR]", err.code || err.message);
-      resolve();
-    });
-    req.setTimeout(3000, () => {
-      console.error("[net-test][TIMEOUT]");
-      req.destroy();
-      resolve();
-    });
-  });
-}
-
-// Known feeds where HEAD is unreliable (404/405/etc.)
 const HEAD_UNRELIABLE = new Set([
   "spring_cloud_blog",
   "spring_security_blog",
   "bleacher_report",
 ]);
 
-async function handleFeed(feedIdOrObj, opts = {}) {
-  const feed =
-    typeof feedIdOrObj === "object" ? feedIdOrObj : null;
+async function safeHead(url, id, timeout = 1500) {
+  if (HEAD_UNRELIABLE.has(id)) {
+    return { ok: true, reason: "HEAD_UNRELIABLE" };
+  }
 
-  const id = feed?.id || feedIdOrObj?.id || feedIdOrObj;
-  const url = feed?.url || feedIdOrObj?.url;
-  const type = feed?.type || feedIdOrObj?.type || "rss";
+  try {
+    const res = await axios.head(url, {
+      timeout,
+      validateStatus: () => true,
+    });
+
+    if (res.status === 404 || res.status === 405) {
+      return { ok: true, reason: "HEAD_UNSUPPORTED" };
+    }
+
+    if (res.status >= 400) {
+      return { ok: false, reason: `HEAD_${res.status}` };
+    }
+
+    return { ok: true, reason: "HEAD_OK" };
+  } catch (err) {
+    return { ok: false, reason: err.code || err.message };
+  }
+}
+
+async function handleFeed(feedConfig, opts = {}) {
+  const id = feedConfig?.id;
+  const url = feedConfig?.url;
+  const type = feedConfig?.type || "rss";
 
   console.log("[handleFeed] feedId:", id, "opts:", opts);
 
-  await testConnectivity();
-
-  if (!url || !id) {
-    console.error("[handleFeed][INVALID_FEED]", feedIdOrObj);
+  if (!id || !url) {
     return {
       id,
       status: "dead",
       fallback: false,
       count: 0,
+      items: [],
+      type,
+      ok: false,
       error: "INVALID_FEED",
+      debug: null
     };
   }
 
-  const headTimeout = 1500;
-  const getTimeout = 3000;
+  const head = await safeHead(url, id);
 
-  // HEAD fastFail (unless known unreliable)
-  if (!HEAD_UNRELIABLE.has(id)) {
-    try {
-      const head = await axios.head(url, {
-        timeout: headTimeout,
-        validateStatus: () => true,
-      });
+  if (!head.ok) {
+    console.warn("[handleFeed][HEAD_FAIL]", id, head.reason);
+  }
 
-      if (head.status === 404 || head.status === 405) {
-        console.warn("[handleFeed][HEAD_UNSUPPORTED]", id, "status:", head.status);
-        // fall through to GET
-      } else if (head.status >= 400) {
-        console.warn("[handleFeed][HEAD_FAIL]", id, "status:", head.status);
+  try {
+    // ------------------------------------------------------------
+    // RSS FEED
+    // ------------------------------------------------------------
+    if (type === "rss") {
+      try {
+        const feedData = await parser.parseURL(url);
+        const items = Array.isArray(feedData.items) ? feedData.items : [];
+
         return {
           id,
-          status: "dead",
+          status: "ok",
           fallback: false,
-          count: 0,
-          error: `HEAD ${head.status}`,
+          count: items.length,
+          items,
+          type: "rss",
+          ok: true,
+          error: null,
+          debug: opts.debug ? { head } : null
         };
+      } catch (rssErr) {
+        console.warn("[handleFeed][RSS_PARSE_FAIL]", id, rssErr.message);
+
+        try {
+          const fallbackItems = await htmlFallback(url);
+          return {
+            id,
+            status: "fallback",
+            fallback: true,
+            count: fallbackItems.length,
+            items: fallbackItems,
+            type: "rss",
+            ok: true,
+            error: null,
+            debug: opts.debug ? { head, rssErr } : null
+          };
+        } catch (htmlErr) {
+          return {
+            id,
+            status: "dead",
+            fallback: false,
+            count: 0,
+            items: [],
+            type: "rss",
+            ok: false,
+            error: htmlErr.message,
+            debug: opts.debug ? { head, rssErr, htmlErr } : null
+          };
+        }
       }
-    } catch (err) {
-      console.error("[handleFeed][HEAD_ERROR]", id, err.code || err.message);
+    }
+
+    // ------------------------------------------------------------
+    // JSON FEED
+    // ------------------------------------------------------------
+    if (type === "json") {
+      const res = await axios.get(url, { timeout: 3000 });
+
+      const raw = res.data;
+      const items =
+        Array.isArray(raw?.data) ? raw.data :
+        Array.isArray(raw?.items) ? raw.items :
+        Array.isArray(raw) ? raw :
+        [];
+
       return {
         id,
-        status: "dead",
+        status: "ok",
         fallback: false,
-        count: 0,
-        error: err.code || err.message,
+        count: items.length,
+        items,
+        type: "json",
+        ok: true,
+        error: null,
+        debug: opts.debug ? { head, raw } : null
       };
     }
-  }
 
-  // FETCH + PARSE
-  try {
-    if (type === "rss") {
-      const feedData = await parser.parseURL(url);
-      const items = Array.isArray(feedData.items) ? feedData.items : [];
-      return { id, status: "ok", fallback: false, count: items.length };
-    }
-
-    if (type === "json") {
-      const res = await axios.get(url, { timeout: getTimeout });
-      const items = Array.isArray(res.data?.data) ? res.data.data : [];
-      return { id, status: "ok", fallback: false, count: items.length };
-    }
-
-    console.error("[handleFeed][INVALID_TYPE]", id, type);
+    // ------------------------------------------------------------
+    // INVALID TYPE
+    // ------------------------------------------------------------
     return {
       id,
       status: "dead",
       fallback: false,
       count: 0,
+      items: [],
+      type,
+      ok: false,
       error: "INVALID_TYPE",
+      debug: opts.debug ? { head } : null
     };
+
   } catch (err) {
-    console.error("[handleFeed][FETCH_ERROR]", id, url, err.code || err.message);
+    console.error("[handleFeed][FETCH_ERROR]", id, err.message);
+
     return {
       id,
       status: "dead",
       fallback: false,
       count: 0,
-      error: err.code || err.message,
+      items: [],
+      type,
+      ok: false,
+      error: err.message,
+      debug: opts.debug ? { head, err } : null
     };
   }
 }

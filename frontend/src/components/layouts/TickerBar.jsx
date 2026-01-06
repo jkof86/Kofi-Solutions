@@ -1,38 +1,21 @@
-// ------------------------------------------------------------
-// TickerBar.jsx — v1.200 (No Crypto Lock + True Multi‑Category)
-// ------------------------------------------------------------
-//
-// Major Fixes:
-//   ✓ NEVER falls back to crypto unless explicitly selected
-//   ✓ Category validation is strict — no silent fallback
-//   ✓ If a category has no valid symbols → show “No symbols”
-//   ✓ If backend errors for all symbols → show “Offline”
-//   ✓ Supports ANY category defined in CATEGORY_SYMBOLS
-//   ✓ Clean logging to identify category/symbol issues
-//
-// ------------------------------------------------------------
-
-import React, { useEffect, useState } from "react";
-import { Box, Typography, Chip, Alert } from "@mui/material";
+import React, { useEffect, useState, useContext } from "react";
+import { Box, Typography, Chip } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 
 import {
-  TICKER_SYMBOLS,
   CATEGORY_SYMBOLS,
   CATEGORY_COLORS,
   SYMBOL_ICONS
 } from "../../data/tickerConfig";
 
-console.log("TickerBar v1.200 loaded");
+import { FeedStatusContext } from "../../context/FeedStatusContext";
 
-const API =
-  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
+console.log("TickerBar v1.206 loaded");
 
 export default function TickerBar({ activeCategory }) {
-  const [prices, setPrices] = useState({});
-  const [lastUpdated, setLastUpdated] = useState("");
-  const [offline, setOffline] = useState(false);
+  const { health } = useContext(FeedStatusContext);
   const [symbols, setSymbols] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState("");
 
   // ------------------------------------------------------------
   // Validate category + load symbols
@@ -44,10 +27,11 @@ export default function TickerBar({ activeCategory }) {
       return;
     }
 
-    const list = CATEGORY_SYMBOLS[activeCategory];
+    const key = activeCategory.toLowerCase(); // normalize
+    const list = CATEGORY_SYMBOLS[key];
 
     if (!Array.isArray(list)) {
-      console.warn(`[Ticker] Category '${activeCategory}' not found`);
+      console.warn(`[Ticker] Category '${activeCategory}' not found in CATEGORY_SYMBOLS`);
       setSymbols([]);
       return;
     }
@@ -63,71 +47,11 @@ export default function TickerBar({ activeCategory }) {
       .filter(Boolean);
 
     setSymbols(cleaned);
-    setOffline(false);
+    setLastUpdated(new Date().toLocaleTimeString());
   }, [activeCategory]);
 
   // ------------------------------------------------------------
-  // Fetch market data
-  // ------------------------------------------------------------
-  useEffect(() => {
-    if (symbols.length === 0) {
-      setPrices({});
-      setOffline(true);
-      return;
-    }
-
-    const fetchTickerData = async () => {
-      const results = {};
-      let okCount = 0;
-
-      await Promise.all(
-        symbols.map(async (lower) => {
-          const url = `${API}?mode=market&symbol=${encodeURIComponent(lower)}`;
-
-          try {
-            const res = await fetch(url);
-            const json = await res.json();
-
-            const isOk =
-              json?.status === "ok" &&
-              (json.type === "crypto" ? json.price != null : true);
-
-            if (isOk) {
-              okCount++;
-              results[lower] = {
-                type: json.type,
-                price: json.price,
-                change: json.change_24h ?? null,
-                warning: false
-              };
-            } else {
-              results[lower] = { warning: true };
-            }
-          } catch (err) {
-            results[lower] = { warning: true };
-          }
-        })
-      );
-
-      if (okCount === 0) {
-        console.warn(`[Ticker] All symbols failed for category '${activeCategory}'`);
-        setOffline(true);
-        setPrices({});
-        return;
-      }
-
-      setOffline(false);
-      setPrices(results);
-      setLastUpdated(new Date().toLocaleTimeString());
-    };
-
-    fetchTickerData();
-    const interval = setInterval(fetchTickerData, 60000);
-    return () => clearInterval(interval);
-  }, [symbols, activeCategory]);
-
-  // ------------------------------------------------------------
-  // Reset scroll animation
+  // Reset scroll animation on symbol change
   // ------------------------------------------------------------
   useEffect(() => {
     const el = document.querySelector(".scroll");
@@ -136,11 +60,39 @@ export default function TickerBar({ activeCategory }) {
       void el.offsetHeight;
       el.style.animation = "";
     }
-  }, [symbols, offline]);
+  }, [symbols]);
 
   // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
+  const markets = health?.markets || {};
+
+  // If markets haven't loaded yet, show loading state
+  if (!health || !health.markets || Object.keys(health.markets).length === 0) {
+    return (
+      <Box sx={{ py: 1, px: 2 }}>
+        <Typography variant="body2" sx={{ opacity: 0.6 }}>
+          Loading market data…
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Filter: only show symbols with valid price + status
+  const visible = symbols.filter((sym) => {
+    const m = markets[sym];
+    return (
+      m &&
+      m.status === "ok" &&
+      typeof m.price === "number" &&
+      m.price > 0
+    );
+  });
+
+  console.log("MARKETS:", markets);
+  console.log("SYMBOLS:", symbols);
+  console.log("VISIBLE:", visible);
+
   return (
     <Box
       sx={{
@@ -153,16 +105,10 @@ export default function TickerBar({ activeCategory }) {
         "&:hover .scroll": { animationPlayState: "paused" }
       }}
     >
-      {symbols.length === 0 && (
-        <Alert severity="info" sx={{ mb: 1 }}>
-          No symbols defined for category: {activeCategory}
-        </Alert>
-      )}
-
-      {offline && symbols.length > 0 && (
-        <Alert severity="warning" sx={{ mb: 1 }}>
-          Market data unavailable for category: {activeCategory}
-        </Alert>
+      {visible.length === 0 && (
+        <Typography variant="body2" color="warning.main">
+          No valid market data for category: {activeCategory}
+        </Typography>
       )}
 
       <Box
@@ -173,10 +119,9 @@ export default function TickerBar({ activeCategory }) {
           animation: "scrollTicker 25s linear infinite"
         }}
       >
-        {symbols.map((sym, idx) => {
-          const lower = sym.toLowerCase();
-          const upper = lower.toUpperCase();
-          const p = prices[lower];
+        {visible.map((sym, idx) => {
+          const m = markets[sym];
+          const upper = sym.toUpperCase();
           const icon = SYMBOL_ICONS[upper] || "";
 
           return (
@@ -184,42 +129,42 @@ export default function TickerBar({ activeCategory }) {
               key={`${upper}-${idx}`}
               sx={{ display: "flex", alignItems: "center", mx: 4 }}
             >
+              {/* Category Chip */}
               <Chip
                 label={activeCategory.toUpperCase()}
                 size="small"
                 sx={{
                   mr: 1,
-                  backgroundColor: CATEGORY_COLORS[activeCategory] || "#666",
+                  backgroundColor: CATEGORY_COLORS[activeCategory.toLowerCase()] || "#666",
                   color: "#fff",
                   fontWeight: 600
                 }}
               />
 
-              {!p || p.warning ? (
-                <Typography
-                  variant="body2"
-                  sx={{ color: "warning.main", fontWeight: 600 }}
-                >
-                  {icon} {upper}: <WarningAmberIcon fontSize="small" />
-                </Typography>
-              ) : p.type === "crypto" ? (
+              {/* Market Data */}
+              {m.type === "crypto" ? (
                 <Typography
                   variant="body2"
                   sx={{
-                    color: p.change >= 0 ? "success.main" : "error.main",
+                    color:
+                      typeof m.change_24h === "number" && m.change_24h >= 0
+                        ? "success.main"
+                        : "error.main",
                     fontWeight: 600
                   }}
                 >
-                  {icon} {upper}: ${p.price.toFixed(2)} (
-                  {p.change >= 0 ? "+" : ""}
-                  {p.change.toFixed(2)}%)
+                  {icon} {upper}: ${m.price.toFixed(2)} (
+                  {typeof m.change_24h === "number"
+                    ? `${m.change_24h >= 0 ? "+" : ""}${m.change_24h.toFixed(2)}%`
+                    : "0.00%"}
+                  )
                 </Typography>
               ) : (
                 <Typography
                   variant="body2"
                   sx={{ color: "text.primary", fontWeight: 600 }}
                 >
-                  {icon} {upper}: N/A
+                  {icon} {upper}: ${m.price.toFixed(2)}
                 </Typography>
               )}
             </Box>

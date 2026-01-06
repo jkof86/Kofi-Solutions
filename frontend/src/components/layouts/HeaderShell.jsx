@@ -43,10 +43,12 @@ export default function HeaderShell({ onHeightChange }) {
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [strictMode, setStrictMode] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("crypto");
+
 
   const navigate = useNavigate();
 
-  // 🔥 THIS ref measures the ENTIRE header (AppBar + Banner + Ticker)
+  // THIS ref measures the ENTIRE header (AppBar + Banner + Ticker)
   const ref = useRef(null);
 
   useEffect(() => {
@@ -172,7 +174,7 @@ export default function HeaderShell({ onHeightChange }) {
                 Dashboard
               </Typography>
               <Chip
-                label="v1.17"
+                label="v1.19"
                 size="large"
                 sx={{
                   backgroundColor: "#fff",
@@ -217,8 +219,8 @@ export default function HeaderShell({ onHeightChange }) {
           </Drawer>
         </Box>
 
-        {/* TICKER */}
-        <TickerBar />
+        {/* TickerBar */}
+        <TickerBar activeCategory={activeCategory} />
       </Box>
     </Box>
   )

@@ -1,5 +1,26 @@
 // ------------------------------------------------------------
-// handleMarket.js — v1.180 (Normalized + History-Safe)
+// handleMarket.js — v1.196 (Full Payload + Stable Contract)
+// ------------------------------------------------------------
+//
+// Standardized market response shape:
+//
+//   {
+//     status: "ok" | "error",
+//     type: "crypto" | "stock" | "etf" | null,
+//     symbol: "btc",
+//     price: 88345.53 | null,
+//     change_24h: -1.23 | null,
+//     history: [...],
+//     debug: {...} | null,
+//     timestamp: 1767126734208
+//   }
+//
+// Used by:
+//   • TickerBar
+//   • FeedHealthDashboard
+//   • FeedStatusContext
+//   • handleHealth.js (via JSON body parsing)
+//
 // ------------------------------------------------------------
 
 const { jsonResponse } = require("../utils/jsonResponse.js");
@@ -19,16 +40,45 @@ function normalizeSymbol(sym) {
     .replace(/\./g, "-");
 }
 
+// ------------------------------------------------------------
+// Helper: Build a consistent market payload
+// ------------------------------------------------------------
+function buildMarketPayload(type, symbol, result) {
+  return {
+    status: "ok",
+    type,
+    symbol,
+    price: result?.price ?? null,
+    change_24h: result?.change_24h ?? null,
+    history: Array.isArray(result?.history) ? result.history : [],
+    debug: result?.debug ?? null,
+    timestamp: result?.timestamp ?? Date.now()
+  };
+}
+
+// ------------------------------------------------------------
+// Helper: Build a consistent error payload
+// ------------------------------------------------------------
+function buildErrorPayload(type, symbol, errorMessage) {
+  return {
+    status: "error",
+    type: type || null,
+    symbol: symbol || null,
+    price: null,
+    change_24h: null,
+    history: [],
+    debug: null,
+    timestamp: Date.now(),
+    error: errorMessage || null
+  };
+}
+
 async function handleMarket(symbol, opts = {}) {
   console.log("[handleMarket] Incoming symbol:", symbol, opts);
 
   try {
     if (!symbol || typeof symbol !== "string") {
-      return jsonResponse(200, {
-        status: "error",
-        error: "Missing symbol parameter",
-        symbol: null
-      });
+      return jsonResponse(200, buildErrorPayload(null, null, "Missing symbol parameter"));
     }
 
     const lower = normalizeSymbol(symbol);
@@ -44,22 +94,10 @@ async function handleMarket(symbol, opts = {}) {
     if (cryptoId) {
       try {
         const result = await fetchCryptoPrice(cryptoId, opts);
-
-        return jsonResponse(200, {
-          status: "ok",
-          type: "crypto",
-          symbol: lower,
-          price: result?.price ?? null,
-          history: result?.history ?? []
-        });
+        return jsonResponse(200, buildMarketPayload("crypto", lower, result));
       } catch (err) {
-        console.error("[handleMarket][CRYPTO_ERROR]", lower, err.code || err.message);
-        return jsonResponse(200, {
-          status: "error",
-          type: null,
-          symbol: lower,
-          price: null
-        });
+        console.error("[handleMarket][CRYPTO_ERROR]", lower, err);
+        return jsonResponse(200, buildErrorPayload("crypto", lower, String(err.message || err)));
       }
     }
 
@@ -69,22 +107,10 @@ async function handleMarket(symbol, opts = {}) {
     if (stockId) {
       try {
         const result = await fetchYahooStock(stockId, opts);
-
-        return jsonResponse(200, {
-          status: "ok",
-          type: "stock",
-          symbol: lower,
-          price: result?.price ?? null,
-          history: result?.history ?? []
-        });
+        return jsonResponse(200, buildMarketPayload("stock", lower, result));
       } catch (err) {
-        console.error("[handleMarket][STOCK_ERROR]", lower, err.code || err.message);
-        return jsonResponse(200, {
-          status: "error",
-          type: null,
-          symbol: lower,
-          price: null
-        });
+        console.error("[handleMarket][STOCK_ERROR]", lower, err);
+        return jsonResponse(200, buildErrorPayload("stock", lower, String(err.message || err)));
       }
     }
 
@@ -94,45 +120,30 @@ async function handleMarket(symbol, opts = {}) {
     if (etfId) {
       try {
         const result = await fetchYahooEtf(etfId, opts);
-
-        return jsonResponse(200, {
-          status: "ok",
-          type: "etf",
-          symbol: lower,
-          price: result?.price ?? null,
-          history: result?.history ?? []
-        });
+        return jsonResponse(200, buildMarketPayload("etf", lower, result));
       } catch (err) {
-        console.error("[handleMarket][ETF_ERROR]", lower, err.code || err.message);
-        return jsonResponse(200, {
-          status: "error",
-          type: null,
-          symbol: lower,
-          price: null
-        });
+        console.error("[handleMarket][ETF_ERROR]", lower, err);
+        return jsonResponse(200, buildErrorPayload("etf", lower, String(err.message || err)));
       }
     }
 
     // ------------------------------------------------------------
-    // 4. ALL FAILED
+    // 4. ALL FAILED / UNKNOWN SYMBOL
     // ------------------------------------------------------------
     console.warn("[handleMarket] No market data for symbol:", lower);
 
-    return jsonResponse(200, {
-      status: "error",
-      error: `No market data available for symbol: ${lower}`,
-      symbol: lower
-    });
+    return jsonResponse(
+      200,
+      buildErrorPayload(null, lower, `No market data available for symbol: ${lower}`)
+    );
 
   } catch (err) {
     console.error("[handleMarket] FATAL ERROR:", err);
 
-    return jsonResponse(200, {
-      status: "error",
-      error: "Market handler crashed",
-      detail: String(err),
-      symbol
-    });
+    return jsonResponse(
+      200,
+      buildErrorPayload(null, symbol, "Market handler crashed")
+    );
   }
 }
 

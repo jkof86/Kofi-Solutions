@@ -24,7 +24,8 @@ import Drawer from "@mui/material/Drawer";
 export default function Home() {
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(null);
-  const [activeCategory, setActiveCategory] = useState("aws"); // ⭐ NEW
+  const [activeCategory, setActiveCategory] = useState("crypto");
+
 
   const navigate = useNavigate();
 
@@ -93,8 +94,7 @@ export default function Home() {
             <FeedStatusBar />
             <MarketStatusBar />
 
-            {/* TickerBar (NEW) */}
-            <TickerBar activeCategory={activeCategory} />
+
 
             {/* System Health Drawer */}
             <Drawer

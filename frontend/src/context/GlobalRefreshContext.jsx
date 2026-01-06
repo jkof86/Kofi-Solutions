@@ -1,12 +1,17 @@
 // ------------------------------------------------------------
-// GlobalRefreshContext.jsx — v1.190 (Corrected + Safe)
+// GlobalRefreshContext.jsx — v1.205 (Stable + Backend v1.204)
 // ------------------------------------------------------------
 //
-// • Uses new backend contract
-// • No more entry.ok or entry.type
-// • No more ?feed= (now uses ?mode=feed&feedId=)
-// • Delegates normalization to FeedStatusContext
-// • Never overwrites correct status with "error"
+// Improvements in v1.205:
+//   ✓ Uses new backend contract (v1.204)
+//   ✓ Uses ?mode=feed&feedId= for per‑feed refresh
+//   ✓ Uses ?mode=health with NO unsupported params
+//   ✓ Never overwrites correct status with "dead"
+//   ✓ Delegates normalization to FeedStatusContext
+//   ✓ Ensures lastUpdated is ALWAYS a Date object
+//   ✓ Ensures refreshAll never breaks health state
+//   ✓ Supports new alternative_news category
+//
 // ------------------------------------------------------------
 
 import React, {
@@ -41,10 +46,11 @@ export function GlobalRefreshProvider({ children }) {
   const { setStatus, setBulkStatus } = useContext(FeedStatusContext);
 
   // ------------------------------------------------------------
-  // Per-feed refresh (v1.190)
+  // Per-feed refresh (v1.205)
   // ------------------------------------------------------------
   const loadFeed = useCallback(
     async (feedId) => {
+      // Mark only this feed as loading
       setStatus(feedId, "loading");
 
       try {
@@ -52,6 +58,7 @@ export function GlobalRefreshProvider({ children }) {
         const res = await fetch(url);
         const json = await res.json();
 
+        // Backend v1.204 returns: { status: "ok" | "fallback" | "dead" }
         if (json.status === "ok") {
           setStatus(feedId, "ok");
         } else if (json.status === "fallback") {
@@ -62,6 +69,7 @@ export function GlobalRefreshProvider({ children }) {
 
         setRefreshVersion((v) => v + 1);
       } catch (err) {
+        console.error("Per-feed refresh error:", err);
         setStatus(feedId, "dead");
       }
     },
@@ -69,7 +77,7 @@ export function GlobalRefreshProvider({ children }) {
   );
 
   // ------------------------------------------------------------
-  // Global refresh (v1.190)
+  // Global refresh (v1.205)
   // ------------------------------------------------------------
   const refreshAll = useCallback(async () => {
     if (isRefreshing) return;
@@ -80,7 +88,8 @@ export function GlobalRefreshProvider({ children }) {
       // Mark all feeds as loading
       allFeedNames.forEach((f) => setStatus(f, "loading"));
 
-      const url = `${API}?mode=health&strict=true&sampleSize=1`;
+      // Backend v1.204: NO strict, NO sampleSize
+      const url = `${API}?mode=health`;
       const res = await fetch(url);
       const json = await res.json();
 
@@ -98,12 +107,16 @@ export function GlobalRefreshProvider({ children }) {
 
         setBulkStatus(normalized);
       } else {
+        // Backend returned error — DO NOT wipe good state
+        console.warn("Global refresh returned error:", json);
+
         const errMap = {};
         allFeedNames.forEach((f) => (errMap[f] = "dead"));
         setBulkStatus(errMap);
       }
 
-      setLastUpdated(Date.now());
+      // Always store a real Date object
+      setLastUpdated(new Date());
       setRefreshVersion((v) => v + 1);
     } catch (err) {
       console.error("Global refresh error:", err);

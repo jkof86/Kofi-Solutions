@@ -1,16 +1,15 @@
 // ------------------------------------------------------------
-// FeedStatusContext.jsx — v1.198 (Stable + Timestamp‑Correct)
+// FeedStatusContext.jsx — v1.204 (Production‑Ready)
 // ------------------------------------------------------------
 //
-// Improvements in v1.198:
-//   ✓ Ensures lastUpdated is ALWAYS a Date object
-//     (fixes .toLocaleTimeString crash in dashboard)
-//   ✓ Calls /health with NO unsupported params
-//   ✓ Validates backend response before updating state
-//   ✓ Never wipes status/health on backend failure
-//   ✓ Normalizes only when json.status === "ok"
-//   ✓ Stable strictMode behavior
-//   ✓ Stable memoization
+// Improvements in v1.204:
+//   ✓ Fully aligned with backend router v1.204
+//   ✓ Supports market_all payload (feeds + markets)
+//   ✓ Ensures health.feeds + health.markets ALWAYS exist
+//   ✓ Ignores stray debug params (backend-safe)
+//   ✓ Never wipes state on backend error
+//   ✓ Timestamp ALWAYS a Date object
+//   ✓ Normalizes feed statuses safely
 //
 // Architectural Notes:
 //   • This context is the SINGLE source of truth for:
@@ -20,9 +19,8 @@
 //       - strict/soft mode
 //       - lastUpdated timestamp
 //
-//   • FeedHealthDashboard and other components MUST NOT
-//     fetch /health directly except for manual refresh.
-//     They should rely on this context for all state.
+//   • UI components MUST NOT fetch /health except manual refresh.
+//     They rely on this context for all state.
 //
 // ------------------------------------------------------------
 
@@ -55,7 +53,7 @@ export const FeedStatusContext = createContext({
   setLastUpdated: () => {}
 });
 
-console.log("FeedStatusContext v1.198 active");
+console.log("FeedStatusContext v1.204 active");
 
 export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
@@ -76,7 +74,7 @@ export function FeedStatusProvider({ children }) {
   }, []);
 
   // ------------------------------------------------------------
-  // Full backend health object
+  // Full backend health object (feeds + markets)
   // ------------------------------------------------------------
   const [health, setHealth] = useState(null);
 
@@ -86,7 +84,7 @@ export function FeedStatusProvider({ children }) {
   const [strictMode, setStrictMode] = useState(true);
 
   // ------------------------------------------------------------
-  // Timestamp (ALWAYS a Date object in v1.198)
+  // Timestamp (ALWAYS a Date object)
   // ------------------------------------------------------------
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -95,14 +93,15 @@ export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
   const normalizeHealthToStatus = useCallback(
     (healthObj) => {
-      if (!healthObj?.feeds || typeof healthObj.feeds !== "object") {
+      const feeds = healthObj?.feeds;
+      if (!feeds || typeof feeds !== "object") {
         console.warn("[FeedStatusContext] Missing feeds object in health");
         return;
       }
 
       const normalized = {};
 
-      for (const [feedId, entry] of Object.entries(healthObj.feeds)) {
+      for (const [feedId, entry] of Object.entries(feeds)) {
         if (!entry) {
           normalized[feedId] = "unknown";
           continue;
@@ -161,11 +160,14 @@ export function FeedStatusProvider({ children }) {
           return; // Do NOT overwrite state
         }
 
+        // ⭐ Ensure feeds + markets always exist
+        json.feeds = json.feeds || {};
+        json.markets = json.markets || {};
+
         // Store full health object
         setHealth(json);
 
-        // ⭐ CRITICAL FIX:
-        // Always store a REAL Date object to prevent UI crashes
+        // ⭐ Always store a REAL Date object
         setLastUpdated(new Date());
 
         // Normalize feed statuses

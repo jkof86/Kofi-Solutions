@@ -1,19 +1,33 @@
 export const TICKER_SYMBOLS = [
-  // Crypto
+  // -------------------------
+  // CRYPTO (exists in CRYPTO_MAP)
+  // -------------------------
   "BTC", "ETH", "SOL", "XRP", "ADA", "AVAX",
+  "DOGE", "SHIB", "LTC", "BCH", "ICP", "TRX", "ZEC", "BONK",
 
-  // Finance
-  "JPM", "GS", "BAC", "V", "MA", "BRK.B",
+  // -------------------------
+  // STOCKS (exists in STOCK_MAP)
+  // -------------------------
+  "AMZN", "AAPL", "MSFT", "GOOG", "META", "NVDA",
+  "TSLA", "INTC", "NFLX", "XOM", "GME", "NVO", "PFE",
+  "BRK-B",   // normalized by backend (BRK.B → brk-b)
 
-  // Tech / Security / AWS / React / Java
-  "AAPL", "MSFT", "AMZN", "GOOG", "META", "NVDA",
+  // -------------------------
+  // ETFs (exists in ETF_MAP)
+  // -------------------------
+  "QQQ", "SPY", "VTI", "VOO", "VGT", "VHT", "VNQ", "VYM",
+  "ARKK", "ARKG", "ARKW",
+  "TLT", "BND", "DIA", "GDX", "SLV",
+  "IWF", "IWD", "IJR",
+  "XLB", "XLC", "XLE", "XLF", "XLI", "XLK", "XLP", "XLU", "XLV", "XLY",
 
-  // IoT
-  "QCOM", "TXN", "STM",
-
-  // Spring / Enterprise
+  // -------------------------
+  // ENTERPRISE / SPRING (mapped as stocks)
+  // -------------------------
   "ORCL", "IBM", "SAP",
 
-  // Sports
-  "DIS", "WBD", "MANU"
+  // -------------------------
+  // SPORTS / MEDIA (only include if mapped)
+  // -------------------------
+  // "DIS"  // include only if STOCK_MAP["dis"] exists
 ];

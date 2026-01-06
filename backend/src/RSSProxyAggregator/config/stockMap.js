@@ -1,41 +1,39 @@
 // ------------------------------------------------------------
-// stocksMap.js — v1.180 (Yahoo Finance Stock Symbols, Alphabetized)
+// stockMap.js — v1.205 (Validated + Yahoo-Safe)
 // ------------------------------------------------------------
 //
-// Notes:
-//   • Keys must be lowercase ticker symbols
-//   • Values must be EXACT Yahoo Finance tickers
-//   • Fully compatible with symbol normalization (BRK.B → brk-b)
-//   • Used by handleMarket → fetchYahooStock
-//   • Alphabetized for maintainability
+// Maps normalized stock symbols → Yahoo Finance tickers
+// All keys lowercase, dash-safe
 //
 // ------------------------------------------------------------
 
 const STOCK_MAP = {
+  aapl: "AAPL",
   amzn: "AMZN",
-  "brk-b": "BRK-B",   // normalized (BRK.B → BRK-B)
-  djt: "DJT",
+  bac: "BAC",
+  "brk-b": "BRK-B",
+  dis: "DIS",
   gme: "GME",
   goog: "GOOG",
+  gs: "GS",
+  ibm: "IBM",
   intc: "INTC",
+  jpm: "JPM",
+  ma: "MA",
   meta: "META",
+  msft: "MSFT",
   nflx: "NFLX",
   nvo: "NVO",
+  nvda: "NVDA",
+  orcl: "ORCL",
   pfe: "PFE",
-  rum: "RUM",
+  qcom: "QCOM",
+  sap: "SAP",
+  stm: "STM",
   tsla: "TSLA",
-  xom: "XOM",
+  txn: "TXN",
+  v: "V",
+  xom: "XOM"
 };
-
-// ------------------------------------------------------------
-// Optional future additions (commented for now)
-// ------------------------------------------------------------
-// amd: "AMD",
-// arm: "ARM",
-// baba: "BABA",
-// coin: "COIN",
-// pltr: "PLTR",
-
-Object.freeze(STOCK_MAP);
 
 module.exports = { STOCK_MAP };

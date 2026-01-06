@@ -1,20 +1,29 @@
 // ------------------------------------------------------------
-// feedsMap.js — Backend v1.180 (Flat + AWS‑Safe + Clean)
+// feedsMap.js — Backend v1.204 (RSS + JSON + Handler-Safe)
 // ------------------------------------------------------------
 //
-// All feeds verified working inside AWS Lambda.
-// Dead feeds removed: the_block, messari, marketwatch,
-// ft_markets, reuters_top, ap_news, and all other blocked feeds.
+// Supports:
+//   ✓ RSS feeds
+//   ✓ JSON feeds (via jsonHandlers.js)
+//   ✓ Handler-based feeds (Yahoo Crypto, CryptoPanic, CoinGecko)
+//   ✓ Full compatibility with handleFeed v1.204
+//   ✓ Full compatibility with handleHealth v1.204
 //
-// Structure:
-//   module.exports = { FEEDS };
-//   FEEDS = { feedId: { id, name, url, type, category } }
+// Feed object shape:
+//   {
+//     id: string,
+//     name: string,
+//     url: string,
+//     type: "rss" | "json",
+//     category: string,
+//     handler?: string   // for JSON feeds
+//   }
 //
 // ------------------------------------------------------------
 
 const FEEDS = {
   // ------------------------------------------------------------
-  // CRYPTO (alphabetized)
+  // CRYPTO (RSS)
   // ------------------------------------------------------------
   coindesk: {
     id: "coindesk",
@@ -42,6 +51,34 @@ const FEEDS = {
     name: "Decrypt",
     url: "https://decrypt.co/feed",
     type: "rss",
+    category: "crypto",
+  },
+
+  // ------------------------------------------------------------
+  // CRYPTO (JSON HANDLERS)
+  // ------------------------------------------------------------
+  yahoo_crypto: {
+    id: "yahoo_crypto",
+    name: "Yahoo Crypto (JSON)",
+    url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=BTC-USD,ETH-USD,SOL-USD,XRP-USD,ADA-USD",
+    type: "json",
+    handler: "yahoo_crypto",
+    category: "crypto",
+  },
+  cryptopanic_crypto: {
+    id: "cryptopanic_crypto",
+    name: "CryptoPanic",
+    url: "https://cryptopanic.com/api/v1/posts/?auth_token=demo&public=true",
+    type: "json",
+    handler: "cryptopanic_crypto",
+    category: "crypto",
+  },
+  coingecko_crypto: {
+    id: "coingecko_crypto",
+    name: "CoinGecko Updates",
+    url: "https://api.coingecko.com/api/v3/status_updates",
+    type: "json",
+    handler: "coingecko_crypto",
     category: "crypto",
   },
 
@@ -107,6 +144,59 @@ const FEEDS = {
     url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
     type: "rss",
     category: "news",
+  },
+
+  // ------------------------------------------------------------
+  // ⭐ ALTERNATIVE NEWS (NEW CATEGORY)
+  // ------------------------------------------------------------
+  intercept: {
+    id: "intercept",
+    name: "The Intercept",
+    url: "https://theintercept.com/feed/?rss",
+    type: "rss",
+    category: "alternative_news",
+  },
+  propublica: {
+    id: "propublica",
+    name: "ProPublica",
+    url: "https://www.propublica.org/feeds/propublica/main",
+    type: "rss",
+    category: "alternative_news",
+  },
+  reason: {
+    id: "reason",
+    name: "Reason Magazine",
+    url: "https://reason.com/feed/",
+    type: "rss",
+    category: "alternative_news",
+  },
+  atlantic: {
+    id: "atlantic",
+    name: "The Atlantic",
+    url: "https://www.theatlantic.com/feed/all/",
+    type: "rss",
+    category: "alternative_news",
+  },
+  the_hill: {
+    id: "the_hill",
+    name: "The Hill",
+    url: "https://thehill.com/feed/",
+    type: "rss",
+    category: "alternative_news",
+  },
+  axios: {
+    id: "axios",
+    name: "Axios",
+    url: "https://www.axios.com/rss",
+    type: "rss",
+    category: "alternative_news",
+  },
+  vice_world: {
+    id: "vice_world",
+    name: "VICE World News",
+    url: "https://www.vice.com/en/rss",
+    type: "rss",
+    category: "alternative_news",
   },
 
   // ------------------------------------------------------------

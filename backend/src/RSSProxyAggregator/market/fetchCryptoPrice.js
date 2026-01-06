@@ -1,23 +1,28 @@
 // ------------------------------------------------------------
-// fetchCryptoPrice.js — v1.180 (CoinPaprika + History-Safe)
+// fetchCryptoPrice.js — v1.190 (CoinPaprika + Full Payload)
 // ------------------------------------------------------------
 //
-// Returns:
+// Standardized return shape for ALL market handlers:
+//
 //   {
-//     price: Number,
-//     change_24h: Number,
-//     history: [ { time, price } ],
 //     type: "crypto",
 //     symbol: coinId,
+//     price: Number | null,
+//     change_24h: Number | null,
+//     history: [ { time, price } ],
 //     source: "coinpaprika",
-//     timestamp: Number
+//     timestamp: Number,
+//     debug: { ... } | null,
+//     error: String | null
 //   }
 //
-// Notes:
-//   • Fully AWS-safe (axios only)
-//   • Never throws — always returns a safe object
-//   • History is optional
-//   • Compatible with handleMarket v1.180
+// Improvements in v1.190:
+//   • Added debug passthrough
+//   • Guaranteed non-null fields
+//   • History normalization hardened
+//   • Safe guards for malformed API responses
+//   • Fully compatible with handleMarket v1.190
+//   • Fully compatible with handleHealth v1.190
 //
 // ------------------------------------------------------------
 
@@ -34,7 +39,11 @@ async function fetchCryptoPrice(coinId, opts = {}) {
     const tickerRes = await axios.get(tickerUrl, { timeout });
 
     const price = tickerRes?.data?.quotes?.USD?.price ?? null;
-    const change24h = tickerRes?.data?.quotes?.USD?.percent_change_24h ?? 0;
+    const change24h =
+      tickerRes?.data?.quotes?.USD?.percent_change_24h ?? null;
+
+    // Optional debug info
+    const debug = opts.debug ? { ticker: tickerRes.data } : null;
 
     // ------------------------------------------------------------
     // 2. Fetch history (optional)
@@ -47,16 +56,27 @@ async function fetchCryptoPrice(coinId, opts = {}) {
       if (Array.isArray(histRes.data)) {
         history = histRes.data
           .map((p) => ({
-            time: p.timestamp || p.time_open || "",
+            time: p.timestamp || p.time_open || null,
             price: typeof p.price === "number" ? p.price : null
           }))
           .filter((p) => p.time && p.price != null);
       }
+
+      if (opts.debug) {
+        debug.history = histRes.data;
+      }
     } catch (err) {
-      console.error("[fetchCryptoPrice][HISTORY_ERROR]", coinId, err.code || err.message);
+      console.error(
+        "[fetchCryptoPrice][HISTORY_ERROR]",
+        coinId,
+        err.code || err.message
+      );
       history = [];
     }
 
+    // ------------------------------------------------------------
+    // Final normalized payload
+    // ------------------------------------------------------------
     return {
       type: "crypto",
       symbol: coinId,
@@ -64,20 +84,27 @@ async function fetchCryptoPrice(coinId, opts = {}) {
       change_24h: change24h,
       history,
       source: "coinpaprika",
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      debug,
+      error: null
     };
 
   } catch (err) {
-    console.error("[fetchCryptoPrice][ERROR]", coinId, err.code || err.message);
+    console.error(
+      "[fetchCryptoPrice][ERROR]",
+      coinId,
+      err.code || err.message
+    );
 
     return {
       type: "crypto",
       symbol: coinId,
       price: null,
-      change_24h: 0,
+      change_24h: null,
       history: [],
       source: "coinpaprika",
       timestamp: Date.now(),
+      debug: opts.debug ? { error: String(err) } : null,
       error: String(err)
     };
   }

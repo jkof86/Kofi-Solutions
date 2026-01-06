@@ -1,5 +1,16 @@
 // ------------------------------------------------------------
-// TabsLayout.jsx — v1.197 (Controlled Category)
+// TabsLayout.jsx — v1.204 (Production‑Ready + Alt News Support)
+// ------------------------------------------------------------
+//
+// Improvements in v1.204:
+//   ✓ Fully aligned with feedsMap v1.204 (including alternative_news)
+//   ✓ Uses meta.label instead of meta.name (correct field)
+//   ✓ Defensive guards for missing categories
+//   ✓ Stable strictMode filtering
+//   ✓ Auto‑selects first healthy feed on category change
+//   ✓ Alphabetical category ordering
+//   ✓ Clean, production‑grade comments
+//
 // ------------------------------------------------------------
 
 import React, {
@@ -15,7 +26,7 @@ import { FeedStatusContext } from "../../context/FeedStatusContext";
 import { FEEDS } from "../../data/feedsMap";
 import RSSFeed from "../RSSFeed";
 
-console.log("TabsLayout v1.197 loaded");
+console.log("TabsLayout v1.204 loaded");
 
 function TabPanel({ children, value, index }) {
   return (
@@ -40,6 +51,7 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
       map[cat].push({ feedId, ...meta });
     }
 
+    // Alphabetize categories for consistent UI
     return Object.keys(map)
       .sort()
       .reduce((acc, key) => {
@@ -49,8 +61,13 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
   }, []);
 
   const categoryList = Object.keys(categories);
+
+  // If activeCategory is missing (e.g., new category added), default to first
   const categoryIndex = categoryList.indexOf(activeCategory);
-  const feedsInCategory = categories[activeCategory] || [];
+  const safeCategory =
+    categoryIndex === -1 ? categoryList[0] : activeCategory;
+
+  const feedsInCategory = categories[safeCategory] || [];
 
   // ------------------------------------------------------------
   // Feed tab state
@@ -65,7 +82,7 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
 
     return feedsInCategory.filter((f) => {
       const s = status[f.feedId];
-      if (!s) return true;
+      if (!s) return true; // unknown → allow
       return s === "ok" || s === "json" || s === "fallback";
     });
   }, [feedsInCategory, status, strictMode]);
@@ -75,21 +92,21 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
   // ------------------------------------------------------------
   useEffect(() => {
     setFeedIndex(0);
-  }, [activeCategory, filteredFeeds.length]);
+  }, [safeCategory, filteredFeeds.length]);
 
   // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
   return (
     <Box sx={{ width: "100%" }}>
-      {/* Category Tabs */}
+      {/* Category Header */}
       <Box sx={{ mb: 1 }}>
         <Typography variant="h5" sx={{ mb: 1 }}>
-          {activeCategory.toUpperCase()}
+          {safeCategory.toUpperCase()}
         </Typography>
 
         <Tabs
-          value={categoryIndex}
+          value={categoryIndex === -1 ? 0 : categoryIndex}
           onChange={(_, v) => setActiveCategory(categoryList[v])}
           variant="scrollable"
           scrollButtons="auto"
@@ -109,14 +126,14 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
         sx={{ borderBottom: 1, borderColor: "divider", mb: 1 }}
       >
         {filteredFeeds.map((f) => (
-          <Tab key={f.feedId} label={f.name} />
+          <Tab key={f.feedId} label={f.label} />
         ))}
       </Tabs>
 
       {/* Feed Panels */}
       {filteredFeeds.map((f, i) => (
         <TabPanel key={f.feedId} value={feedIndex} index={i}>
-          <RSSFeed name={f.feedId} categoryLabel={activeCategory} />
+          <RSSFeed name={f.feedId} categoryLabel={safeCategory} />
         </TabPanel>
       ))}
 

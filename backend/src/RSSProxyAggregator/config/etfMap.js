@@ -1,13 +1,9 @@
 // ------------------------------------------------------------
-// etfMap.js — v1.180 (Yahoo Finance ETF Symbols, Alphabetized)
+// etfMap.js — v1.205 (Validated + Yahoo-Safe)
 // ------------------------------------------------------------
 //
-// Notes:
-//   • Keys must be lowercase ticker symbols
-//   • Values must be EXACT Yahoo Finance tickers
-//   • Used by handleMarket → fetchYahooEtf
-//   • Fully compatible with symbol normalization (BRK.B → brk-b)
-//   • Alphabetized for maintainability
+// Maps normalized ETF symbols → Yahoo Finance tickers
+// All keys lowercase, dash-safe
 //
 // ------------------------------------------------------------
 
@@ -21,6 +17,7 @@ const ETF_MAP = {
   ijr: "IJR",
   iwd: "IWD",
   iwf: "IWF",
+  qqq: "QQQ",
   schd: "SCHD",
   slv: "SLV",
   spy: "SPY",
@@ -28,9 +25,9 @@ const ETF_MAP = {
   vgt: "VGT",
   vht: "VHT",
   vti: "VTI",
+  vnq: "VNQ",
   voo: "VOO",
   vym: "VYM",
-  vnq: "VNQ",
   xlb: "XLB",
   xlc: "XLC",
   xle: "XLE",
@@ -39,18 +36,8 @@ const ETF_MAP = {
   xlk: "XLK",
   xlp: "XLP",
   xlu: "XLU",
-  xly: "XLY",
+  xlv: "XLV",
+  xly: "XLY"
 };
-
-// ------------------------------------------------------------
-// Optional future additions (commented for now)
-// ------------------------------------------------------------
-// jeq: "JEQ",      // Japan Equity Fund
-// eem: "EEM",      // Emerging Markets
-// xbi: "XBI",      // Biotech
-// tan: "TAN",      // Solar
-// soxx: "SOXX",    // Semiconductors
-
-Object.freeze(ETF_MAP);
 
 module.exports = { ETF_MAP };
