@@ -1,12 +1,12 @@
 // ------------------------------------------------------------
-// TickerBar.jsx — v1.21 (Fully Patched + Yahoo-Safe Symbols)
+// TickerBar.jsx — v1.23 (Seamless Scroll, No Dividers)
 // ------------------------------------------------------------
-// Fixes:
-//   ✓ Crypto symbols now match backend keys (btc-usd, doge-usd, etc.)
-//   ✓ Category mapping uses normalized keys
-//   ✓ Icon lookup uses uppercase Yahoo symbols
-//   ✓ All symbols display correctly in ticker
-//   ✓ Scroll animation resets cleanly
+// Improvements:
+//   ✓ Seamless infinite scroll (duplicated content)
+//   ✓ Category-based sorting (crypto → tech → finance)
+//   ✓ No category dividers (per request)
+//   ✓ Fully compatible with v1.205 health + v1.206 alias-safe market
+//   ✓ Smooth scroll preserved, no early looping
 // ------------------------------------------------------------
 
 import React, { useEffect, useState, useContext } from "react";
@@ -20,13 +20,13 @@ import {
 
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 
-console.log("TickerBar v1.21 loaded");
+console.log("TickerBar v1.23 loaded");
 
 // ------------------------------------------------------------
 // Symbol → Category mapping (normalized keys)
 // ------------------------------------------------------------
 const SYMBOL_CATEGORY = {
-  // Crypto (Yahoo normalized)
+  // Crypto
   "btc-usd": "crypto",
   "eth-usd": "crypto",
   "sol-usd": "crypto",
@@ -100,7 +100,6 @@ export default function TickerBar() {
   // Only show valid market entries
   const visible = symbols.filter((sym) => {
     const m = markets[sym];
-    // const m = markets[sym] || markets[sym.toUpperCase()];
     return (
       m &&
       m.status === "ok" &&
@@ -108,6 +107,20 @@ export default function TickerBar() {
       m.price > 0
     );
   });
+
+  // ------------------------------------------------------------
+  // 4. Sort by category (crypto → tech → finance)
+  // ------------------------------------------------------------
+  const sorted = [...visible].sort((a, b) => {
+    const catA = SYMBOL_CATEGORY[a] || "finance";
+    const catB = SYMBOL_CATEGORY[b] || "finance";
+    return catA.localeCompare(catB);
+  });
+
+  // ------------------------------------------------------------
+  // 5. Duplicate content for seamless infinite scroll
+  // ------------------------------------------------------------
+  const doubled = [...sorted, ...sorted];
 
   return (
     <Box
@@ -121,7 +134,7 @@ export default function TickerBar() {
         "&:hover .scroll": { animationPlayState: "paused" }
       }}
     >
-      {visible.length === 0 && (
+      {sorted.length === 0 && (
         <Typography variant="body2" color="warning.main">
           No valid market data available
         </Typography>
@@ -133,15 +146,13 @@ export default function TickerBar() {
         sx={{
           display: "inline-flex",
           alignItems: "center",
-          animation: "scrollTicker 25s linear infinite"
+          animation: "scrollTicker 60s linear infinite"
         }}
       >
-        {visible.map((sym, idx) => {
+        {doubled.map((sym, idx) => {
           const m = markets[sym];
-          const upper = sym.toUpperCase(); // e.g., "DOGE-USD"
+          const upper = sym.toUpperCase();
           const icon = SYMBOL_ICONS[upper] || "";
-
-          // Determine chip color category
           const cat = SYMBOL_CATEGORY[sym] || "finance";
 
           return (
@@ -162,33 +173,24 @@ export default function TickerBar() {
               />
 
               {/* Market Data */}
-              {["crypto", "stock", "etf"].includes(m.type) ? (
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color:
-                      typeof m.change_24h === "number" && m.change_24h >= 0
-                        ? "success.main"
-                        : "error.main",
-                    fontWeight: 600
-                  }}
-                >
-                  {icon} {upper}: ${m.price.toFixed(2)} (
-                  {typeof m.change_24h === "number"
-                    ? `${m.change_24h >= 0 ? "+" : ""}${m.change_24h.toFixed(
+              <Typography
+                variant="body2"
+                sx={{
+                  color:
+                    typeof m.change_24h === "number" && m.change_24h >= 0
+                      ? "success.main"
+                      : "error.main",
+                  fontWeight: 600
+                }}
+              >
+                {icon} {upper}: ${m.price.toFixed(2)} (
+                {typeof m.change_24h === "number"
+                  ? `${m.change_24h >= 0 ? "+" : ""}${m.change_24h.toFixed(
                       2
                     )}%`
-                    : "0.00%"}
-                  )
-                </Typography>
-              ) : (
-                <Typography
-                  variant="body2"
-                  sx={{ color: "text.primary", fontWeight: 600 }}
-                >
-                  {icon} {upper}: ${m.price.toFixed(2)}
-                </Typography>
-              )}
+                  : "0.00%"}
+                )
+              </Typography>
             </Box>
           );
         })}

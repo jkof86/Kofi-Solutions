@@ -111,6 +111,11 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
   const safeSource = item?.source || "";
   const safeDescription = item?.description || "";
   const safeDate = item?.date ? new Date(item.date).toLocaleString() : "";
+  const safeImage =
+    item?.image && typeof item.image === "string" && item.image.startsWith("http")
+      ? item.image
+      : null;
+
 
   // ------------------------------------------------------------
   // Render
@@ -179,6 +184,38 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
             />
           </Box>
         </Box>
+
+        {/* Article Image */}
+        <Box
+          sx={{
+            mb: 1,
+            height: 160,
+            overflow: "hidden",
+            borderRadius: 1,
+            backgroundColor: "#f0f0f0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+        >
+          {safeImage ? (
+            <img
+              src={safeImage}
+              alt="Article"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                borderRadius: 4
+              }}
+            />
+          ) : (
+            <Typography variant="caption" color="text.secondary">
+              No image available
+            </Typography>
+          )}
+        </Box>
+
 
         {/* Description */}
         {safeDescription && (

@@ -111,7 +111,7 @@ export const SYMBOL_ICONS = {
   "ZEC-USD": "ⓩ",
 
   // Tech
-  AAPL: "",
+  AAPL: "🍎",
   MSFT: "🪟",
   AMZN: "🛒",
   GOOG: "🔍",
