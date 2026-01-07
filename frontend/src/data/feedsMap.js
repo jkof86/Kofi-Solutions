@@ -1,5 +1,14 @@
 // ------------------------------------------------------------
-// feedsMap.js — Frontend FEEDS v1.195 (Fully Synced)
+// feedsMap.js — Frontend FEEDS v1.196 (Chart-Safe Symbols)
+// ------------------------------------------------------------
+//
+// Additions in v1.196:
+//   ✓ Added Yahoo Finance symbols for MarketChart
+//   ✓ Crypto RSS feeds default to BTC-USD
+//   ✓ Finance RSS feeds default to SPY
+//   ✓ JSON crypto handlers default to BTC-USD
+//   ✓ No removals — all original FEEDS preserved
+//
 // ------------------------------------------------------------
 
 export const FEEDS = {
@@ -12,6 +21,7 @@ export const FEEDS = {
     url: "https://www.coindesk.com/arc/outboundfeeds/rss/",
     type: "rss",
     category: "crypto",
+    symbol: "BTC-USD",
   },
   cointelegraph: {
     id: "cointelegraph",
@@ -19,6 +29,7 @@ export const FEEDS = {
     url: "https://cointelegraph.com/rss",
     type: "rss",
     category: "crypto",
+    symbol: "BTC-USD",
   },
   cryptoslate: {
     id: "cryptoslate",
@@ -26,6 +37,7 @@ export const FEEDS = {
     url: "https://cryptoslate.com/feed/",
     type: "rss",
     category: "crypto",
+    symbol: "BTC-USD",
   },
   decrypt: {
     id: "decrypt",
@@ -33,6 +45,7 @@ export const FEEDS = {
     url: "https://decrypt.co/feed",
     type: "rss",
     category: "crypto",
+    symbol: "BTC-USD",
   },
 
   // ------------------------------------------------------------
@@ -45,6 +58,7 @@ export const FEEDS = {
     type: "json",
     handler: "yahoo_crypto",
     category: "crypto",
+    symbol: "BTC-USD",
   },
   cryptopanic_crypto: {
     id: "cryptopanic_crypto",
@@ -53,6 +67,7 @@ export const FEEDS = {
     type: "json",
     handler: "cryptopanic_crypto",
     category: "crypto",
+    symbol: "BTC-USD",
   },
   coingecko_crypto: {
     id: "coingecko_crypto",
@@ -61,6 +76,7 @@ export const FEEDS = {
     type: "json",
     handler: "coingecko_crypto",
     category: "crypto",
+    symbol: "BTC-USD",
   },
 
   // ------------------------------------------------------------
@@ -72,6 +88,7 @@ export const FEEDS = {
     url: "https://www.cnbc.com/id/10001147/device/rss/rss.html",
     type: "rss",
     category: "finance",
+    symbol: "SPY",
   },
   investing: {
     id: "investing",
@@ -79,6 +96,7 @@ export const FEEDS = {
     url: "https://www.investing.com/rss/news_25.rss",
     type: "rss",
     category: "finance",
+    symbol: "SPY",
   },
   yahoo_finance: {
     id: "yahoo_finance",
@@ -86,10 +104,11 @@ export const FEEDS = {
     url: "https://finance.yahoo.com/news/rssindex",
     type: "rss",
     category: "finance",
+    symbol: "SPY",
   },
 
   // ------------------------------------------------------------
-  // NEWS
+  // NEWS (no symbols needed)
   // ------------------------------------------------------------
   aljazeera_world: {
     id: "aljazeera_world",
@@ -128,51 +147,51 @@ export const FEEDS = {
   },
 
   // ------------------------------------------------------------
-  // ⭐ NEW CATEGORY — Alternative News
+  // ALTERNATIVE NEWS
   // ------------------------------------------------------------
   intercept: {
     id: "intercept",
     category: "alternative_news",
     label: "The Intercept",
-    url: "https://theintercept.com/feed/?rss"
+    url: "https://theintercept.com/feed/?rss",
   },
   propublica: {
     id: "propublica",
     category: "alternative_news",
     label: "ProPublica",
-    url: "https://www.propublica.org/feeds/propublica/main"
+    url: "https://www.propublica.org/feeds/propublica/main",
   },
   reason: {
     id: "reason",
     category: "alternative_news",
     label: "Reason Magazine",
-    url: "https://reason.com/feed/"
+    url: "https://reason.com/feed/",
   },
   atlantic: {
     id: "atlantic",
     category: "alternative_news",
     label: "The Atlantic",
-    url: "https://www.theatlantic.com/feed/all/"
+    url: "https://www.theatlantic.com/feed/all/",
   },
   the_hill: {
     id: "the_hill",
     category: "alternative_news",
     label: "The Hill",
-    url: "https://thehill.com/feed/"
+    url: "https://thehill.com/feed/",
   },
   axios: {
     id: "axios",
     category: "alternative_news",
     label: "Axios",
-    url: "https://www.axios.com/rss"
+    url: "https://www.axios.com/rss",
   },
   vice_world: {
     id: "vice_world",
     category: "alternative_news",
     label: "VICE World News",
-    url: "https://www.vice.com/en/rss"
+    url: "https://www.vice.com/en/rss",
   },
-  
+
   // ------------------------------------------------------------
   // AWS
   // ------------------------------------------------------------

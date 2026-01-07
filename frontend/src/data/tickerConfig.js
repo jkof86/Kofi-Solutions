@@ -1,31 +1,80 @@
 // ------------------------------------------------------------
-// tickerConfig.js — Kofi Solutions v1.206
+// tickerConfig.js — Kofi Solutions v1.300
 // ------------------------------------------------------------
-// Frontend ticker config aligned with backend curated symbols:
-//   Crypto:  btc, eth, sol
-//   Tech:    aapl, msft, amzn
-//   Finance: spy, vti, voo
+// Fully updated to support:
+//   ✓ Crypto (Yahoo format: BTC-USD, ETH-USD, etc.)
+//   ✓ Tech stocks
+//   ✓ Finance ETFs
+//   ✓ New additions: DOGE, XRP, ZEC, GOOG, NVDA, TSLA, META,
+//                    IBIT, ARKG, BLOK
 // ------------------------------------------------------------
 
 
 // ------------------------------------------------------------
-// 1. Category → Symbols (UI-facing, uppercase)
+// 1. Category → Symbols (UI-facing, Yahoo-compatible)
 // ------------------------------------------------------------
-// These are the ONLY symbols the backend tracks in v1.205+.
-// All other symbols are commented out below in Section B.
-//
+// IMPORTANT:
+// Crypto *must* use Yahoo symbols (BTC-USD, ETH-USD, etc.)
+// Stocks/ETFs use uppercase tickers as usual.
+// ------------------------------------------------------------
 
 export const CATEGORY_SYMBOLS = {
-  crypto: ["BTC", "ETH", "SOL"],
-  finance: ["SPY", "VTI", "VOO"],
-  tech: ["AAPL", "MSFT", "AMZN"]
+  crypto: [
+    "BTC-USD",
+    "ETH-USD",
+    "SOL-USD",
+    "DOGE-USD",
+    "XRP-USD",
+    "ZEC-USD"
+  ],
+
+  tech: [
+    "AAPL",
+    "MSFT",
+    "AMZN",
+    "GOOG",
+    "NVDA",
+    "TSLA",
+    "META"
+  ],
+
+  finance: [
+    "SPY",
+    "VTI",
+    "VOO",
+    "IBIT",
+    "ARKG",
+    "BLOK"
+  ]
 };
 
 export const ALL_MARKET_SYMBOLS = [
-  "BTC", "ETH", "SOL",
-  "AAPL", "MSFT", "AMZN",
-  "SPY", "VTI", "VOO"
+  // Crypto (Yahoo format)
+  "BTC-USD",
+  "ETH-USD",
+  "SOL-USD",
+  "DOGE-USD",
+  "XRP-USD",
+  "ZEC-USD",
+
+  // Tech
+  "AAPL",
+  "MSFT",
+  "AMZN",
+  "GOOG",
+  "NVDA",
+  "TSLA",
+  "META",
+
+  // Finance / ETFs
+  "SPY",
+  "VTI",
+  "VOO",
+  "IBIT",
+  "ARKG",
+  "BLOK"
 ];
+
 
 
 // ------------------------------------------------------------
@@ -49,64 +98,56 @@ export const CATEGORY_COLORS = {
 // ------------------------------------------------------------
 // 4. Symbol Icons (UI-facing)
 // ------------------------------------------------------------
-// Only icons for active symbols are included.
-// Full icon set is preserved in Section B.
-//
+// Clean, readable, emoji-safe icons for all active symbols.
+// ------------------------------------------------------------
+
 export const SYMBOL_ICONS = {
-  // Crypto
-  BTC: "₿",
-  ETH: "◆",
-  SOL: "◎",
+  // Crypto (Yahoo format)
+  "BTC-USD": "₿",
+  "ETH-USD": "◆",
+  "SOL-USD": "◎",
+  "DOGE-USD": "🐶",
+  "XRP-USD": "✦",
+  "ZEC-USD": "ⓩ",
 
   // Tech
   AAPL: "",
   MSFT: "🪟",
   AMZN: "🛒",
+  GOOG: "🔍",
+  NVDA: "🎮",
+  TSLA: "⚡",
+  META: "∞",
 
-  // Finance (ETFs)
+  // Finance / ETFs
   SPY: "📈",
   VTI: "📊",
-  VOO: "📘"
+  VOO: "📘",
+  IBIT: "🟦",
+  ARKG: "🧬",
+  BLOK: "🧱"
 };
-
 
 // ------------------------------------------------------------
 // 5. Lowercase icon map (backend-safe)
 // ------------------------------------------------------------
 export const SYMBOL_ICONS_LOWER = Object.fromEntries(
-  Object.entries(SYMBOL_ICONS).map(([k, v]) => [k.toLowerCase(), v])
+  Object.entries(SYMBOL_ICONS).map(([k, v]) => [
+    k.toLowerCase(),
+    v
+  ])
 );
 
 
 // ------------------------------------------------------------
 // 6. Normalized symbol list (backend-safe)
 // ------------------------------------------------------------
+// Converts:
+//   BTC-USD → btc-usd
+//   AAPL    → aapl
+//   IBIT    → ibit
+// ------------------------------------------------------------
+
 export const NORMALIZED_SYMBOLS = TICKER_SYMBOLS.map((s) =>
   s.toLowerCase().replace(/\./g, "-")
 );
-
-
-
-// ============================================================================
-// B. FULL ORIGINAL CATEGORY SET (COMMENTED OUT)
-// ============================================================================
-// These symbols are NOT tracked by the backend in v1.205+.
-// Keeping them here for future expansion or UI reference.
-// ----------------------------------------------------------------------------
-//
-// export const CATEGORY_SYMBOLS = {
-//   crypto: ["BTC", "ETH", "SOL", "XRP", "ADA", "AVAX", "DOGE", "SHIB", "LTC", "BCH", "ICP", "TRX", "ZEC", "BONK"],
-//
-//   finance: ["JPM", "GS", "BAC", "V", "MA", "BRK-B", "PFE", "NVO"],
-//
-//   tech: ["AAPL", "MSFT", "AMZN", "GOOG", "META", "NVDA", "NFLX", "INTC"],
-//
-//   iot: ["QCOM", "TXN", "STM"],
-//
-//   spring: ["ORCL", "IBM", "SAP"],
-//
-//   sports: ["DIS"]
-// };
-//
-//
-//

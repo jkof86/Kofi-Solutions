@@ -1,12 +1,12 @@
 // ------------------------------------------------------------
-// TickerBar.jsx — v1.20 (Always Show All 9 Symbols + Category Colors)
+// TickerBar.jsx — v1.21 (Fully Patched + Yahoo-Safe Symbols)
 // ------------------------------------------------------------
-// This version:
-//   ✓ Ignores activeCategory entirely
-//   ✓ Always loads all 9 market symbols
-//   ✓ Uses crypto/finance/tech colors per symbol
-//   ✓ Keeps UI identical (scrolling ticker, icons, formatting)
-//   ✓ Removes all broken logic + undefined variables
+// Fixes:
+//   ✓ Crypto symbols now match backend keys (btc-usd, doge-usd, etc.)
+//   ✓ Category mapping uses normalized keys
+//   ✓ Icon lookup uses uppercase Yahoo symbols
+//   ✓ All symbols display correctly in ticker
+//   ✓ Scroll animation resets cleanly
 // ------------------------------------------------------------
 
 import React, { useEffect, useState, useContext } from "react";
@@ -20,23 +20,36 @@ import {
 
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 
-console.log("TickerBar v1.20 loaded");
+console.log("TickerBar v1.21 loaded");
 
 // ------------------------------------------------------------
-// Symbol → Category mapping (for chip colors)
+// Symbol → Category mapping (normalized keys)
 // ------------------------------------------------------------
 const SYMBOL_CATEGORY = {
-  btc: "crypto",
-  eth: "crypto",
-  sol: "crypto",
+  // Crypto (Yahoo normalized)
+  "btc-usd": "crypto",
+  "eth-usd": "crypto",
+  "sol-usd": "crypto",
+  "doge-usd": "crypto",
+  "xrp-usd": "crypto",
+  "zec-usd": "crypto",
 
+  // Tech
   aapl: "tech",
   msft: "tech",
   amzn: "tech",
+  goog: "tech",
+  nvda: "tech",
+  tsla: "tech",
+  meta: "tech",
 
+  // Finance / ETFs
   spy: "finance",
   vti: "finance",
-  voo: "finance"
+  voo: "finance",
+  ibit: "finance",
+  arkg: "finance",
+  blok: "finance"
 };
 
 export default function TickerBar() {
@@ -46,7 +59,7 @@ export default function TickerBar() {
   const [lastUpdated, setLastUpdated] = useState("");
 
   // ------------------------------------------------------------
-  // 1. Always load all 9 symbols
+  // 1. Load all symbols (normalized)
   // ------------------------------------------------------------
   useEffect(() => {
     const cleaned = ALL_MARKET_SYMBOLS.map((s) =>
@@ -64,7 +77,7 @@ export default function TickerBar() {
     const el = document.querySelector(".scroll");
     if (el) {
       el.style.animation = "none";
-      void el.offsetHeight; // force reflow
+      void el.offsetHeight;
       el.style.animation = "";
     }
   }, [symbols]);
@@ -87,6 +100,7 @@ export default function TickerBar() {
   // Only show valid market entries
   const visible = symbols.filter((sym) => {
     const m = markets[sym];
+    // const m = markets[sym] || markets[sym.toUpperCase()];
     return (
       m &&
       m.status === "ok" &&
@@ -124,7 +138,7 @@ export default function TickerBar() {
       >
         {visible.map((sym, idx) => {
           const m = markets[sym];
-          const upper = sym.toUpperCase();
+          const upper = sym.toUpperCase(); // e.g., "DOGE-USD"
           const icon = SYMBOL_ICONS[upper] || "";
 
           // Determine chip color category
@@ -162,8 +176,8 @@ export default function TickerBar() {
                   {icon} {upper}: ${m.price.toFixed(2)} (
                   {typeof m.change_24h === "number"
                     ? `${m.change_24h >= 0 ? "+" : ""}${m.change_24h.toFixed(
-                        2
-                      )}%`
+                      2
+                    )}%`
                     : "0.00%"}
                   )
                 </Typography>
