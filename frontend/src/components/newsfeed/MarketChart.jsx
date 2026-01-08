@@ -46,6 +46,9 @@ export default function MarketChart({ symbol }) {
   useEffect(() => {
     if (!symbol) return;
 
+    console.log('[MarketChart] requesting range:', range);
+
+
     const fetchData = async () => {
       const normalized = normalize(symbol);
       const url = `${API}?mode=market&symbol=${normalized}&range=${range}`;
