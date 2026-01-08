@@ -9,7 +9,7 @@ import { Box, Tabs, Tab, Typography } from "@mui/material";
 
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 import { FEEDS } from "../../data/feedsMap";
-import RSSFeed from "../RSSFeed";
+import RSSFeed from "..//newsfeed/RSSFeed";
 
 console.log("TabsLayout v1.204 + Chart + Symbol Fix loaded");
 

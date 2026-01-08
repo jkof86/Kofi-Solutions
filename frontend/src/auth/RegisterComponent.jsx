@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TextField, Button, Box, Typography } from '@mui/material';
-import MainBar from './navigation/MainBar';
+import MainBar from '../components/navigation/MainBar';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 import { googleLogout } from '@react-oauth/google';

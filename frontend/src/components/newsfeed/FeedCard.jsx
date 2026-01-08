@@ -30,17 +30,17 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
-import FeedIcon from "../components/FeedIcon";
+import FeedIcon from "./FeedIcon";
 
 
-import { FEED_IMAGE_OVERRIDES } from "../data/feedImageOverrides";
-import { FeedStatusContext } from "../context/FeedStatusContext";
+import { FEED_IMAGE_OVERRIDES } from "../../data/feedImageOverrides";
+import { FeedStatusContext } from "../../context/FeedStatusContext";
 
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
 // Global fallback image
-const FALLBACK_IMAGE = require("../images/bg/ksBanner04.jpeg");
+const FALLBACK_IMAGE = require("../../images/bg/ksBanner04.jpeg");
 
 // ------------------------------------------------------------
 // Helper: robust URL validator

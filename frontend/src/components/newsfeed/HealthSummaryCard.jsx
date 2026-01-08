@@ -4,7 +4,7 @@
 
 import React, { useContext, useMemo } from "react";
 import { Box, Typography, Grid, Paper } from "@mui/material";
-import { FeedStatusContext } from "../context/FeedStatusContext";
+import { FeedStatusContext } from "../../context/FeedStatusContext";
 
 export default function HealthSummaryCard() {
   const { health, lastUpdated } = useContext(FeedStatusContext);

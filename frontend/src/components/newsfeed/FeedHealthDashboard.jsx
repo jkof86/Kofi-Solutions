@@ -1,13 +1,13 @@
 // ------------------------------------------------------------
-// FeedHealthDashboard.jsx — v1.204 (Rewired for backend v1.204)
+// FeedHealthDashboard.jsx — v1.205 (Stable + StrictMode Global)
 // ------------------------------------------------------------
 //
 // Fixes:
+//   ✓ Uses global strictMode from FeedStatusContext
+//   ✓ Strict Mode toggle moved inside Debug tab only
+//   ✓ Added Feed Status Legend
 //   ✓ Debug runner cleaned + safe
-//   ✓ Removed broken mode check
-//   ✓ All preset debug buttons updated
-//   ✓ Custom query auto-normalized
-//   ✓ Health loader stable with v1.204 backend
+//   ✓ Health loader stable with backend v1.204
 //   ✓ Clear button resets console cleanly
 //
 // ------------------------------------------------------------
@@ -38,7 +38,7 @@ import {
 
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import { FeedStatusContext } from "../context/FeedStatusContext";
+import { FeedStatusContext } from "../../context/FeedStatusContext";
 import HealthHistory from "./HealthHistory";
 
 const API =
@@ -49,7 +49,9 @@ export default function FeedHealthDashboard() {
     lastUpdated,
     setLastUpdated,
     health,
-    setHealth
+    setHealth,
+    strictMode,
+    setStrictMode
   } = useContext(FeedStatusContext);
 
   const [error, setError] = useState(null);
@@ -57,8 +59,6 @@ export default function FeedHealthDashboard() {
 
   const [debugOutput, setDebugOutput] = useState("");
   const [customQuery, setCustomQuery] = useState("");
-
-  const [strictMode, setStrictMode] = useState(false);
 
   const debugRef = useRef(null);
 
@@ -94,7 +94,6 @@ export default function FeedHealthDashboard() {
   // ------------------------------------------------------------
   const runDebug = async (query) => {
     try {
-      // Normalize query: ensure it starts with "?"
       const q = query.startsWith("?") ? query : `?${query}`;
 
       const res = await fetch(`${API}${q}`);
@@ -104,7 +103,7 @@ export default function FeedHealthDashboard() {
         `REQUEST: ${API}${q}\n\n` +
         JSON.stringify(json, null, 2)
       );
-      setTab(1); // switch to Debug tab
+      setTab(1);
     } catch (err) {
       setDebugOutput(`ERROR: ${err.message}`);
       setTab(1);
@@ -120,7 +119,7 @@ export default function FeedHealthDashboard() {
 
   const copyDebug = () => {
     if (!debugOutput) return;
-    navigator.clipboard.writeText(debugOutput).catch(() => { });
+    navigator.clipboard.writeText(debugOutput).catch(() => {});
   };
 
   const formatTime = (d) => {
@@ -194,7 +193,7 @@ export default function FeedHealthDashboard() {
         <Tab label="History" />
       </Tabs>
 
-      {/* Tab Panels */}
+      {/* HEALTH TAB */}
       {tab === 0 && (
         <Box sx={{ mt: 1 }}>
           {/* Feed Health */}
@@ -250,30 +249,63 @@ export default function FeedHealthDashboard() {
         </Box>
       )}
 
-      {/* Strict Mode Toggle (Global) */}
-      <Box sx={{ mb: 2 }}>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={strictMode}
-              onChange={(e) => setStrictMode(e.target.checked)}
-              color="warning"
-            />
-          }
-          label={
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Strict Mode (Filter Unhealthy Feeds)
-            </Typography>
-          }
-        />
-        <Typography variant="caption" sx={{ ml: 1, opacity: 0.7 }}>
-          When enabled, only ok/json/fallback feeds appear in category tabs.
-        </Typography>
-      </Box>
-
-
+      {/* DEBUG TAB */}
       {tab === 1 && (
         <Box sx={{ mt: 1 }}>
+          {/* Strict Mode Toggle (Global) */}
+          <Box sx={{ mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={strictMode}
+                  onChange={(e) => setStrictMode(e.target.checked)}
+                  color="warning"
+                />
+              }
+              label={
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Strict Mode (Filter Unhealthy Feeds)
+                </Typography>
+              }
+            />
+            <Typography variant="caption" sx={{ ml: 1, opacity: 0.7 }}>
+              When enabled, only ok/json/fallback feeds appear in category tabs.
+            </Typography>
+          </Box>
+
+          {/* Feed Status Legend */}
+          <Box
+            sx={{
+              mb: 2,
+              p: 1.5,
+              borderRadius: 1,
+              bgcolor: "#222",
+              color: "#eee",
+              fontSize: "0.85rem",
+              fontFamily: "monospace",
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ mb: 1, color: "#fff" }}>
+              Feed Status Legend
+            </Typography>
+
+            <Box sx={{ lineHeight: 1.8 }}>
+              <span style={{ color: "#4caf50" }}>ok</span> — Feed parsed successfully
+              <br />
+              <span style={{ color: "#81c784" }}>json</span> — JSON feed parsed successfully
+              <br />
+              <span style={{ color: "#ffb300" }}>fallback</span> — Feed returned fallback content
+              <br />
+              <span style={{ color: "#e53935" }}>dead</span> — Feed unreachable or invalid
+              <br />
+              <span style={{ color: "#fb8c00" }}>blocked</span> — Feed blocked by server or CORS
+              <br />
+              <span style={{ color: "#ff7043" }}>html_error</span> — HTML feed parsing failed
+              <br />
+              <span style={{ color: "#9e9e9e" }}>unknown</span> — No status available
+            </Box>
+          </Box>
+
           {/* Preset Debug Buttons */}
           <Typography variant="subtitle2" sx={{ mb: 1 }}>
             API Debug
@@ -284,10 +316,9 @@ export default function FeedHealthDashboard() {
             <Chip label="Echo" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=echo"); }} clickable />
             <Chip label="Env" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=debug_env"); }} clickable />
             <Chip label="Feeds" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=debug_feeds"); }} clickable />
-            <Chip label="Market" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=debug_market"); }} clickable />
-            <Chip label="Health" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=debug_health"); }} clickable />
+            <Chip label="Market" color="info" onClick={() => { setDebugOutput(""); runDebug("?mode=market_all"); }} clickable />
+            <Chip label="Health" color="info" onClick={() => { setDebugOutput(""); runDebug("?mode=health"); }} clickable />
 
-            {/* Clears output screen */}
             <Chip label="Clear" color="warning" onClick={() => setDebugOutput("")} clickable />
           </Stack>
 
@@ -346,6 +377,7 @@ export default function FeedHealthDashboard() {
         </Box>
       )}
 
+      {/* HISTORY TAB */}
       {tab === 2 && (
         <Box sx={{ mt: 1 }}>
           <HealthHistory />

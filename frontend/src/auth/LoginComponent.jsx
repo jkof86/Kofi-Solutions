@@ -3,11 +3,7 @@ import { TextField, Button, Box, Typography } from '@mui/material';
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 
-import { googleLogout } from '@react-oauth/google';
-
-// 🔥 Add your MainBar or HeaderShell here
-import MainBar from './navigation/MainBar';
-// OR: import HeaderShell from "./layouts/HeaderShell";
+import MainBar from '../components/navigation/MainBar';
 
 export default function LoginComponent() {
 

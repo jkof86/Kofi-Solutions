@@ -32,8 +32,8 @@ import ContactProfessional from "./components/portfolio/ContactProfessional";
 import ContactGaming from "./components/portfolio/ContactGaming";
 
 // Auth
-import LoginComponent from "./components/LoginComponent";
-import RegisterComponent from "./components/RegisterComponent";
+import LoginComponent from "./auth/LoginComponent";
+import RegisterComponent from "./auth/RegisterComponent";
 
 export default function App() {
   return (

@@ -21,7 +21,7 @@ import {
 } from "@mui/material";
 
 import FeedCard from "./FeedCard";
-import { FEEDS } from "../data/feedsMap";
+import { FEEDS } from "../../data/feedsMap";
 
 console.log("RSSFeed v1.199 loaded");
 

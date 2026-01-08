@@ -18,7 +18,7 @@ import {
 } from "@mui/icons-material";
 
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
-import FeedHealthDashboard from "../FeedHealthDashboard";
+import FeedHealthDashboard from "../newsfeed/FeedHealthDashboard";
 import NavDrawerMain from "../navigation/NavDrawerMain";
 import TickerBar from "./TickerBar";
 

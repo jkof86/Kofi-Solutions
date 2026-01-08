@@ -7,7 +7,7 @@ import { Box, IconButton, Typography } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
-import { ALL_MARKET_SYMBOLS } from "../data/tickerConfig";
+import { ALL_MARKET_SYMBOLS } from "../../data/tickerConfig";
 import MarketChart from "./MarketChart";
 
 export default function MarketCarousel() {

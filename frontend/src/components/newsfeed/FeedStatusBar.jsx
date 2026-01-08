@@ -1,32 +1,34 @@
 // ------------------------------------------------------------
-// MarketStatusBar.jsx — v1.200 (Market Health Bar)
+// FeedStatusBar.jsx — v1.201 (Feed Health Bar)
 // ------------------------------------------------------------
 
 import React, { useContext } from "react";
 import { Box, Chip, Stack, Typography } from "@mui/material";
-import { FeedStatusContext } from "../context/FeedStatusContext";
+import { FeedStatusContext } from "../../context/FeedStatusContext";
 
 const STATUS_COLOR = {
   ok: "success",
   json: "warning",
   fallback: "warning",
-  error: "error",
+  dead: "error",
+  blocked: "error",
+  html_error: "error",
   unknown: "error",
 };
 
-export default function MarketStatusBar() {
+export default function FeedStatusBar() {
   const { health } = useContext(FeedStatusContext);
 
-  if (!health || !health.markets) return null;
+  if (!health || !health.feeds) return null;
 
-  const { markets } = health;
+  const { feeds } = health;
 
   return (
     <Box
       sx={{
         width: "100%",
-        mt: 1,
-        mb: 2,
+        mt: 2,
+        mb: 1,
         px: 2,
         py: 1.5,
         borderRadius: 2,
@@ -38,21 +40,21 @@ export default function MarketStatusBar() {
         variant="subtitle2"
         sx={{ mb: 1, fontWeight: 600, color: "#555" }}
       >
-        Market Status
+        Feed Status
       </Typography>
 
       <Stack direction="row" spacing={1} flexWrap="wrap">
-        {Object.entries(markets).map(([symbol, m]) => {
-          if (!m || !m.status) return null;
+        {Object.entries(feeds).map(([feedId, info]) => {
+          if (!info || !info.status) return null;
 
-          const color = STATUS_COLOR[m.status] || "error";
-          const label = `${symbol.toUpperCase()} — ${
-            m.type || "unknown"
-          }: ${m.price != null ? `$${m.price.toFixed(2)}` : "no data"}`;
+          const color = STATUS_COLOR[info.status] || "error";
+          const label = info.fallback
+            ? `${feedId} (fallback)`
+            : `${feedId} (${info.count})`;
 
           return (
             <Chip
-              key={symbol}
+              key={feedId}
               label={label}
               color={color}
               size="small"

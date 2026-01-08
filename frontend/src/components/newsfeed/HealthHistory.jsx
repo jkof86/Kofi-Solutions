@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState, useContext } from "react";
 import { Box, Typography, List, ListItem, ListItemText } from "@mui/material";
-import { FeedStatusContext } from "../context/FeedStatusContext";
+import { FeedStatusContext } from "../../context/FeedStatusContext";
 
 export default function HealthHistory() {
   const { health, lastUpdated } = useContext(FeedStatusContext);

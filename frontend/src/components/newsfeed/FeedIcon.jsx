@@ -19,7 +19,7 @@ export default function FeedIcon({ url, className, size = 96 }) {
   if (failed) {
     return (
       <img
-        src={require("../images/bg/ksBanner04.jpeg")}
+        src={require("../../images/bg/ksBanner04.jpeg")}
         alt="Fallback"
         style={{
           width: size,

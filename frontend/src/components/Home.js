@@ -33,12 +33,12 @@ import {
 
 import RssFeedIcon from "@mui/icons-material/RssFeed";
 import TabsLayout from "./layouts/TabsLayout";
-import FeedStatusBar from "./FeedStatusBar";
-import MarketStatusBar from "./MarketStatusBar";
-import HealthSummaryCard from "./HealthSummaryCard";
-import FeedHealthDashboard from "./FeedHealthDashboard";
-import MarketCarousel from "./MarketCarousel";
-import MiniSparkline from "./MiniSparkline";
+import FeedStatusBar from "./newsfeed/FeedStatusBar";
+import MarketStatusBar from "./newsfeed/MarketStatusBar";
+import HealthSummaryCard from "./newsfeed/HealthSummaryCard";
+import FeedHealthDashboard from "./newsfeed/FeedHealthDashboard";
+import MarketCarousel from "./newsfeed/MarketCarousel";
+import MiniSparkline from "./newsfeed/MiniSparkline";
 
 import { useNavigate } from "react-router-dom";
 import MainContainer from "./layouts/MainContainer";
