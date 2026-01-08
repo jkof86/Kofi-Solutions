@@ -146,7 +146,7 @@ export default function Home() {
                 flexDirection: "column",
                 overflow: "hidden",
               }}
-            >
+            > 
               {/* Mini Sparkline (global now) */}
               <MiniSparkline />
 
