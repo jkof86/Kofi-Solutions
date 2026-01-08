@@ -1,153 +1,149 @@
-// ------------------------------------------------------------
-// TabsLayout.jsx — Phase 3 Version
-//
-// Responsibilities:
-// - Renders feed tabs with real-time error badges
-// - Switches between feeds instantly
-// - Supports per-feed refresh via loadFeed()
-// - Supports global refresh via refreshAll()
-// - Displays feed + optional market chart side-by-side
-// - Fully reactive with FeedStatusContext + GlobalRefreshContext
-// ------------------------------------------------------------
+import React, {
+  useContext,
+  useMemo,
+  useState,
+  useEffect
+} from "react";
 
-import React, { useState, useContext } from "react";
-import { Box, Tabs, Tab, Button, Typography } from "@mui/material";
+import { Box, Tabs, Tab, Typography } from "@mui/material";
 
-import RSSFeed from "../RSSFeed";
-import MarketChart from "../MarketChart";
-
-import { GlobalRefreshContext } from "../../context/GlobalRefreshContext";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
+import { FEEDS } from "../../data/feedsMap";
+import RSSFeed from "../RSSFeed";
 
-export default function TabsLayout({ feeds, safeFeedIndex, currentCategory }) {
-  // ------------------------------------------------------------
-  // ✅ Track which tab is active
-  // ------------------------------------------------------------
-  const [tabIndex, setTabIndex] = useState(safeFeedIndex || 0);
+console.log("TabsLayout v1.204 + Chart + Symbol Fix loaded");
 
-  // ------------------------------------------------------------
-  // ✅ Phase 3 Context Hooks
-  // ------------------------------------------------------------
-  const { loadFeed, refreshAll } = useContext(GlobalRefreshContext);
-  const { status } = useContext(FeedStatusContext);
+function TabPanel({ children, value, index }) {
+  return (
+    <div role="tabpanel" hidden={value !== index} style={{ width: "100%" }}>
+      {value === index && <Box sx={{ p: 2 }}>{children}</Box>}
+    </div>
+  );
+}
 
-  // Ensure index is always valid
-  const safeIndex = Math.min(tabIndex, feeds.length - 1);
-  const activeFeed = feeds[safeIndex];
+export default function TabsLayout({ activeCategory, setActiveCategory }) {
+  const { status, strictMode } = useContext(FeedStatusContext);
 
-  // ------------------------------------------------------------
-  // ✅ Tab switching
-  // ------------------------------------------------------------
-  const handleTabChange = (_, newValue) => {
-    setTabIndex(newValue);
-
-    // ✅ Immediately load the newly selected feed
-    const selected = feeds[newValue];
-    if (selected) {
-      loadFeed(selected.name);
+  const categories = useMemo(() => {
+    const map = {};
+    for (const [feedId, meta] of Object.entries(FEEDS)) {
+      const cat = meta.category || "other";
+      if (!map[cat]) map[cat] = [];
+      map[cat].push({ feedId, ...meta });
     }
-  };
+    return Object.keys(map)
+      .sort()
+      .reduce((acc, key) => {
+        acc[key] = map[key];
+        return acc;
+      }, {});
+  }, []);
 
-  // ------------------------------------------------------------
-  // ✅ Per-feed refresh (Phase 3)
-  // ------------------------------------------------------------
-  const handleFeedRefresh = () => {
-    if (activeFeed) {
-      loadFeed(activeFeed.name);
-    }
-  };
+  const categoryList = Object.keys(categories);
+  const categoryIndex = categoryList.indexOf(activeCategory);
+  const safeCategory =
+    categoryIndex === -1 ? categoryList[0] : activeCategory;
 
-  // ------------------------------------------------------------
-  // ✅ Global refresh (Phase 3)
-  // Streams updates one-by-one
-  // ------------------------------------------------------------
-  const handleGlobalRefresh = () => {
-    refreshAll();
-  };
+  const feedsInCategory = categories[safeCategory] || [];
+  const [feedIndex, setFeedIndex] = useState(0);
+
+  const filteredFeeds = useMemo(() => {
+    if (!strictMode) return feedsInCategory;
+    return feedsInCategory.filter((f) => {
+      const s = status[f.feedId];
+      if (!s) return true;
+      return s === "ok" || s === "json" || s === "fallback";
+    });
+  }, [feedsInCategory, status, strictMode]);
+
+  useEffect(() => {
+    setFeedIndex(0);
+  }, [safeCategory, filteredFeeds.length]);
+
+  const activeFeed = filteredFeeds[feedIndex] || null;
+  const activeSymbol =
+    typeof activeFeed?.symbol === "string" && activeFeed.symbol.trim()
+      ? activeFeed.symbol.trim().toLowerCase()
+      : "btc";
+
+  console.log("Active feed:", activeFeed);
+  console.log("Active symbol:", activeSymbol);
 
   return (
-    <Box>
-      {/* --------------------------------------------------------
-         Tabs Row
-      --------------------------------------------------------- */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          mb: 2,
-          gap: 2
-        }}
-      >
+    <Box sx={{ width: "100%" }}>
+      <Box sx={{ mb: 1 }}>
+
+{/*         
+        <Typography variant="h5" sx={{ mb: 1 }}>
+          {safeCategory.toUpperCase()}
+        </Typography> */}
+
         <Tabs
-          value={tabIndex}
-          onChange={handleTabChange}
+          value={categoryIndex === -1 ? 0 : categoryIndex}
+          onChange={(_, v) => setActiveCategory(categoryList[v])}
           variant="scrollable"
           scrollButtons="auto"
-          sx={{ flexGrow: 1 }}
+          sx={{
+            "& .MuiTab-root": {
+              color: "#333",
+              fontWeight: 600
+            },
+            "& .Mui-selected": {
+              color: "#000 !important"
+            }
+          }}
         >
-          {feeds.map((feed, idx) => {
-            const feedState = status[feed.name];
-            const isError = feedState && feedState !== "ok";
-
-            return (
-              <Tab
-                key={feed.name}
-                value={idx}
-                label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    {feed.label}
-
-                    {/* ✅ Real-time error badge */}
-                    {isError && (
-                      <Typography
-                        component="span"
-                        sx={{
-                          color: "error.main",
-                          fontWeight: 700,
-                          fontSize: "0.9rem"
-                        }}
-                      >
-                        !
-                      </Typography>
-                    )}
-                  </Box>
-                }
-              />
-            );
-          })}
+          {categoryList.map((cat) => (
+            <Tab key={cat} label={cat.toUpperCase()} />
+          ))}
         </Tabs>
-
-        {/* ✅ Per-feed refresh */}
-        <Button variant="outlined" onClick={handleFeedRefresh}>
-          Refresh Feed
-        </Button>
-
-        {/* ✅ Global refresh */}
-        <Button variant="contained" onClick={handleGlobalRefresh}>
-          Global Refresh
-        </Button>
       </Box>
 
-      {/* --------------------------------------------------------
-         Main Layout: Feed + Chart
-      --------------------------------------------------------- */}
-      <Box sx={{ display: "flex", gap: 2 }}>
-        {/* Left column: Feed */}
-        <Box sx={{ flex: 3 }}>
-          <RSSFeed
-            name={activeFeed.name}
-            feedLabel={activeFeed.label}
-            categoryLabel={currentCategory}
+      <Tabs
+        value={feedIndex}
+        onChange={(_, v) => setFeedIndex(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{
+          borderBottom: 1,
+          borderColor: "divider",
+          mb: 1,
+          "& .MuiTab-root": {
+            color: "#333 !important",
+            fontWeight: 600
+          },
+          "& .Mui-selected": {
+            color: "#000 !important"
+          }
+        }}
+      >
+        {filteredFeeds.map((f) => (
+          <Tab
+            key={f.feedId}
+            label={f.label?.trim() || f.feedId?.toUpperCase() || "UNKNOWN"}
           />
-        </Box>
+        ))}
+      </Tabs>
 
-        {/* Right column: Market Chart */}
-        <Box sx={{ flex: 2 }}>
-          {activeFeed?.symbol && (
-            <MarketChart symbol={activeFeed.symbol} />
-          )}
+      {filteredFeeds.map((f, i) => (
+        <TabPanel key={f.feedId} value={feedIndex} index={i}>
+          <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
+
+            {/* FEED COLUMN (dominant) */}
+            <Box sx={{ flex: 2 }}>
+              <RSSFeed feedId={f.feedId} categoryLabel={safeCategory} />
+            </Box>
+
+
+          </Box>
+        </TabPanel>
+      ))}
+
+      {filteredFeeds.length === 0 && (
+        <Box sx={{ p: 2 }}>
+          <Typography>No healthy feeds in this category.</Typography>
         </Box>
-      </Box>
+      )}
     </Box>
   );
 }

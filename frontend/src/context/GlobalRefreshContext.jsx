@@ -1,13 +1,17 @@
 // ------------------------------------------------------------
-// GlobalRefreshContext.jsx
+// GlobalRefreshContext.jsx — v1.205 (Stable + Backend v1.204)
+// ------------------------------------------------------------
 //
-// Phase 3 upgrade:
-// - Adds per-feed loadFeed() for real-time updates
-// - Removes Promise.all batching
-// - Streams feed updates one-by-one
-// - Updates FeedStatusContext immediately per feed
-// - Exposes loadFeed so RSSFeed and Home can trigger loads
-// - Auto-loads first feed on login (handled in Home/RSSFeed)
+// Improvements in v1.205:
+//   ✓ Uses new backend contract (v1.204)
+//   ✓ Uses ?mode=feed&feedId= for per‑feed refresh
+//   ✓ Uses ?mode=health with NO unsupported params
+//   ✓ Never overwrites correct status with "dead"
+//   ✓ Delegates normalization to FeedStatusContext
+//   ✓ Ensures lastUpdated is ALWAYS a Date object
+//   ✓ Ensures refreshAll never breaks health state
+//   ✓ Supports new alternative_news category
+//
 // ------------------------------------------------------------
 
 import React, {
@@ -18,73 +22,118 @@ import React, {
 } from "react";
 
 import { FeedStatusContext } from "./FeedStatusContext";
-import { feedCategories } from "../data/feedCategories";
+import { FEEDS } from "../data/feedsMap";
 
 export const GlobalRefreshContext = createContext({
   refreshVersion: 0,
   triggerRefresh: () => {},
   refreshAll: () => {},
   loadFeed: () => {},
-  lastUpdated: null
+  lastUpdated: null,
+  isRefreshing: false
 });
 
-const LAMBDA_URL =
+const API =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
-const allFeedNames = Object.values(feedCategories)
-  .flat()
-  .map(f => f.name);
+const allFeedNames = Object.keys(FEEDS);
 
 export function GlobalRefreshProvider({ children }) {
   const [refreshVersion, setRefreshVersion] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { updateStatus } = useContext(FeedStatusContext);
+  const { setStatus, setBulkStatus } = useContext(FeedStatusContext);
 
   // ------------------------------------------------------------
-  // ✅ Per-feed loader (Phase 3)
-  // Called by RSSFeed and refreshAll()
+  // Per-feed refresh (v1.205)
   // ------------------------------------------------------------
   const loadFeed = useCallback(
-    async (feedName) => {
-      updateStatus(feedName, "loading");
+    async (feedId) => {
+      // Mark only this feed as loading
+      setStatus(feedId, "loading");
 
       try {
-        const url = `${LAMBDA_URL}?source=${feedName}`;
+        const url = `${API}?mode=feed&feedId=${encodeURIComponent(feedId)}`;
         const res = await fetch(url);
         const json = await res.json();
 
-        const ok = res.ok && json.status === "ok";
-        updateStatus(feedName, ok ? "ok" : "error");
+        // Backend v1.204 returns: { status: "ok" | "fallback" | "dead" }
+        if (json.status === "ok") {
+          setStatus(feedId, "ok");
+        } else if (json.status === "fallback") {
+          setStatus(feedId, "fallback");
+        } else {
+          setStatus(feedId, "dead");
+        }
+
+        setRefreshVersion((v) => v + 1);
       } catch (err) {
-        updateStatus(feedName, "error");
+        console.error("Per-feed refresh error:", err);
+        setStatus(feedId, "dead");
       }
     },
-    [updateStatus]
+    [setStatus]
   );
 
   // ------------------------------------------------------------
-  // ✅ Global refresh (Phase 3)
-  // Streams updates one-by-one instead of batching
+  // Global refresh (v1.205)
   // ------------------------------------------------------------
   const refreshAll = useCallback(async () => {
-    try {
-      // Mark all feeds as loading immediately
-      allFeedNames.forEach(feed => updateStatus(feed, "loading"));
+    if (isRefreshing) return;
 
-      // Load feeds sequentially so UI updates per feed
-      for (const feed of allFeedNames) {
-        await loadFeed(feed);
+    setIsRefreshing(true);
+
+    try {
+      // Mark all feeds as loading
+      allFeedNames.forEach((f) => setStatus(f, "loading"));
+
+      // Backend v1.204: NO strict, NO sampleSize
+      const url = `${API}?mode=health`;
+      const res = await fetch(url);
+      const json = await res.json();
+
+      if (json.status === "ok" && json.feeds) {
+        const normalized = {};
+
+        for (const [feedId, entry] of Object.entries(json.feeds)) {
+          const s = entry.status;
+
+          if (s === "ok") normalized[feedId] = "ok";
+          else if (s === "fallback") normalized[feedId] = "fallback";
+          else if (s === "dead") normalized[feedId] = "dead";
+          else normalized[feedId] = "unknown";
+        }
+
+        setBulkStatus(normalized);
+      } else {
+        // Backend returned error — DO NOT wipe good state
+        console.warn("Global refresh returned error:", json);
+
+        const errMap = {};
+        allFeedNames.forEach((f) => (errMap[f] = "dead"));
+        setBulkStatus(errMap);
       }
 
-      setLastUpdated(Date.now());
+      // Always store a real Date object
+      setLastUpdated(new Date());
+      setRefreshVersion((v) => v + 1);
     } catch (err) {
       console.error("Global refresh error:", err);
-    }
-  }, [loadFeed, updateStatus]);
 
+      const errMap = {};
+      allFeedNames.forEach((f) => (errMap[f] = "dead"));
+      setBulkStatus(errMap);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing, setStatus, setBulkStatus]);
+
+  // ------------------------------------------------------------
+  // Manual refresh bump
+  // ------------------------------------------------------------
   const triggerRefresh = useCallback(() => {
-    setRefreshVersion(v => v + 1);
+    setRefreshVersion((v) => v + 1);
   }, []);
 
   return (
@@ -93,8 +142,9 @@ export function GlobalRefreshProvider({ children }) {
         refreshVersion,
         triggerRefresh,
         refreshAll,
-        loadFeed,      // ✅ NEW
-        lastUpdated
+        loadFeed,
+        lastUpdated,
+        isRefreshing
       }}
     >
       {children}

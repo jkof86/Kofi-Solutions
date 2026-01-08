@@ -1,186 +1,223 @@
 // ------------------------------------------------------------
-// MarketChart.jsx — Phase 3 Stable Version
+// MarketChart.jsx — v2.701 (Debug-Enabled)
+// ------------------------------------------------------------
 //
-// Fixes:
-// ✅ Normalizes crypto + stock data
-// ✅ Downsamples CoinGecko (1 point every 5 minutes)
-// ✅ Handles Lambda inconsistencies (data vs prices)
-// ✅ Fixes timestamp formatting
-// ✅ Fixes Y-axis collapsing
-// ✅ Handles missing or empty data gracefully
+// Adds:
+//   ✓ Debug logging for history length + timestamps
+//   ✓ Safe logging (won't crash if empty)
+//   ✓ Helps confirm backend is returning correct ranges
+//
 // ------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
 import {
+  Box,
+  Typography,
+  ToggleButton,
+  ToggleButtonGroup
+} from "@mui/material";
+
+import {
+  ResponsiveContainer,
   LineChart,
   Line,
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer
+  CartesianGrid
 } from "recharts";
-import { Box, Typography, CircularProgress } from "@mui/material";
 
-const LAMBDA_URL =
+const API =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
-// ------------------------------------------------------------
-// Helpers
-// ------------------------------------------------------------
-
-// Detect crypto symbols (BTC-USD, ETH-USD, SOL-USD, etc.)
-function isCryptoSymbol(symbol) {
-  return symbol.toLowerCase().includes("-usd");
-}
-
-// Map BTC-USD → bitcoin for CoinGecko
-function toCoinGeckoId(symbol) {
-  const lower = symbol.toLowerCase();
-  if (lower.startsWith("btc")) return "bitcoin";
-  if (lower.startsWith("eth")) return "ethereum";
-  if (lower.startsWith("sol")) return "solana";
-  return lower.replace("-usd", "");
-}
-
-// Downsample CoinGecko data (1 point every 5 minutes)
-function downsampleCrypto(prices) {
-  const result = [];
-  for (let i = 0; i < prices.length; i += 5) {
-    const [t, p] = prices[i];
-    result.push({
-      time: new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      value: p
-    });
-  }
-  return result;
-}
-
-// ------------------------------------------------------------
-// Fetchers
-// ------------------------------------------------------------
-
-async function fetchCryptoHistory(symbol) {
-  const id = toCoinGeckoId(symbol);
-  const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=1`;
-
-  try {
-    const res = await fetch(url);
-    const json = await res.json();
-
-    if (!json.prices) return [];
-
-    return downsampleCrypto(json.prices);
-  } catch {
-    return [];
-  }
-}
-
-async function fetchStockHistory(symbol) {
-  const url = `${LAMBDA_URL}?mode=market&symbol=${encodeURIComponent(symbol)}`;
-
-  try {
-    const res = await fetch(url);
-    const json = await res.json();
-
-    if (!res.ok || json.status !== "ok") return [];
-
-    // Normalize Lambda output
-    const series = json.data || json.prices || [];
-
-    return series.map((point) => ({
-      time: point.time || point.timestamp || "",
-      value: point.value || point.close || point.price || 0
-    }));
-  } catch {
-    return [];
-  }
-}
-
-// ------------------------------------------------------------
-// Component
-// ------------------------------------------------------------
-
 export default function MarketChart({ symbol }) {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState([]);
+  const [price, setPrice] = useState(null);
+  const [change24h, setChange24h] = useState(null);
+  const [range, setRange] = useState("1W");
+
+  const normalize = (s) =>
+    String(s || "").toLowerCase().replace(/\./g, "-");
+
+  const handleRange = (_, val) => {
+    if (val) setRange(val);
+  };
 
   useEffect(() => {
-    if (!symbol) {
-      setData([]);
-      return;
-    }
+    if (!symbol) return;
 
-    async function load() {
+    const fetchData = async () => {
+      const normalized = normalize(symbol);
+      const url = `${API}?mode=market&symbol=${normalized}&range=${range}`;
+
       try {
-        let series = [];
+        const res = await fetch(url);
+        const json = await res.json();
 
-        if (isCryptoSymbol(symbol)) {
-          series = await fetchCryptoHistory(symbol);
-        } else {
-          series = await fetchStockHistory(symbol);
-        }
+        // ------------------------------------------------------------
+        // DEBUG BLOCK (safe, no crashes)
+        // ------------------------------------------------------------
+        const hist = json.history || [];
+        console.log("MARKET DEBUG", {
+          symbol: normalized,
+          range,
+          count: hist.length,
+          first: hist.length > 0 ? hist[0].time : null,
+          last: hist.length > 0 ? hist[hist.length - 1].time : null
+        });
+        // ------------------------------------------------------------
 
-        setData(series);
-      } catch {
-        setData([]);
+        setPrice(json.price ?? null);
+        setChange24h(json.change_24h ?? null);
+
+        const cleaned = hist
+          .map((p) => ({
+            time: p.time,
+            price: p.price
+          }))
+          .filter((p) => p.time && p.price != null);
+
+        setData(cleaned);
+      } catch (err) {
+        console.error("Chart error:", err);
       }
+    };
+
+    fetchData();
+  }, [symbol, range]);
+
+  // ------------------------------------------------------------
+  // Range-aware tick formatter
+  // ------------------------------------------------------------
+  const formatTick = (t) => {
+    const d = new Date(t);
+
+    if (range === "1D") {
+      return d.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
     }
 
-    load();
-  }, [symbol]);
+    if (range === "1W" || range === "1M") {
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit"
+      });
+    }
 
-  if (!symbol) return null;
+    if (range === "1Y") {
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        year: "numeric"
+      });
+    }
 
-  if (data === null) {
-    return (
-      <Box sx={{ textAlign: "center", mt: 2 }}>
-        <CircularProgress size={24} />
-      </Box>
-    );
-  }
+    return t;
+  };
 
-  if (data.length === 0) {
-    return (
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="body2" color="text.secondary">
-          No market data available for {symbol}.
-        </Typography>
-      </Box>
-    );
-  }
+  // ------------------------------------------------------------
+  // Smart tick count
+  // ------------------------------------------------------------
+  const TICK_COUNT = {
+    "1D": 6,
+    "1W": 7,
+    "1M": 6,
+    "1Y": 6
+  };
 
-  const latest = data[data.length - 1];
-  const first = data[0];
-  const change = first.value
-    ? (((latest.value - first.value) / first.value) * 100).toFixed(2)
-    : null;
+  const tickCount = TICK_COUNT[range] || 6;
+
+  // ------------------------------------------------------------
+  // Y-axis padding
+  // ------------------------------------------------------------
+  const yDomain = [
+    (min) => (min ? min * 0.99 : 0),
+    (max) => (max ? max * 1.01 : 1)
+  ];
 
   return (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="subtitle1" sx={{ mb: 0.5, fontWeight: 600 }}>
-        {symbol} Market Snapshot
-      </Typography>
-
-      {change && (
-        <Typography
-          variant="body2"
-          sx={{ mb: 1 }}
-          color={change >= 0 ? "success.main" : "error.main"}
-        >
-          1d Change: {change}% | Latest: {latest.value.toFixed(2)}
+    <Box sx={{ width: "100%", height: "100%" }}>
+      {/* Header */}
+      <Box sx={{ mb: 1 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          {symbol?.toUpperCase()}
         </Typography>
-      )}
 
-      <ResponsiveContainer width="100%" height={250}>
-        <LineChart data={data}>
-          <XAxis dataKey="time" hide />
-          <YAxis domain={["auto", "auto"]} />
-          <Tooltip />
+        {price != null && (
+          <Typography variant="body2" sx={{ opacity: 0.8 }}>
+            ${price.toLocaleString()}{" "}
+            <span
+              style={{
+                color: change24h >= 0 ? "green" : "red",
+                fontWeight: 600
+              }}
+            >
+              {change24h >= 0 ? "+" : ""}
+              {change24h?.toFixed(2)}%
+            </span>
+          </Typography>
+        )}
+      </Box>
+
+      {/* Range Toggle */}
+      <ToggleButtonGroup
+        value={range}
+        exclusive
+        onChange={handleRange}
+        size="small"
+        sx={{
+          mb: 1,
+          "& .MuiToggleButton-root": {
+            padding: "2px 10px",
+            fontSize: "0.7rem"
+          }
+        }}
+      >
+        <ToggleButton value="1D">1D</ToggleButton>
+        <ToggleButton value="1W">1W</ToggleButton>
+        <ToggleButton value="1M">1M</ToggleButton>
+        <ToggleButton value="1Y">1Y</ToggleButton>
+      </ToggleButtonGroup>
+
+      {/* Chart */}
+      <ResponsiveContainer width="100%" height={180}>
+        <LineChart
+          data={data}
+          margin={{ top: 10, right: 20, bottom: 20, left: 10 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+
+          <XAxis
+            dataKey="time"
+            tick={{ fontSize: 10 }}
+            tickFormatter={formatTick}
+            tickCount={tickCount}
+            minTickGap={10}
+            tickMargin={8}
+          />
+
+          <YAxis
+            domain={yDomain}
+            tick={{ fontSize: 10 }}
+            tickMargin={6}
+            width={50}
+            tickFormatter={(v) => `$${v.toFixed(2)}`}
+          />
+
+          <Tooltip
+            formatter={(value) => `$${value.toLocaleString()}`}
+            labelFormatter={(label) => formatTick(label)}
+          />
+
           <Line
             type="monotone"
-            dataKey="value"
+            dataKey="price"
             stroke="#1976d2"
             dot={false}
             strokeWidth={2}
+            isAnimationActive={false}
           />
         </LineChart>
       </ResponsiveContainer>

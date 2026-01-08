@@ -1,154 +1,324 @@
 // ------------------------------------------------------------
-// FeedCard.jsx
+// FeedCard.jsx — v1.300 (Icons via Google API + Per-Article Images)
+// ------------------------------------------------------------
 //
-// Responsibilities:
-// - Entire card clickable
-// - Favicon from domain
-// - Source + category chips
-// - Timestamp
-// - Main image (GIF-safe backend)
-// - HTML summary with expand/collapse
-// - Dark-mode friendly
+// Improvements in v1.300:
+//   ✓ Per-article image logic preserved
+//   ✓ Feed-level Material icon fallback (Google API)
+//   ✓ ksBanner as final fallback
+//   ✓ Safe description handling
+//   ✓ Safe image handling (http/https only)
+//   ✓ Added referrerPolicy="no-referrer"
+//   ✓ Layout-stable and null-safe
 // ------------------------------------------------------------
 
-import React, { useState } from "react";
-import { Box, Typography, Chip, Button } from "@mui/material";
+import React, { useContext } from "react";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Button,
+  Chip,
+  IconButton,
+  Tooltip,
+  Icon
+} from "@mui/material";
 
-const getFavicon = (url) => {
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import FeedIcon from "../components/FeedIcon";
+
+
+import { FEED_IMAGE_OVERRIDES } from "../data/feedImageOverrides";
+import { FeedStatusContext } from "../context/FeedStatusContext";
+
+const BACKEND_URL =
+  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
+
+// Global fallback image
+const FALLBACK_IMAGE = require("../images/bg/ksBanner04.jpeg");
+
+// ------------------------------------------------------------
+// Helper: robust URL validator
+// ------------------------------------------------------------
+function isValidHttpUrl(str) {
+  if (!str || typeof str !== "string") return false;
   try {
-    const { hostname } = new URL(url);
-    return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+    const u = new URL(str);
+    return u.protocol === "http:" || u.protocol === "https:";
   } catch {
-    return null;
+    return false;
   }
-};
+}
 
-const FeedCard = ({ item, source, category }) => {
-  const {
-    title,
-    url,
-    summary,
-    content_html,
-    date_published,
-    image
-  } = item;
+export default function FeedCard({ item, feedMeta, onRefresh }) {
+  const { status: feedHealth, setStatus } = useContext(FeedStatusContext);
+  const feedId = feedMeta?.id;
 
-  const [expanded, setExpanded] = useState(false);
+  const status = feedHealth[feedId] || "unknown";
 
-  const favicon = url ? getFavicon(url) : null;
-  const htmlContent = content_html || summary || "";
+  // ------------------------------------------------------------
+  // Status → Icon + Label mapping
+  // ------------------------------------------------------------
+  let statusIcon = null;
+  let statusLabel = "";
 
-  const shortContent =
-    htmlContent.length > 500 && !expanded
-      ? htmlContent.slice(0, 500) + "..."
-      : htmlContent;
+  switch (status) {
+    case "ok":
+    case "json":
+      statusIcon = <CheckCircleIcon fontSize="small" color="success" />;
+      statusLabel = status === "json" ? "JSON OK" : "OK";
+      break;
 
+    case "fallback":
+      statusIcon = <WarningAmberIcon fontSize="small" color="warning" />;
+      statusLabel = "Fallback";
+      break;
+
+    case "blocked":
+    case "dead":
+    case "html_error":
+      statusIcon = <ErrorIcon fontSize="small" color="error" />;
+      statusLabel =
+        status === "html_error"
+          ? "HTML Error"
+          : status.charAt(0).toUpperCase() + status.slice(1);
+      break;
+
+    default:
+      statusIcon = <WarningAmberIcon fontSize="small" color="warning" />;
+      statusLabel = "Unknown";
+  }
+
+  // ------------------------------------------------------------
+  // Manual health refresh handler
+  // ------------------------------------------------------------
+  const refreshHealth = () => {
+    fetch(`${BACKEND_URL}?mode=health`)
+      .then((res) => res.json())
+      .then((json) => {
+        const entry = json?.feeds?.[feedId];
+        if (!entry) return;
+
+        const newStatus = entry.ok
+          ? entry.type === "json"
+            ? "json"
+            : "ok"
+          : entry.status || "unknown";
+
+        setStatus(feedId, newStatus);
+      })
+      .catch((err) => console.error("Retry health error:", err));
+  };
+
+  // ------------------------------------------------------------
+  // Safe item fields
+  // ------------------------------------------------------------
+  const safeTitle = item?.title || "Untitled";
+  const safeUrl = item?.url || "#";
+
+  // Description: allow blank, but never undefined/null
+  const safeDescription =
+    typeof item?.description === "string" ? item.description : "";
+
+  const truncatedDescription =
+    safeDescription.length > 300
+      ? safeDescription.slice(0, 300).trim() + "…"
+      : safeDescription;
+
+  const safeDate = item?.date ? new Date(item.date).toLocaleString() : "";
+
+
+  // ------------------------------------------------------------
+  // Per-article image + icon logic
+  // ------------------------------------------------------------
+
+
+  // 1. Article-level image (if valid)
+  const extractedImage =
+    item?.image && isValidHttpUrl(item.image) ? item.image : null;
+
+  // 2. Feed-level icon object (Material Symbols Rounded)
+  const overrideImage = FEED_IMAGE_OVERRIDES[item?.source] || null;
+
+  // 3. Feed-level icon key (if needed elsewhere)
+  const feedIconKey = overrideImage?.icon || null;
+
+
+
+  // ------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      style={{ textDecoration: "none", color: "inherit" }}
-    >
-      <Box
-        sx={{
-          mb: 3,
-          p: 2,
-          borderRadius: 2,
-          backgroundColor: "background.paper",
-          boxShadow: 1,
-          transition: "0.2s",
-          cursor: "pointer",
-          "&:hover": { boxShadow: 4 }
-        }}
-      >
-        {/* Title + favicon */}
-        <Box sx={{ display: "flex", alignItems: "center", mb: 1, gap: 1 }}>
-          {favicon && (
-            <img
-              src={favicon}
-              alt=""
-              style={{ width: 20, height: 20, borderRadius: 4 }}
-            />
-          )}
-
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            {title}
-          </Typography>
-        </Box>
-
-        {/* Metadata */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-          {source && (
-            <Chip
-              label={source.toUpperCase()}
-              size="small"
-              sx={{ fontSize: "0.65rem", fontWeight: 600, opacity: 0.8 }}
-            />
-          )}
-
-          {category && (
-            <Chip
-              label={category}
-              size="small"
-              color="primary"
-              sx={{ fontSize: "0.65rem", fontWeight: 600 }}
-            />
-          )}
-
-          {date_published && (
-            <Typography variant="caption" sx={{ opacity: 0.7 }}>
-              {date_published}
+    <Card variant="outlined">
+      <CardContent>
+        {/* Header */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 1
+          }}
+        >
+          {/* Title */}
+          <Box sx={{ flex: 1, pr: 1 }}>
+            <Typography
+              component="a"
+              href={safeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{
+                display: "block",
+                fontSize: "1.05rem",
+                fontWeight: 700,
+                lineHeight: 1.4,
+                color: "text.primary",
+                textDecoration: "none",
+                transition: "color 0.2s ease",
+                "&:hover": {
+                  color: "primary.main",
+                  textDecoration: "underline"
+                }
+              }}
+            >
+              {safeTitle}
             </Typography>
-          )}
+          </Box>
+
+          {/* Actions + Status */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: 0.5
+            }}
+          >
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Tooltip title="Refresh Articles">
+                <IconButton size="small" onClick={onRefresh}>
+                  <AutorenewIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Refresh Health">
+                <IconButton size="small" onClick={refreshHealth}>
+                  <HealthAndSafetyIcon fontSize="small" color="primary" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+
+            <Tooltip title="Health Status">
+              <Chip
+                size="small"
+                icon={statusIcon}
+                label={statusLabel}
+                sx={{ fontSize: 10, height: 22 }}
+              />
+            </Tooltip>
+          </Box>
         </Box>
 
-        {/* Main image */}
-        {image && (
-          <Box sx={{ my: 1 }}>
+        {/* Visual: Article image → Feed icon → ksBanner */}
+        <Box
+          onClick={() => window.open(safeUrl, "_blank")}
+          className="feed-image-container"
+          sx={{
+            mb: 1,
+            borderRadius: 1,
+            overflow: "hidden",
+            backgroundColor: "#f0f0f0",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: 240,
+            cursor: "pointer"
+          }}
+        >
+          {extractedImage ? (
             <img
-              src={image}
-              alt=""
+              src={extractedImage}
+              alt="Article"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = FALLBACK_IMAGE;
+              }}
               style={{
+                maxHeight: "100%",
                 maxWidth: "100%",
-                height: "auto",
-                borderRadius: 6,
+                objectFit: "contain",
                 display: "block"
               }}
             />
-          </Box>
-        )}
+          ) : overrideImage ? (
+            overrideImage.isImage ? (
+              <img
+                src={overrideImage.url}
+                alt="Feed Logo"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = FALLBACK_IMAGE;
+                }}
+                style={{
+                  width: "96px",
+                  height: "96px",
+                  objectFit: "contain",
+                  display: "block"
+                }}
+              />
+            ) : (
+              <FeedIcon
+                url={overrideImage.url}
+                className={overrideImage.className}
+                size={96}
+              />
+            )
+          ) : (
+            <img
+              src={FALLBACK_IMAGE}
+              alt="Fallback"
+              referrerPolicy="no-referrer"
+              style={{
+                maxHeight: "100%",
+                maxWidth: "100%",
+                objectFit: "cover",
+                display: "block"
+              }}
+            />
+          )}
+        </Box>
 
-        {/* Summary */}
-        <Typography
-          variant="body2"
-          sx={{
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-            overflowWrap: "anywhere",
-            lineHeight: 1.5,
-            "& p": { mb: 1 },
-            "& img": { maxWidth: "100%", borderRadius: 4 }
-          }}
-          dangerouslySetInnerHTML={{ __html: shortContent }}
-        />
+        {/* Description */}
+        <Typography variant="body2" sx={{ mb: 1, lineHeight: 1.6 }}>
+          {truncatedDescription}
+        </Typography>
 
-        {/* Expand/Collapse */}
-        {htmlContent.length > 500 && (
+        {/* Read More */}
+        <Box>
           <Button
+            variant="outlined"
             size="small"
-            sx={{ mt: 1 }}
-            onClick={(e) => {
-              e.preventDefault();
-              setExpanded(prev => !prev);
-            }}
+            href={safeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            {expanded ? "Show Less" : "Read More"}
+            Read more →
           </Button>
-        )}
-      </Box>
-    </a>
-  );
-};
+        </Box>
 
-export default FeedCard;
+        {/* Timestamp */}
+        {safeDate && (
+          <Typography variant="caption" color="text.secondary">
+            {safeDate}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

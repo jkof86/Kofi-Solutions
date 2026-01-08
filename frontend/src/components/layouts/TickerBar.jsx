@@ -1,100 +1,223 @@
 // ------------------------------------------------------------
-// TickerBar.jsx
-// Lightweight crypto + mock stocks ticker bar.
+// TickerBar.jsx — v1.23 (Seamless Scroll, No Dividers)
+// ------------------------------------------------------------
+// Improvements:
+//   ✓ Seamless infinite scroll (duplicated content)
+//   ✓ Category-based sorting (crypto → tech → finance)
+//   ✓ No category dividers (per request)
+//   ✓ Fully compatible with v1.205 health + v1.206 alias-safe market
+//   ✓ Smooth scroll preserved, no early looping
 // ------------------------------------------------------------
 
-import React, { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import React, { useEffect, useState, useContext } from "react";
+import { Box, Typography, Chip } from "@mui/material";
 
-const CRYPTO_SYMBOLS = ["bitcoin", "ethereum", "solana"];
+import {
+  ALL_MARKET_SYMBOLS,
+  CATEGORY_COLORS,
+  SYMBOL_ICONS
+} from "../../data/tickerConfig";
 
-const STOCKS = [
-  { symbol: "AAPL", price: 190.12, change: +0.8 },
-  { symbol: "MSFT", price: 410.55, change: -0.3 },
-  { symbol: "AMZN", price: 175.44, change: +1.2 }
-];
+import { FeedStatusContext } from "../../context/FeedStatusContext";
+
+console.log("TickerBar v1.23 loaded");
+
+// ------------------------------------------------------------
+// Symbol → Category mapping (normalized keys)
+// ------------------------------------------------------------
+const SYMBOL_CATEGORY = {
+  // Crypto
+  "btc-usd": "crypto",
+  "eth-usd": "crypto",
+  "sol-usd": "crypto",
+  "doge-usd": "crypto",
+  "xrp-usd": "crypto",
+  "zec-usd": "crypto",
+
+  // Tech
+  aapl: "tech",
+  msft: "tech",
+  amzn: "tech",
+  goog: "tech",
+  nvda: "tech",
+  tsla: "tech",
+  meta: "tech",
+
+  // Finance / ETFs
+  spy: "finance",
+  vti: "finance",
+  voo: "finance",
+  ibit: "finance",
+  arkg: "finance",
+  blok: "finance"
+};
 
 export default function TickerBar() {
-  const [crypto, setCrypto] = useState([]);
+  const { health } = useContext(FeedStatusContext);
 
+  const [symbols, setSymbols] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState("");
+
+  // ------------------------------------------------------------
+  // 1. Load all symbols (normalized)
+  // ------------------------------------------------------------
   useEffect(() => {
-    async function load() {
-      try {
-        const ids = CRYPTO_SYMBOLS.join(",");
-        const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
-        const res = await fetch(url);
-        const json = await res.json();
+    const cleaned = ALL_MARKET_SYMBOLS.map((s) =>
+      String(s).trim().toLowerCase()
+    );
 
-        const data = CRYPTO_SYMBOLS.map(id => ({
-          symbol: id.toUpperCase(),
-          price: json[id]?.usd ?? null,
-          change: json[id]?.usd_24h_change ?? null
-        }));
-
-        setCrypto(data);
-      } catch (e) {
-        console.error("TickerBar crypto error:", e);
-      }
-    }
-
-    load();
-    const interval = setInterval(load, 60_000);
-    return () => clearInterval(interval);
+    setSymbols(cleaned);
+    setLastUpdated(new Date().toLocaleTimeString());
   }, []);
+
+  // ------------------------------------------------------------
+  // 2. Reset scroll animation when symbols change
+  // ------------------------------------------------------------
+  useEffect(() => {
+    const el = document.querySelector(".scroll");
+    if (el) {
+      el.style.animation = "none";
+      void el.offsetHeight;
+      el.style.animation = "";
+    }
+  }, [symbols]);
+
+  // ------------------------------------------------------------
+  // 3. Render
+  // ------------------------------------------------------------
+  const markets = health?.markets || {};
+
+  if (!health || !health.markets || Object.keys(markets).length === 0) {
+    return (
+      <Box sx={{ py: 1, px: 2 }}>
+        <Typography variant="body2" sx={{ opacity: 0.6 }}>
+          Loading market data…
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Only show valid market entries
+  const visible = symbols.filter((sym) => {
+    const m = markets[sym];
+    return (
+      m &&
+      m.status === "ok" &&
+      typeof m.price === "number" &&
+      m.price > 0
+    );
+  });
+
+  // ------------------------------------------------------------
+  // 4. Sort by category (crypto → tech → finance)
+  // ------------------------------------------------------------
+  const sorted = [...visible].sort((a, b) => {
+    const catA = SYMBOL_CATEGORY[a] || "finance";
+    const catB = SYMBOL_CATEGORY[b] || "finance";
+    return catA.localeCompare(catB);
+  });
+
+  // ------------------------------------------------------------
+  // 5. Duplicate content for seamless infinite scroll
+  // ------------------------------------------------------------
+  const doubled = [...sorted, ...sorted];
 
   return (
     <Box
       sx={{
-        width: "100%",
-        px: 2,
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        backgroundColor: "#f5f5f5",
         py: 1,
-        display: "flex",
-        flexWrap: "wrap",
-        gap: 3,
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#0d1117",
-        color: "#fff",
-        fontSize: 14
+        px: 2,
+        position: "relative",
+        "&:hover .scroll": { animationPlayState: "paused" }
       }}
     >
-      {crypto.map(c => (
-        <Box key={c.symbol}>
-          <Typography component="span" sx={{ fontWeight: 600, mr: 0.5 }}>
-            {c.symbol}
-          </Typography>
-          <Typography component="span" sx={{ mr: 0.5 }}>
-            ${c.price?.toFixed(2)}
-          </Typography>
-          <Typography
-            component="span"
-            sx={{
-              color: (c.change ?? 0) >= 0 ? "#4caf50" : "#f44336"
-            }}
-          >
-            {c.change?.toFixed(2)}%
-          </Typography>
-        </Box>
-      ))}
+      {sorted.length === 0 && (
+        <Typography variant="body2" color="warning.main">
+          No valid market data available
+        </Typography>
+      )}
 
-      {STOCKS.map(s => (
-        <Box key={s.symbol}>
-          <Typography component="span" sx={{ fontWeight: 600, mr: 0.5 }}>
-            {s.symbol}
-          </Typography>
-          <Typography component="span" sx={{ mr: 0.5 }}>
-            ${s.price.toFixed(2)}
-          </Typography>
-          <Typography
-            component="span"
-            sx={{
-              color: s.change >= 0 ? "#4caf50" : "#f44336"
-            }}
-          >
-            {s.change.toFixed(2)}%
-          </Typography>
-        </Box>
-      ))}
+      {/* Scrolling ticker */}
+      <Box
+        className="scroll"
+        sx={{
+          display: "inline-flex",
+          alignItems: "center",
+          animation: "scrollTicker 60s linear infinite"
+        }}
+      >
+        {doubled.map((sym, idx) => {
+          const m = markets[sym];
+          const upper = sym.toUpperCase();
+          const icon = SYMBOL_ICONS[upper] || "";
+          const cat = SYMBOL_CATEGORY[sym] || "finance";
+
+          return (
+            <Box
+              key={`${upper}-${idx}`}
+              sx={{ display: "flex", alignItems: "center", mx: 4 }}
+            >
+              {/* Category Chip */}
+              <Chip
+                label={cat.toUpperCase()}
+                size="small"
+                sx={{
+                  mr: 1,
+                  backgroundColor: CATEGORY_COLORS[cat] || "#666",
+                  color: "#fff",
+                  fontWeight: 600
+                }}
+              />
+
+              {/* Market Data */}
+              <Typography
+                variant="body2"
+                sx={{
+                  color:
+                    typeof m.change_24h === "number" && m.change_24h >= 0
+                      ? "success.main"
+                      : "error.main",
+                  fontWeight: 600
+                }}
+              >
+                {icon} {upper}: ${m.price.toFixed(2)} (
+                {typeof m.change_24h === "number"
+                  ? `${m.change_24h >= 0 ? "+" : ""}${m.change_24h.toFixed(
+                      2
+                    )}%`
+                  : "0.00%"}
+                )
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+
+      {/* Timestamp */}
+      <Typography
+        variant="caption"
+        sx={{
+          position: "absolute",
+          right: 12,
+          bottom: 2,
+          opacity: 0.6
+        }}
+      >
+        Updated: {lastUpdated}
+      </Typography>
+
+      {/* Animation */}
+      <style>
+        {`
+          @keyframes scrollTicker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+        `}
+      </style>
     </Box>
   );
 }

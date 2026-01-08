@@ -1,62 +1,106 @@
-export const feedCategories = {
-   // ✅ Restored Crypto section
-  Crypto: [
-    { name: "cd", label: "CoinDesk", symbol: "BTC-USD" },
-    { name: "ct", label: "CoinTelegraph", symbol: "ETH-USD" },
-    { name: "cb", label: "Coinbase Blog", symbol: "BTC-USD" },
-    { name: "decrypt", label: "Decrypt", symbol: "SOL-USD" }
-  ],
+// ------------------------------------------------------------
+// feedCategories.js — v1.180 (Frontend Category Map)
+// ------------------------------------------------------------
 
-  Finance: [
-    { name: "marketwatch", label: "MarketWatch", symbol: "SPY" },
-    { name: "investopedia", label: "Investopedia", symbol: "QQQ" },
-    { name: "seeking_alpha", label: "Seeking Alpha", symbol: "SPY" }
-  ],
+export const FEED_CATEGORIES = [
+  { id: "crypto", label: "Crypto", feeds: [
+    "coindesk",
+    "cointelegraph",
+    "decrypt",
+    "the_block",
+    "cryptoslate",
+    "messari"
+  ]},
 
-  News: [
-    { name: "reuters_world", label: "Reuters World", symbol: "SPY" },
-    { name: "bbc_world", label: "BBC World", symbol: "SPY" },
-    { name: "ap_world", label: "AP World", symbol: "SPY" }
-  ],
+  { id: "finance", label: "Finance", feeds: [
+    "marketwatch",
+    "yahoo_finance",
+    "investing",
+    "wsj_markets",
+    "cnbc_markets",
+    "ft_markets"
+  ]},
 
-  Sports: [
-    { name: "espn", label: "ESPN", symbol: "DIS" },
-    { name: "cbs_sports", label: "CBS Sports", symbol: "PARA" },
-    { name: "bleacher", label: "Bleacher Report", symbol: "WBD" }
-  ],
+  { id: "news", label: "News", feeds: [
+    "reuters_top",
+    "ap_news",
+    "bbc_world",
+    "fox_latest",
+    "nyt_home",
+    "npr_world",
+    "aljazeera_world"
+  ]},
 
-  IoT: [
-    { name: "iot_world", label: "IoT World Today" },
-    { name: "stacey_iot", label: "Stacey on IoT" },
-    { name: "iot_business", label: "IoT Business News" }
-  ],
+  { id: "alternative_news", label: "Alt News", feeds: [
+    "intercept",
+    "propublica",
+    "reason",
+    "atlantic",
+    "the_hill",
+    "axios",
+    "vice_world"
+  ]},
 
-   CloudSecurity: [
-    { name: "dark_reading", label: "Dark Reading" },
-    { name: "security_week", label: "Security Week" },
-    { name: "krebs", label: "Krebs on Security" }
-  ],
+  { id: "java", label: "Java", feeds: [
+    "infoq_java",
+    "baeldung",
+    "jetbrains_java",
+    "dzone_java"
+  ]},
 
-   AWS: [
-    { name: "aws_news", label: "AWS News", symbol: "AMZN" },
-    { name: "aws_arch", label: "AWS Architecture", symbol: "AMZN" },
-    { name: "aws_security", label: "AWS Security Blog", symbol: "AMZN" }
-  ],
-  
-  Java: [
-    { name: "jcg", label: "Java Code Geeks" },
-    { name: "infoq_java", label: "InfoQ Java" }
-  ],
+  { id: "spring", label: "Spring", feeds: [
+    "spring_blog",
+    "spring_releases",
+    "spring_security_blog",
+    "spring_cloud_blog"
+  ]},
 
-  Spring: [
-    { name: "spring_blog", label: "Spring Blog" },
-    { name: "spring_guides", label: "Spring Guides" }
-  ],
+  { id: "aws", label: "AWS", feeds: [
+    "aws_news",
+    "aws_official_blog",
+    "aws_security_blog",
+    "aws_compute_blog"
+  ]},
 
-  React: [
-    { name: "react_status", label: "React Status", symbol: "META" },
-    { name: "logrocket_react", label: "LogRocket React", symbol: "META" },
-    { name: "smashing_react", label: "Smashing React", symbol: "META" }
-  ]
+  { id: "react", label: "React", feeds: [
+    "react_blog",
+    "javascript_weekly",
+    "logrocket_react",
+    "overreacted",
+    "devto_react"
+  ]},
 
-};
+  { id: "iot", label: "IoT", feeds: [
+    "iot_world_today",
+    "stacey_iot",
+    "industrial_iot_news",
+    "postscapes_iot",
+    "connected_world"
+  ]},
+
+  { id: "cybersecurity", label: "Cybersecurity", feeds: [
+    "krebs_security",
+    "darkreading",
+    "the_hacker_news",
+    "bleepingcomputer",
+    "threatpost",
+    "securityweek",
+    "naosec_threatintel"
+  ]},
+
+  { id: "sports", label: "Sports", feeds: [
+    "espn",
+    "bleacher_report",
+    "bbc_sport",
+    "sky_sports",
+    "yahoo_sports"
+  ]},
+
+  { id: "infowars", label: "Infowars", feeds: [
+    "alex_jones_show",
+    "infowars_news",
+    "war_room",
+    "david_knight",
+    "banned_video_clips"
+  ]}
+];

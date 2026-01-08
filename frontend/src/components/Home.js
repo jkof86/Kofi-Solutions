@@ -1,64 +1,63 @@
 // ------------------------------------------------------------
-// Home.jsx — Phase 3 Clean + Corrected Version
+// Home.jsx — v1.197 (Two‑Column Layout + Stable Containers)
+// ------------------------------------------------------------
 //
-// Responsibilities:
-// - Login validation
-// - Banner + Navbar
-// - Ticker bar
-// - Category selector
-// - TabsLayout (only layout now)
-// - FeedStatusProvider + GlobalRefreshProvider
-// - Auto-load first feed on category change
-// - Feed health dashboard
+// Goals of v1.197:
+//   ✓ Fix container overflow (FeedStatusBar, MarketChart)
+//   ✓ Introduce right‑side MarketChart column
+//   ✓ Ensure all content lives inside MainContainer
+//   ✓ Prevent horizontal stretching with minWidth: 0
+//   ✓ Move Drawer outside MainContainer for proper overlay
+//   ✓ Clean, production‑grade comments
+//
+// Layout Structure:
+//   <HeaderShell />
+//   <MainContainer>
+//       <Container>
+//           Banner
+//           Row: [Feed Column | MarketChart Column]
+//           Health Summary
+//           Status Bars
+//       </Container>
+//   </MainContainer>
+//   <Drawer />
+//
 // ------------------------------------------------------------
 
-import React, { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import {
-  Box,
-  Toolbar,
-  Grid,
-  Card,
-  CardActionArea,
-  CardMedia,
-  CardContent,
-  CardActions,
+  Container,
   Typography,
-  ToggleButton,
-  ToggleButtonGroup
+  Box,
 } from "@mui/material";
 
-import { useNavigate } from "react-router-dom";
-
-import banner from "../images/bg/ksBanner08.jpeg";
-import Navbar from "./navigation/Navbar";
-
+import RssFeedIcon from "@mui/icons-material/RssFeed";
 import TabsLayout from "./layouts/TabsLayout";
-import TickerBar from "./layouts/TickerBar";
+import FeedStatusBar from "./FeedStatusBar";
+import MarketStatusBar from "./MarketStatusBar";
+import HealthSummaryCard from "./HealthSummaryCard";
 import FeedHealthDashboard from "./FeedHealthDashboard";
+import MarketCarousel from "./MarketCarousel";
+import MiniSparkline from "./MiniSparkline";
 
-import { FeedStatusProvider } from "../context/FeedStatusContext";
-import { GlobalRefreshProvider, GlobalRefreshContext } from "../context/GlobalRefreshContext";
-import { feedCategories } from "../data/feedCategories";
-
-// ------------------------------------------------------------
+import { useNavigate } from "react-router-dom";
+import MainContainer from "./layouts/MainContainer";
+import HeaderShell from "./layouts/HeaderShell";
+import Drawer from "@mui/material/Drawer";
 
 export default function Home() {
-  const categories = feedCategories;
-
-  const [currentCategory, setCurrentCategory] = useState(
-    Object.keys(categories)[0] || ""
-  );
-
-  const feeds = categories[currentCategory] || [];
-  const safeFeedIndex = 0;
+  const [isHealthOpen, setIsHealthOpen] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(null);
+  const [activeCategory, setActiveCategory] = useState(null);
 
   const navigate = useNavigate();
 
   // ------------------------------------------------------------
-  // ✅ Login validation
+  // Redirect unauthenticated users
   // ------------------------------------------------------------
   useEffect(() => {
     const loggedIn = localStorage.getItem("isLoggedIn");
+
     if (!loggedIn) {
       console.log("User NOT logged in → redirecting to /login");
       navigate("/login");
@@ -68,126 +67,135 @@ export default function Home() {
   }, [navigate]);
 
   return (
-    <FeedStatusProvider>
-      <GlobalRefreshProvider>
-        <AutoLoadFirstFeed feeds={feeds} />
+    <>
+      {/* --------------------------------------------------------
+         HeaderShell controls the top navigation + health drawer.
+         It reports its height so MainContainer can offset content.
+      --------------------------------------------------------- */}
+      <HeaderShell
+        onHeightChange={setHeaderHeight}
+        isHealthOpen={isHealthOpen}
+        setIsHealthOpen={setIsHealthOpen}
+        activeCategory={activeCategory}
+      />
 
-        <center>
-          {/* --------------------------------------------------------
-             Banner
-          --------------------------------------------------------- */}
-          <Toolbar
-            sx={{
-              justifyContent: "center",
-              backgroundImage: `url(${banner})`,
-              backgroundSize: "cover",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center",
-              backgroundColor: "white",
-              borderRadius: "25px",
-              border: "1px solid black",
-              boxShadow: "0px 0px 8px 5px white",
-              height: "300px",
-              width: "800px",
-              mt: 2
-            }}
-          />
+      {/* --------------------------------------------------------
+         Main page container — applies header offset + full height.
+         All page content MUST live inside this container.
+      --------------------------------------------------------- */}
+      <MainContainer headerHeight={headerHeight}>
+        <Container maxWidth="xl" sx={{ mt: 2, mb: 6 }}>
 
-          <Navbar />
-          <TickerBar />
-
-          {/* --------------------------------------------------------
-             Main Content Box
-          --------------------------------------------------------- */}
+          {/* ----------------------------------------------------
+             Banner — top section with title + icon
+          ----------------------------------------------------- */}
           <Box
             sx={{
-              justifyContent: "center",
-              backgroundColor: "white",
-              borderRadius: "25px",
-              border: "1px solid black",
-              boxShadow: "0px 0px 2px 2px white",
-              padding: "10px",
-              margin: "20px",
-              width: "75vw"
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              backgroundColor: "#1976d2",
+              color: "#fff",
+              px: 3,
+              py: 2,
+              borderRadius: 2,
+              boxShadow: 3,
+              mb: 3,
             }}
           >
-            <Grid container spacing={0}>
-              <Grid item xs={12}>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
-                  RSS Feeds
-                </Typography>
-
-                <Card
-                  sx={{
-                    border: "2px solid black",
-                    maxWidth: "100%",
-                    borderRadius: "25px",
-                    margin: "10px",
-                    padding: "10px",
-                    textAlign: "center"
-                  }}
-                >
-                  <CardActionArea>
-                    <CardMedia>
-                      <CardContent>
-                        {/* --------------------------------------------------------
-                           Category Selector
-                        --------------------------------------------------------- */}
-                        <Box sx={{ mb: 2 }}>
-                          <ToggleButtonGroup
-                            value={currentCategory}
-                            exclusive
-                            onChange={(e, val) => val && setCurrentCategory(val)}
-                            size="small"
-                          >
-                            {Object.keys(categories).map((cat) => (
-                              <ToggleButton key={cat} value={cat}>
-                                {cat}
-                              </ToggleButton>
-                            ))}
-                          </ToggleButtonGroup>
-                        </Box>
-
-                        {/* --------------------------------------------------------
-                           Tabs Layout (Only Layout)
-                        --------------------------------------------------------- */}
-                        <TabsLayout
-                          feeds={feeds}
-                          safeFeedIndex={safeFeedIndex}
-                          currentCategory={currentCategory}
-                        />
-                      </CardContent>
-                      <CardActions />
-                    </CardMedia>
-                  </CardActionArea>
-                </Card>
-              </Grid>
-
-              {/* --------------------------------------------------------
-                 Feed Health Dashboard
-              --------------------------------------------------------- */}
-              <Grid item xs={12} sx={{ mt: 2 }}>
-                <FeedHealthDashboard />
-              </Grid>
-            </Grid>
+            <RssFeedIcon fontSize="large" />
+            <Typography variant="h5" sx={{ fontWeight: 600 }}>
+              News Feeds (RSS)
+            </Typography>
           </Box>
-        </center>
-      </GlobalRefreshProvider>
-    </FeedStatusProvider>
+
+          {/* ----------------------------------------------------
+             MAIN CONTENT ROW
+             Left: Tabs + Feed
+             Right: Market Chart Column
+          ----------------------------------------------------- */}
+          <Box
+            sx={{
+              display: "flex",
+              gap: 3,
+              alignItems: "flex-start",
+              mb: 4,
+              overflow: "hidden",   // prevents horizontal scroll
+              flexWrap: "nowrap",
+            }}
+          >
+            {/* LEFT COLUMN — FEED + TABS */}
+            <Box sx={{ flex: "1 1 auto", minWidth: 0 }}>
+              <TabsLayout
+                activeCategory={activeCategory}
+                setActiveCategory={setActiveCategory}
+              />
+            </Box>
+
+            {/* RIGHT COLUMN — MARKET CHART (fixed width) */}
+            <Box
+              sx={{
+                flex: "0 0 320px",
+                minWidth: 0,
+                height: 300,
+                p: 1.5,
+                borderRadius: 2,
+                backgroundColor: "#f5f5f5",
+                border: "1px solid #ddd",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+              }}
+            > 
+              {/* Mini Sparkline (global now) */}
+              <MiniSparkline />
+
+              {/* Main Market Carousel */}
+              <MarketCarousel />
+            </Box>
+          </Box>
+
+          {/* ----------------------------------------------------
+             Health Summary — small card showing feed + market stats
+          ----------------------------------------------------- */}
+          <Box sx={{ mb: 4 }}>
+            <HealthSummaryCard />
+          </Box>
+
+          {/* ----------------------------------------------------
+             Status Bars — feed health + market health
+             Wrapped to prevent overflow
+          ----------------------------------------------------- */}
+          <Box sx={{ mb: 4, maxWidth: "100%", overflowX: "auto" }}>
+            <FeedStatusBar />
+            <MarketStatusBar />
+          </Box>
+
+        </Container>
+      </MainContainer>
+
+      {/* --------------------------------------------------------
+         System Health Drawer — MUST live OUTSIDE MainContainer.
+         This ensures it overlays the page instead of stretching it.
+      --------------------------------------------------------- */}
+      <Drawer
+        anchor="right"
+        open={isHealthOpen}
+        onClose={() => setIsHealthOpen(false)}
+        PaperProps={{
+          sx: {
+            width: "26rem",
+            padding: 2,
+            backgroundColor: "#fafafa",
+          },
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          System Health
+        </Typography>
+
+        <FeedHealthDashboard />
+      </Drawer>
+    </>
   );
-}
-
-// ------------------------------------------------------------
-// ✅ Auto-load first feed whenever feeds change
-// ------------------------------------------------------------
-function AutoLoadFirstFeed({ feeds }) {
-  const { loadFeed } = useContext(GlobalRefreshContext);
-
-  useEffect(() => {
-    if (loadFeed && feeds.length > 0) {
-      loadFeed(feeds[0].name);
-    }
-  }, [loadFeed, feeds]);
-
-  return null;
 }

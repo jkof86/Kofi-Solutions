@@ -1,124 +1,205 @@
-# Kofi Solutions App – Complete Architecture & Features
-Project Hub
+```markdown
+# README.frontend.md — Kofi Solutions Frontend (v1.17)
 
-**Current Date:** December 21, 2025
+A modular, reactive, real-time dashboard built with React 18 + MUI v5.
 
-## Overview
-Kofi Solutions is a **client-side Single Page Application (SPA)** hosted on AWS S3 as a static website.  
-It uses **browser localStorage** for simulated authentication (unencrypted email/password storage).  
-The app includes:
-- Live market tickers (crypto & stocks)
-- RSS feed aggregator (with frequent upstream errors)
-- Tabbed sections: Professional, Fitness/Nutrition, Gaming, WordPress blog
+## 🏗️ Overview
 
-All navigation, state management, and content loading are handled **client-side** via JavaScript.  
-No backend or server-side API calls are involved.
+The v1.17 frontend is a fully normalized, production-ready React application designed to consume the unified backend aggregator.  
+This release focuses on:
 
-## Authentication Flow
-1. **Unauthenticated**  
-   - Top nav: HOME | REGISTER | LOGIN | LOGOUT  
-   - Displays login form with email/password fields, submit button, and security warning  
-   - Optional quick sign-in buttons (e.g., "Sign in as Jason")
+- Stability
+- Correct wiring
+- Health-driven UI
+- Market chart reliability
+- Feed switching + category switching
+- Debug visibility
 
-2. **Registration / Login**  
-   - REGISTER: Form saves new credentials to localStorage  
-   - LOGIN: Stores credentials → hides form → reveals full dashboard  
-   - Post-login: Navigation expands to include PROFESSIONAL | FITNESS / NUTRITION | GAMING | WORDPRESS
+The entire UI is now driven by a consistent global state model, ensuring predictable behavior across all components.
 
-3. **Logout**  
-   - Clears localStorage → reverts to login screen
+## 🚀 Key Improvements in v1.17
 
-## Main Dashboard Layout (Authenticated View)
+### 🔥 1. TabsLayout Rebuild
 
-### Header
-- Top navigation: HOME | REGISTER | LOGIN | LOGOUT
-- Branding: "KOFI SOLUTIONS" logo with "K" icon + tagline  
-  `INNOVATION | STRATEGY | EXECUTION`
-- Live market ticker (color-coded changes):  
-  - Bitcoin (BTC): $88,250.00 +0.16%  
-  - Ethereum (ETH): $2,980.07 +0.10%  
-  - Solana (SOL): $125.32 -0.70%  
-  - Apple (AAPL): $190.12 +0.80%  
-  - Microsoft (MSFT): $410.55 -0.30%  
-  - Amazon (AMZN): $175.44 +1.20%
+The core dashboard layout has been fully rewired:
 
-### Main Navigation Tabs
-- **PROFESSIONAL**  
-- **FITNESS / NUTRITION**  
-- **GAMING**  
-- **WORDPRESS**
+- Correct `feedId` propagation
+- Correct symbol mapping for `MarketChart`
+- Category switching resets feed index
+- Feed switching stable across all categories
+- Health badges mapped from global health object
+- Debug logging added for visibility
 
-### RSS Feeds Section (Default View)
-- Tabbed categories: CRYPTO | FINANCE | NEWS | SPORTS | IOT | CLOUDSECURITY | AWS | JAVA | SPRING | REACT | etc.
-- Sources: CoinDesk, Cointelegraph, Krebs on Security, Security Week, etc.
-- Controls: REFRESH FEED | GLOBAL REFRESH | LOAD MORE
-- Current view example: "Security Week – CloudSecurity" → shows **403 Upstream Error**
-- Feed Health (bottom):  
-  Status indicators (OK / Error) for feeds like:  
-  - seeking-alpha: OK (green)  
-  - marketwatch: Error (red)  
-  - Last updated: 11:55 AM
+This eliminates long-standing issues with:
 
-## Tab-Specific Content
+- Undefined feed IDs
+- Missing feed parameters
+- Incorrect symbol mapping
+- Tabs not updating on category change
 
-### Professional Tab
-- Sidebar menu: Professional → Back | Home | About | Contact | Account | Settings
-- Content: "DevOps Design & Stack Development" with server rack background
-- Footer icons: LinkedIn | GitHub
+### 🔥 2. RSSFeed Rebuild
 
-### Fitness / Nutrition Tab
-- Sidebar menu: Fitness / Nutrition → Back | Home | Contact | Nutrition Calculator | Account | Settings
-- Content: "FITNESS & NUTRITION" banner with macronutrient icons (Carbs, Protein, Fats)
-- Nutrition Calculator:
-  - Inputs: Calorie Limit (kcal), Carb/Protein/Fat Percentages (%)
-  - Outputs: Grams for each macro (currently 0.00)
-  - Buttons: CALCULATE | CLEAR | SHARE | LEARN MORE
-- Additional: User gym photo
+`RSSFeed.jsx` now:
 
-### Gaming Tab
-- Sidebar menu: Gaming → Back | Home | About | Contact | Account | Settings | Logout
-- Content: "GAMES" neon banner with tagline  
-  "Discover new worlds, conquer challenges, and connect with players worldwide."
-- Sub-section: "JKOF GAMING CHANNEL" (streaming | gameplay | commentary) with grid background
-- Buttons: SHARE | LEARN MORE
+- Uses `feedId` instead of legacy name
+- Calls backend using the correct contract: `?mode=feed&feed=<id>`
+- Supports debug mode (`&debug=debug_feeds`)
+- Displays fallback mode messaging
+- Handles empty feeds gracefully
+- Supports batch loading (“Load more”)
+- Shows per-item refresh
 
-### WordPress Tab
-- Embedded WordPress blog (Twenty Twenty-Five theme)
-- Default content: "Hello world!" post (dated October 17, 2025)
-- Footer links: Blog | Events | About | Shop | FAQs | Patterns | Authors | Themes
-- Powered by: WordPress
+This resolves:
 
-## Technical Architecture
+- “Missing feed parameter”
+- Silent failures
+- Incorrect debug behavior
 
-| Layer          | Details                                                                 |
-|----------------|-------------------------------------------------------------------------|
-| **Hosting**    | AWS S3 static website hosting (bucket: kofisolutions.com)              |
-| **Frontend**   | HTML, CSS (dark/neon themes), Vanilla JavaScript                       |
-| **State**      | Browser localStorage (unencrypted credentials)                         |
-| **Data**       | Client-side RSS fetching (many 403 upstream errors)                    |
-| **Routing**    | Client-side tab toggling via JS                                        |
-| **Security**   | Insecure by design – explicit warnings; RSS fetch issues               |
+### 🔥 3. MarketChart Stabilization
 
-## Site Structure (Simplified)
+`MarketChart.jsx` now:
+
+- Uses a fixed-height responsive container
+- Handles missing history arrays
+- Prevents width/height = -1 errors
+- Displays graceful fallback UI
+- Correctly maps symbols from `FEEDS`
+
+This resolves:
+
+- Recharts crashes
+- “No chart data” loops
+- Rendering behind fixed header
+
+### 🔥 4. FeedStatusContext v1.180
+
+The global health system now includes:
+
+- Automatic polling (`?mode=health`)
+- Backend → legacy status normalization
+- Global health object
+- `strictMode` + `sampleSize` preserved
+- `lastUpdated` timestamp
+- Debug mode
+
+This powers:
+
+- `FeedStatusBar`
+- `FeedHealthDashboard`
+- `TabsLayout` badges
+- Ticker fallback logic
+
+### 🔥 5. Ticker + HeaderShell Stability
+
+- Ticker now uses normalized market symbols
+- Fallback logic tied to health object
+- `HeaderShell` auto-offset via `ResizeObserver`
+- Fully responsive across breakpoints
+
+## 🧩 Frontend File Structure
 
 ```
-index.html (SPA entry point)
-├── Header (logo + market ticker)
-├── Navigation (top bar + tab bar)
-├── Main Content Area
-│   ├── Login/Register Form (unauthenticated)
-│   └── Dashboard (authenticated)
-│       ├── RSS Feeds (default)
-│       ├── Professional
-│       ├── Fitness / Nutrition
-│       ├── Gaming
-│       └── WordPress (blog embed)
-└── Footer (Feed Health + social icons)
+/src
+  /components
+    HeaderShell.jsx
+    MainBar.jsx
+    TabsLayout.jsx
+    RSSFeed.jsx
+    FeedCard.jsx
+    MarketChart.jsx
+    FeedStatusBar.jsx
+    FeedHealthDashboard.jsx
+  /context
+    FeedStatusContext.jsx
+  /data
+    feedCategories.js
+    feedsMap.js
+  /auth
+    Login.jsx
+    Register.jsx
+  /debug
+    DebugPanel.jsx
+  /docs
+    README.md
+    backend.md
+    frontend.md
+    architecture.md
+    CHANGELOG.md
 ```
 
-## Notes & Recommendations
-- **RSS Issues**: Frequent 403 errors suggest CORS restrictions or upstream blocks when fetching client-side. Consider server-side proxy for production.
-- **Purpose**: Designed for testing/demo only (repeated security warnings).
-- **Enhancements**: Add proper auth, error handling, and real API integrations for live feeds and calculators.
+## 🎨 UI Architecture
 
-You can copy the entire content above and save it as `kofi-solutions-architecture.md` to download or use in your repository.
+### HeaderShell
+
+- Fixed AppBar
+- Banner slot
+- Live ticker
+- Drawer navigation
+
+### TabsLayout
+
+- Category tabs (crypto, finance, news…)
+- Feed tabs (ct, decrypt, yahoo_crypto…)
+- Feed content + MarketChart side-by-side
+
+### RSSFeed
+
+- Batch loading
+- Debug mode
+- Fallback messaging
+- Per-item refresh
+
+### MarketChart
+
+- Recharts line chart
+- Responsive container
+- Auto-height
+- Graceful fallback
+
+### FeedStatusBar
+
+- Bottom health indicator
+- Uses global health object
+
+### FeedHealthDashboard
+
+- Right-side drawer
+- Full feed + market health matrix
+
+## 🔐 Authentication
+
+- LocalStorage-based test mode
+- Google OAuth supported for demo
+- Warning displayed for non-encrypted credentials
+
+## 🧪 Running Locally
+
+**Install**
+
+```bash
+npm install
+```
+
+**Run**
+
+```bash
+npm start
+```
+
+**Build**
+
+```bash
+npm run build
+```
+
+## 🏁 Frontend Summary (v1.17)
+
+- `TabsLayout` fully rewired
+- `RSSFeed` contract fixed
+- `MarketChart` stabilized
+- Health system integrated
+- Ticker normalized
+- `FEEDS` + categories aligned
+- Debug visibility improved
+- Zero mismatches with backend
+```
