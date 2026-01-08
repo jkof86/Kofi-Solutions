@@ -1,14 +1,13 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.198 (Prop Fix + Stable + Debug)
+// RSSFeed.jsx — v1.199 (Backend-Normalized + Stable Rendering)
 // ------------------------------------------------------------
 //
-// Fixes in v1.198:
-//   ✓ Accepts `feedId` instead of `name`
-//   ✓ Fully compatible with TabsLayout v1.204
-//   ✓ feedMeta lookup now correct
-//   ✓ Added debug logs for feedId + URL
-//   ✓ All previous stability improvements preserved
-//
+// Fixes in v1.199:
+//   ✓ TRUSTS backend-normalized items (no re-normalization)
+//   ✓ Uses item.description / item.image / item.url directly
+//   ✓ Keeps debug + health behavior intact
+//   ✓ Safer guards for malformed backend responses
+//   ✓ Fully aligned with normalize.js v1.201 + FeedCard v1.198
 // ------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
@@ -24,7 +23,7 @@ import {
 import FeedCard from "./FeedCard";
 import { FEEDS } from "../data/feedsMap";
 
-console.log("RSSFeed v1.198 loaded");
+console.log("RSSFeed v1.199 loaded");
 
 const BATCH_SIZE = 4;
 const BACKEND_URL =
@@ -45,8 +44,12 @@ export default function RSSFeed({ feedId }) {
   const [showDebug, setShowDebug] = useState(false);
 
   const [globalDebug, setGlobalDebug] = useState(() => {
-    const urlParam = new URLSearchParams(window.location.search).get("debug");
-    return urlParam === "true";
+    try {
+      const urlParam = new URLSearchParams(window.location.search).get("debug");
+      return urlParam === "true";
+    } catch {
+      return false;
+    }
   });
 
   // Keyboard shortcut: Ctrl + Shift + D
@@ -59,23 +62,6 @@ export default function RSSFeed({ feedId }) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
-
-  // ------------------------------------------------------------
-  // Normalize feed items
-  // ------------------------------------------------------------
-  function normalizeItem(item, fallbackSource) {
-    return {
-      title: item.title || "Untitled",
-      url: item.link || item.url || "#",
-      description:
-        item.contentSnippet ||
-        item.description ||
-        item.summary ||
-        "",
-      date: item.pubDate || item.isoDate || item.date || null,
-      source: item.source || fallbackSource || null
-    };
-  }
 
   // ------------------------------------------------------------
   // Fetch feed items from backend
@@ -105,6 +91,14 @@ export default function RSSFeed({ feedId }) {
       const json = await res.json();
 
       console.log("Feed response:", json);
+
+      // Backend now always returns:
+      // { id, status, fallback, count, items, type, ok, error, debug }
+      if (!json || typeof json !== "object") {
+        setError("Malformed backend response");
+        setItems([]);
+        return;
+      }
 
       if (json.status === "dead") {
         setError("Feed unavailable");
@@ -150,7 +144,7 @@ export default function RSSFeed({ feedId }) {
 
   // ------------------------------------------------------------
   // Early returns (invalid feed)
-  // ------------------------------------------------------------
+// ------------------------------------------------------------
   if (!feedMeta) {
     return (
       <Box sx={{ p: 2 }}>
@@ -171,14 +165,7 @@ export default function RSSFeed({ feedId }) {
     );
   }
 
-  // ------------------------------------------------------------
-  // Normalize items BEFORE slicing
-  // ------------------------------------------------------------
-  const normalizedItems = items.map((item) =>
-    normalizeItem(item, feedMeta.label)
-  );
-
-  const visibleItems = normalizedItems.slice(0, visibleCount);
+  const visibleItems = items.slice(0, visibleCount);
   const feedLabel = feedMeta.label || feedMeta.name || feedId;
 
   // ------------------------------------------------------------
@@ -228,13 +215,13 @@ export default function RSSFeed({ feedId }) {
         <Typography sx={{ mb: 2 }}>Loading feed: {feedLabel}</Typography>
       )}
 
-      {error && normalizedItems.length === 0 && (
+      {error && items.length === 0 && (
         <Typography color="error" sx={{ mb: 2 }}>
           {error}
         </Typography>
       )}
 
-      {isFallback && normalizedItems.length > 0 && (
+      {isFallback && items.length > 0 && (
         <Typography variant="body2" sx={{ mb: 1 }}>
           Feed "{feedId}" is using HTML fallback mode.
         </Typography>
@@ -266,7 +253,7 @@ export default function RSSFeed({ feedId }) {
       <Stack spacing={2}>
         {visibleItems.map((item, idx) => (
           <FeedCard
-            key={`${item.url}-${idx}`}
+            key={`${item.url || idx}-${idx}`}
             item={item}
             feedMeta={feedMeta}
             onRefresh={() => fetchFeed(feedId)}
@@ -275,7 +262,7 @@ export default function RSSFeed({ feedId }) {
       </Stack>
 
       {/* Load more */}
-      {visibleCount < normalizedItems.length && (
+      {visibleCount < items.length && (
         <Box sx={{ mt: 2, textAlign: "center" }}>
           <Button
             variant="outlined"

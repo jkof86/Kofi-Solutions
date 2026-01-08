@@ -10,8 +10,6 @@ import { Box, Tabs, Tab, Typography } from "@mui/material";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 import { FEEDS } from "../../data/feedsMap";
 import RSSFeed from "../RSSFeed";
-import MarketCarousel from "../MarketCarousel";
-import MiniSparkline from "../MiniSparkline";
 
 console.log("TabsLayout v1.204 + Chart + Symbol Fix loaded");
 
@@ -132,27 +130,6 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
             {/* FEED COLUMN (dominant) */}
             <Box sx={{ flex: 2 }}>
               <RSSFeed feedId={f.feedId} categoryLabel={safeCategory} />
-            </Box>
-
-            {/* CHART COLUMN (compact + fixed size) */}
-            <Box
-              sx={{
-                flex: "0 0 320px",
-                height: 300,
-                p: 1.5,
-                borderRadius: 2,
-                backgroundColor: "#f5f5f5",
-                border: "1px solid #ddd",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-              }}
-            >
-              {/* Mini Sparkline */}
-              <MiniSparkline data={activeFeed?.sparkline || []} />
-
-              {/* Main Chart */}
-              <MarketCarousel />
             </Box>
 
 

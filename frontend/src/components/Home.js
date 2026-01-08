@@ -1,5 +1,27 @@
 // ------------------------------------------------------------
-// Home.jsx — v1.202 (TickerBar Restored)
+// Home.jsx — v1.197 (Two‑Column Layout + Stable Containers)
+// ------------------------------------------------------------
+//
+// Goals of v1.197:
+//   ✓ Fix container overflow (FeedStatusBar, MarketChart)
+//   ✓ Introduce right‑side MarketChart column
+//   ✓ Ensure all content lives inside MainContainer
+//   ✓ Prevent horizontal stretching with minWidth: 0
+//   ✓ Move Drawer outside MainContainer for proper overlay
+//   ✓ Clean, production‑grade comments
+//
+// Layout Structure:
+//   <HeaderShell />
+//   <MainContainer>
+//       <Container>
+//           Banner
+//           Row: [Feed Column | MarketChart Column]
+//           Health Summary
+//           Status Bars
+//       </Container>
+//   </MainContainer>
+//   <Drawer />
+//
 // ------------------------------------------------------------
 
 import { useEffect, useState } from "react";
@@ -15,6 +37,9 @@ import FeedStatusBar from "./FeedStatusBar";
 import MarketStatusBar from "./MarketStatusBar";
 import HealthSummaryCard from "./HealthSummaryCard";
 import FeedHealthDashboard from "./FeedHealthDashboard";
+import MarketCarousel from "./MarketCarousel";
+import MiniSparkline from "./MiniSparkline";
+
 import { useNavigate } from "react-router-dom";
 import MainContainer from "./layouts/MainContainer";
 import HeaderShell from "./layouts/HeaderShell";
@@ -25,9 +50,11 @@ export default function Home() {
   const [headerHeight, setHeaderHeight] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
 
-
   const navigate = useNavigate();
 
+  // ------------------------------------------------------------
+  // Redirect unauthenticated users
+  // ------------------------------------------------------------
   useEffect(() => {
     const loggedIn = localStorage.getItem("isLoggedIn");
 
@@ -41,6 +68,10 @@ export default function Home() {
 
   return (
     <>
+      {/* --------------------------------------------------------
+         HeaderShell controls the top navigation + health drawer.
+         It reports its height so MainContainer can offset content.
+      --------------------------------------------------------- */}
       <HeaderShell
         onHeightChange={setHeaderHeight}
         isHealthOpen={isHealthOpen}
@@ -48,76 +79,123 @@ export default function Home() {
         activeCategory={activeCategory}
       />
 
+      {/* --------------------------------------------------------
+         Main page container — applies header offset + full height.
+         All page content MUST live inside this container.
+      --------------------------------------------------------- */}
       <MainContainer headerHeight={headerHeight}>
         <Container maxWidth="xl" sx={{ mt: 2, mb: 6 }}>
+
+          {/* ----------------------------------------------------
+             Banner — top section with title + icon
+          ----------------------------------------------------- */}
           <Box
             sx={{
-              backgroundColor: "#fff",
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              backgroundColor: "#1976d2",
+              color: "#fff",
+              px: 3,
+              py: 2,
               borderRadius: 2,
               boxShadow: 3,
-              p: 3,
+              mb: 3,
             }}
           >
-            {/* Banner */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                backgroundColor: "#1976d2",
-                color: "#fff",
-                px: 3,
-                py: 2,
-                borderRadius: 2,
-                boxShadow: 3,
-                mb: 3,
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                <RssFeedIcon fontSize="large" />
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                  News Feeds (RSS)
-                </Typography>
-              </Box>
+            <RssFeedIcon fontSize="large" />
+            <Typography variant="h5" sx={{ fontWeight: 600 }}>
+              News Feeds (RSS)
+            </Typography>
+          </Box>
+
+          {/* ----------------------------------------------------
+             MAIN CONTENT ROW
+             Left: Tabs + Feed
+             Right: Market Chart Column
+          ----------------------------------------------------- */}
+          <Box
+            sx={{
+              display: "flex",
+              gap: 3,
+              alignItems: "flex-start",
+              mb: 4,
+              overflow: "hidden",   // prevents horizontal scroll
+              flexWrap: "nowrap",
+            }}
+          >
+            {/* LEFT COLUMN — FEED + TABS */}
+            <Box sx={{ flex: "1 1 auto", minWidth: 0 }}>
+              <TabsLayout
+                activeCategory={activeCategory}
+                setActiveCategory={setActiveCategory}
+              />
             </Box>
 
-            {/* Tabs + Feed + Market Status */}
-            <TabsLayout
-              activeCategory={activeCategory}
-              setActiveCategory={setActiveCategory}
-            />
-
-            {/* Health Summary */}
-            <HealthSummaryCard />
-
-            {/* Status Bars */}
-            <FeedStatusBar />
-            <MarketStatusBar />
-
-
-
-            {/* System Health Drawer */}
-            <Drawer
-              anchor="right"
-              open={isHealthOpen}
-              onClose={() => setIsHealthOpen(false)}
-              PaperProps={{
-                sx: {
-                  width: "26rem",
-                  padding: 2,
-                  backgroundColor: "#fafafa",
-                },
+            {/* RIGHT COLUMN — MARKET CHART (fixed width) */}
+            <Box
+              sx={{
+                flex: "0 0 320px",
+                minWidth: 0,
+                height: 300,
+                p: 1.5,
+                borderRadius: 2,
+                backgroundColor: "#f5f5f5",
+                border: "1px solid #ddd",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
               }}
             >
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                System Health
-              </Typography>
+              {/* Mini Sparkline (global now) */}
+              <MiniSparkline />
 
-              <FeedHealthDashboard />
-            </Drawer>
+              {/* Main Market Carousel */}
+              <MarketCarousel />
+            </Box>
           </Box>
+
+          {/* ----------------------------------------------------
+             Health Summary — small card showing feed + market stats
+          ----------------------------------------------------- */}
+          <Box sx={{ mb: 4 }}>
+            <HealthSummaryCard />
+          </Box>
+
+          {/* ----------------------------------------------------
+             Status Bars — feed health + market health
+             Wrapped to prevent overflow
+          ----------------------------------------------------- */}
+          <Box sx={{ mb: 4, maxWidth: "100%", overflowX: "auto" }}>
+            <FeedStatusBar />
+            <MarketStatusBar />
+          </Box>
+
         </Container>
       </MainContainer>
+
+      {/* --------------------------------------------------------
+         System Health Drawer — MUST live OUTSIDE MainContainer.
+         This ensures it overlays the page instead of stretching it.
+      --------------------------------------------------------- */}
+      <Drawer
+        anchor="right"
+        open={isHealthOpen}
+        onClose={() => setIsHealthOpen(false)}
+        PaperProps={{
+          sx: {
+            width: "26rem",
+            padding: 2,
+            backgroundColor: "#fafafa",
+          },
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          System Health
+        </Typography>
+
+        <FeedHealthDashboard />
+      </Drawer>
     </>
   );
 }

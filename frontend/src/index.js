@@ -30,6 +30,9 @@
 
 import React from "react";
 import ReactDOM from "react-dom/client";
+
+// CSS
+import "./data/feedIconColors.css";
 import "./index.css";
 
 import App from "./App";

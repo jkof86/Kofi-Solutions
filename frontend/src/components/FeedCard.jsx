@@ -1,14 +1,15 @@
 // ------------------------------------------------------------
-// FeedCard.jsx — v1.197 (Health‑Correct + Normalized Items)
+// FeedCard.jsx — v1.300 (Icons via Google API + Per-Article Images)
 // ------------------------------------------------------------
 //
-// Improvements in v1.197:
-//   ✓ FIXED: health refresh now calls /health correctly
-//   ✓ FIXED: JSON OK detection aligned with backend v1.196
-//   ✓ FIXED: fallback/dead/html_error mapping
-//   ✓ Safer guards for malformed items
-//   ✓ Safer guards for malformed backend responses
-//   ✓ Fully aligned with FeedStatusContext v1.195+
+// Improvements in v1.300:
+//   ✓ Per-article image logic preserved
+//   ✓ Feed-level Material icon fallback (Google API)
+//   ✓ ksBanner as final fallback
+//   ✓ Safe description handling
+//   ✓ Safe image handling (http/https only)
+//   ✓ Added referrerPolicy="no-referrer"
+//   ✓ Layout-stable and null-safe
 // ------------------------------------------------------------
 
 import React, { useContext } from "react";
@@ -17,27 +18,47 @@ import {
   CardContent,
   Typography,
   Box,
+  Button,
   Chip,
   IconButton,
-  Tooltip
+  Tooltip,
+  Icon
 } from "@mui/material";
 
-import RefreshIcon from "@mui/icons-material/Refresh";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
+import AutorenewIcon from "@mui/icons-material/Autorenew";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import FeedIcon from "../components/FeedIcon";
 
+
+import { FEED_IMAGE_OVERRIDES } from "../data/feedImageOverrides";
 import { FeedStatusContext } from "../context/FeedStatusContext";
 
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
+// Global fallback image
+const FALLBACK_IMAGE = require("../images/bg/ksBanner04.jpeg");
+
+// ------------------------------------------------------------
+// Helper: robust URL validator
+// ------------------------------------------------------------
+function isValidHttpUrl(str) {
+  if (!str || typeof str !== "string") return false;
+  try {
+    const u = new URL(str);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export default function FeedCard({ item, feedMeta, onRefresh }) {
   const { status: feedHealth, setStatus } = useContext(FeedStatusContext);
-
   const feedId = feedMeta?.id;
 
-  // Current health status from context
   const status = feedHealth[feedId] || "unknown";
 
   // ------------------------------------------------------------
@@ -48,13 +69,9 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
 
   switch (status) {
     case "ok":
-      statusIcon = <CheckCircleIcon fontSize="small" color="success" />;
-      statusLabel = "OK";
-      break;
-
     case "json":
       statusIcon = <CheckCircleIcon fontSize="small" color="success" />;
-      statusLabel = "JSON OK";
+      statusLabel = status === "json" ? "JSON OK" : "OK";
       break;
 
     case "fallback":
@@ -63,18 +80,13 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
       break;
 
     case "blocked":
-      statusIcon = <ErrorIcon fontSize="small" color="error" />;
-      statusLabel = "Blocked";
-      break;
-
     case "dead":
-      statusIcon = <ErrorIcon fontSize="small" color="error" />;
-      statusLabel = "Dead";
-      break;
-
     case "html_error":
       statusIcon = <ErrorIcon fontSize="small" color="error" />;
-      statusLabel = "HTML Error";
+      statusLabel =
+        status === "html_error"
+          ? "HTML Error"
+          : status.charAt(0).toUpperCase() + status.slice(1);
       break;
 
     default:
@@ -108,13 +120,34 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
   // ------------------------------------------------------------
   const safeTitle = item?.title || "Untitled";
   const safeUrl = item?.url || "#";
-  const safeSource = item?.source || "";
-  const safeDescription = item?.description || "";
+
+  // Description: allow blank, but never undefined/null
+  const safeDescription =
+    typeof item?.description === "string" ? item.description : "";
+
+  const truncatedDescription =
+    safeDescription.length > 300
+      ? safeDescription.slice(0, 300).trim() + "…"
+      : safeDescription;
+
   const safeDate = item?.date ? new Date(item.date).toLocaleString() : "";
-  const safeImage =
-    item?.image && typeof item.image === "string" && item.image.startsWith("http")
-      ? item.image
-      : null;
+
+
+  // ------------------------------------------------------------
+  // Per-article image + icon logic
+  // ------------------------------------------------------------
+
+
+  // 1. Article-level image (if valid)
+  const extractedImage =
+    item?.image && isValidHttpUrl(item.image) ? item.image : null;
+
+  // 2. Feed-level icon object (Material Symbols Rounded)
+  const overrideImage = FEED_IMAGE_OVERRIDES[item?.source] || null;
+
+  // 3. Feed-level icon key (if needed elsewhere)
+  const feedIconKey = overrideImage?.icon || null;
+
 
 
   // ------------------------------------------------------------
@@ -132,24 +165,29 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
             mb: 1
           }}
         >
-          {/* Title + Source */}
+          {/* Title */}
           <Box sx={{ flex: 1, pr: 1 }}>
             <Typography
-              variant="subtitle1"
               component="a"
               href={safeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              sx={{ textDecoration: "none", color: "primary.main" }}
+              sx={{
+                display: "block",
+                fontSize: "1.05rem",
+                fontWeight: 700,
+                lineHeight: 1.4,
+                color: "text.primary",
+                textDecoration: "none",
+                transition: "color 0.2s ease",
+                "&:hover": {
+                  color: "primary.main",
+                  textDecoration: "underline"
+                }
+              }}
             >
               {safeTitle}
             </Typography>
-
-            {safeSource && (
-              <Typography variant="caption" color="text.secondary">
-                {safeSource}
-              </Typography>
-            )}
           </Box>
 
           {/* Actions + Status */}
@@ -161,68 +199,109 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
               gap: 0.5
             }}
           >
-            {/* Refresh feed content */}
-            <Tooltip title="Refresh Feed Content">
-              <IconButton size="large" onClick={onRefresh}>
-                <RefreshIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            <Box sx={{ display: "flex", gap: 1 }}>
+              <Tooltip title="Refresh Articles">
+                <IconButton size="small" onClick={onRefresh}>
+                  <AutorenewIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
 
-            {/* Refresh feed health */}
-            <Tooltip title="Refresh Feed Health">
-              <IconButton size="large" onClick={refreshHealth}>
-                <RefreshIcon fontSize="small" color="primary" />
-              </IconButton>
-            </Tooltip>
+              <Tooltip title="Refresh Health">
+                <IconButton size="small" onClick={refreshHealth}>
+                  <HealthAndSafetyIcon fontSize="small" color="primary" />
+                </IconButton>
+              </Tooltip>
+            </Box>
 
-            {/* Health status chip */}
-            <Chip
-              size="small"
-              icon={statusIcon}
-              label={statusLabel}
-              sx={{ fontSize: 10, height: 22 }}
-            />
+            <Tooltip title="Health Status">
+              <Chip
+                size="small"
+                icon={statusIcon}
+                label={statusLabel}
+                sx={{ fontSize: 10, height: 22 }}
+              />
+            </Tooltip>
           </Box>
         </Box>
 
-        {/* Article Image */}
+        {/* Visual: Article image → Feed icon → ksBanner */}
         <Box
           sx={{
             mb: 1,
-            height: 160,
-            overflow: "hidden",
             borderRadius: 1,
+            overflow: "hidden",
             backgroundColor: "#f0f0f0",
             display: "flex",
+            justifyContent: "center",
             alignItems: "center",
-            justifyContent: "center"
+            height: 240
           }}
         >
-          {safeImage ? (
+          {extractedImage ? (
             <img
-              src={safeImage}
+              src={extractedImage}
               alt="Article"
+              referrerPolicy="no-referrer"
               style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                borderRadius: 4
+                maxHeight: "100%",
+                maxWidth: "100%",
+                objectFit: "contain",
+                display: "block"
               }}
             />
+          ) : overrideImage ? (
+            overrideImage.isImage ? (
+              <img
+                src={overrideImage.url}
+                alt="Feed Logo"
+                style={{
+                  width: "96px",
+                  height: "96px",
+                  objectFit: "contain",
+                  display: "block"
+                }}
+              />
+            ) : (
+              <FeedIcon
+                url={overrideImage.url}
+                className={overrideImage.className}
+                size={96}
+              />
+            )
           ) : (
-            <Typography variant="caption" color="text.secondary">
-              No image available
-            </Typography>
+
+            <img
+              src={FALLBACK_IMAGE}
+              alt="Fallback"
+              referrerPolicy="no-referrer"
+              style={{
+                maxHeight: "100%",
+                maxWidth: "100%",
+                objectFit: "cover",
+                display: "block"
+              }}
+            />
           )}
         </Box>
 
 
         {/* Description */}
-        {safeDescription && (
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            {safeDescription}
-          </Typography>
-        )}
+        <Typography variant="body2" sx={{ mb: 1, lineHeight: 1.6 }}>
+          {truncatedDescription}
+        </Typography>
+
+        {/* Read More */}
+        <Box>
+          <Button
+            variant="outlined"
+            size="small"
+            href={safeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Read more →
+          </Button>
+        </Box>
 
         {/* Timestamp */}
         {safeDate && (
