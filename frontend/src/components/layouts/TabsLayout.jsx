@@ -72,9 +72,11 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
   return (
     <Box sx={{ width: "100%" }}>
       <Box sx={{ mb: 1 }}>
+
+{/*         
         <Typography variant="h5" sx={{ mb: 1 }}>
           {safeCategory.toUpperCase()}
-        </Typography>
+        </Typography> */}
 
         <Tabs
           value={categoryIndex === -1 ? 0 : categoryIndex}
