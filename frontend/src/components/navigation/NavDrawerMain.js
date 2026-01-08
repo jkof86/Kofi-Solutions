@@ -52,8 +52,8 @@ export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
   const navigate = useNavigate();
 
   const navItems2 = [
-    { label: "Account", icon: <AccountCircleIcon />, to: "/professional/about" },
-    { label: "Settings", icon: <SettingsIcon />, to: "/professional/about" },
+    { label: "Account", icon: <AccountCircleIcon />, to: "/home" },
+    { label: "Settings", icon: <SettingsIcon />, to: "/home" },
     {
       label: "Logout",
       icon: <LogoutIcon />,

@@ -163,7 +163,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                 Dashboard
               </Typography> */}
               <Chip
-                label="v1.19"
+                label="v1.2"
                 size="large"
                 sx={{
                   backgroundColor: "#fff",

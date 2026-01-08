@@ -226,6 +226,8 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
 
         {/* Visual: Article image → Feed icon → ksBanner */}
         <Box
+          onClick={() => window.open(safeUrl, "_blank")}
+          className="feed-image-container"
           sx={{
             mb: 1,
             borderRadius: 1,
@@ -234,7 +236,8 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            height: 240
+            height: 240,
+            cursor: "pointer"
           }}
         >
           {extractedImage ? (
@@ -242,6 +245,10 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
               src={extractedImage}
               alt="Article"
               referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = FALLBACK_IMAGE;
+              }}
               style={{
                 maxHeight: "100%",
                 maxWidth: "100%",
@@ -254,6 +261,10 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
               <img
                 src={overrideImage.url}
                 alt="Feed Logo"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = FALLBACK_IMAGE;
+                }}
                 style={{
                   width: "96px",
                   height: "96px",
@@ -269,7 +280,6 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
               />
             )
           ) : (
-
             <img
               src={FALLBACK_IMAGE}
               alt="Fallback"
@@ -283,7 +293,6 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
             />
           )}
         </Box>
-
 
         {/* Description */}
         <Typography variant="body2" sx={{ mb: 1, lineHeight: 1.6 }}>

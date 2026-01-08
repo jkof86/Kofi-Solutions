@@ -182,7 +182,7 @@ export default function NavDrawerGaming() {
 
                 {item === 'Account' ? <ListItemButton sx={{}}
                   component={Link}
-                  to='/gaming/about'
+                  to='/gaming/contact'
                   onClick={() => {
                     console.info("ACCOUNT BUTTON TEST");
                     setIsDrawerOpen(false);
@@ -195,7 +195,7 @@ export default function NavDrawerGaming() {
 
                 {item === 'Settings' ? <ListItemButton sx={{ borderTop: '1px solid black' }}
                   component={Link}
-                  to='/gaming/about'
+                  to='/gaming/contact'
                   onClick={() => {
                     console.info("SETTINGS BUTTON TEST");
                     setIsDrawerOpen(false);

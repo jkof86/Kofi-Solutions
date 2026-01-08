@@ -1,3 +1,7 @@
+/* ------------------------------------------------------------
+   CATEGORY COLORS (C3)
+   ------------------------------------------------------------ */
+
 /* Crypto */
 .icon-crypto {
   fill: #ffb300;
@@ -42,3 +46,216 @@
 .icon-sports {
   fill: #43a047;
 }
+
+/* ------------------------------------------------------------
+   IMAGE CONTAINER HOVER ANIMATION (ACTIVE)
+   ------------------------------------------------------------ */
+
+.feed-image-container {
+  transition: transform 0.25s ease, filter 0.25s ease, opacity 0.25s ease;
+}
+
+.feed-image-container:hover {
+  transform: scale(1.03);
+  filter: brightness(1.08);
+  opacity: 0.97;
+}
+
+
+/* ------------------------------------------------------------
+   DEFAULT HOVER ANIMATION (ACTIVE)
+   ------------------------------------------------------------ */
+
+.icon-crypto,
+.icon-finance,
+.icon-news,
+.icon-altnews,
+.icon-aws,
+.icon-spring,
+.icon-java,
+.icon-react,
+.icon-sports {
+  transition: transform 0.25s ease, filter 0.25s ease, opacity 0.25s ease;
+  cursor: pointer;
+}
+
+.icon-crypto:hover,
+.icon-finance:hover,
+.icon-news:hover,
+.icon-altnews:hover,
+.icon-aws:hover,
+.icon-spring:hover,
+.icon-java:hover,
+.icon-react:hover,
+.icon-sports:hover {
+  transform: scale(1.18) rotate(3deg);
+  opacity: 0.9;
+  filter: brightness(1.25);
+}
+
+
+
+/* ------------------------------------------------------------
+   CATEGORY-SPECIFIC ANIMATIONS (ACTIVE)
+   Each category gets its own motion personality
+   ------------------------------------------------------------ */
+
+/* Crypto → pulse */
+.icon-crypto:hover {
+  animation: crypto-pulse 0.35s ease forwards;
+}
+@keyframes crypto-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1.18); }
+}
+
+/* Finance → slide up */
+.icon-finance:hover {
+  animation: finance-slide 0.25s ease forwards;
+}
+@keyframes finance-slide {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-6px) scale(1.18); }
+}
+
+/* News → subtle rotate */
+.icon-news:hover {
+  animation: news-tilt 0.25s ease forwards;
+}
+@keyframes news-tilt {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-6deg) scale(1.18); }
+}
+
+/* Alternative News → dramatic pop */
+.icon-altnews:hover {
+  animation: altnews-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes altnews-pop {
+  0% { transform: scale(1); }
+  60% { transform: scale(1.35); }
+  100% { transform: scale(1.18); }
+}
+
+/* AWS → bounce */
+.icon-aws:hover {
+  animation: aws-bounce 0.35s ease forwards;
+}
+@keyframes aws-bounce {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(-10px) scale(1.2); }
+  100% { transform: translateY(-4px) scale(1.18); }
+}
+
+/* Spring → gentle grow */
+.icon-spring:hover {
+  animation: spring-grow 0.3s ease forwards;
+}
+@keyframes spring-grow {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.22); }
+}
+
+/* Java → wobble */
+.icon-java:hover {
+  animation: java-wobble 0.35s ease forwards;
+}
+@keyframes java-wobble {
+  0% { transform: rotate(0deg); }
+  30% { transform: rotate(6deg); }
+  60% { transform: rotate(-6deg); }
+  100% { transform: rotate(3deg) scale(1.18); }
+}
+
+/* React → spin */
+.icon-react:hover {
+  animation: react-spin 0.4s ease forwards;
+}
+@keyframes react-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(180deg) scale(1.18); }
+}
+
+/* Sports → jump */
+.icon-sports:hover {
+  animation: sports-jump 0.3s ease forwards;
+}
+@keyframes sports-jump {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-12px) scale(1.22); }
+  100% { transform: translateY(-6px) scale(1.18); }
+}
+
+
+
+/* ------------------------------------------------------------
+   OPTIONAL ANIMATION SETS (COMMENTED OUT)
+   Uncomment ONE block to activate a different global style
+   ------------------------------------------------------------ */
+
+
+/* 
+// OPTION 1 — Glow Effect
+.icon-crypto:hover,
+.icon-finance:hover,
+.icon-news:hover,
+.icon-altnews:hover,
+.icon-aws:hover,
+.icon-spring:hover,
+.icon-java:hover,
+.icon-react:hover,
+.icon-sports:hover {
+  filter: drop-shadow(0 0 8px currentColor);
+}
+*/
+
+
+/* 
+// OPTION 2 — Elastic Bounce
+@keyframes elastic {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.3); }
+  60% { transform: scale(1.15); }
+  80% { transform: scale(1.25); }
+  100% { transform: scale(1.18); }
+}
+.icon-crypto:hover,
+.icon-finance:hover,
+.icon-news:hover,
+.icon-altnews:hover,
+.icon-aws:hover,
+.icon-spring:hover,
+.icon-java:hover,
+.icon-react:hover,
+.icon-sports:hover {
+  animation: elastic 0.45s ease forwards;
+}
+*/
+
+
+/*
+// OPTION 3 — Ripple (Material-style)
+.icon-crypto:hover::after,
+.icon-finance:hover::after,
+.icon-news:hover::after,
+.icon-altnews:hover::after,
+.icon-aws:hover::after,
+.icon-spring:hover::after,
+.icon-java:hover::after,
+.icon-react:hover::after,
+.icon-sports:hover::after {
+  content: "";
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.15;
+  animation: ripple 0.4s ease-out forwards;
+}
+@keyframes ripple {
+  0% { transform: scale(0.2); opacity: 0.3; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+*/

@@ -1,16 +1,35 @@
-import React, { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function FeedIcon({ url, className, size = 96 }) {
   const [svgContent, setSvgContent] = useState(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     if (!url) return;
 
     fetch(url)
-      .then((res) => res.text())
+      .then((res) => {
+        if (!res.ok) throw new Error("SVG failed");
+        return res.text();
+      })
       .then((text) => setSvgContent(text))
-      .catch(() => setSvgContent(null));
+      .catch(() => setFailed(true));
   }, [url]);
+
+  if (failed) {
+    return (
+      <img
+        src={require("../images/bg/ksBanner04.jpeg")}
+        alt="Fallback"
+        style={{
+          width: size,
+          height: size,
+          objectFit: "cover",
+          display: "block"
+        }}
+      />
+    );
+  }
 
   if (!svgContent) return null;
 

@@ -12,8 +12,6 @@ export const FEED_IMAGE_OVERRIDES = {
     icon: "currency_bitcoin",
     url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/currency_bitcoin/default/48px.svg",
     className: "icon-crypto",
-    // M2-B: "materialsymbolssharp/currency_bitcoin"
-    // M2-C: "materialsymbolsoutlined/currency_bitcoin"
   },
   cointelegraph: {
     icon: "bolt",
@@ -48,26 +46,36 @@ export const FEED_IMAGE_OVERRIDES = {
 
   // -------------------- FINANCE --------------------
   cnbc_markets: {
-    icon: "show_chart",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/show_chart/default/48px.svg",
-    className: "icon-finance",
+    icon: null, // not an SVG icon
+    url: "https://fm.cnbc.com/applications/cnbc.com/staticcontent/img/cnbc_logo.gif",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   investing: {
-    icon: "trending_up",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/trending_up/default/48px.svg",
-    className: "icon-finance",
+    // icon: "trending_up",
+    // url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/trending_up/default/48px.svg",
+    // className: "icon-finance",
+    icon: null, // not an SVG icon
+    url: "https://consumersiteimages.trustpilot.net/business-units/570a57060000ff00058b51f8-198x149-1x.jpg",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   yahoo_finance: {
-    icon: "attach_money",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/attach_money/default/48px.svg",
-    className: "icon-finance",
+    icon: null, // not an SVG icon
+    url: "https://images.seeklogo.com/logo-png/61/3/yahoo-finance-horizontal-logo-png_seeklogo-613891.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
 
   // -------------------- NEWS --------------------
   aljazeera_world: {
-    icon: "mosque",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/mosque/default/48px.svg",
-    className: "icon-news",
+    // icon: "mosque",
+    // url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/mosque/default/48px.svg",
+    // className: "icon-news",
+    icon: null, // not an SVG icon
+    url: "https://www.liblogo.com/img-logo/al1049a118-al-jazeera-logo-al-jazeera-to-deliver-bloomberg-news-content-for-expanded-global.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   bbc_world: {
     icon: null, // not an SVG icon
@@ -76,165 +84,196 @@ export const FEED_IMAGE_OVERRIDES = {
     isImage: true    // <-- important flag
   },
   fox_latest: {
-    icon: "nightlife",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/nightlife/default/48px.svg",
-    className: "icon-news",
+    icon: null, // not an SVG icon
+    url: "https://images.seeklogo.com/logo-png/48/3/fox-news-headlines-24-7-logo-png_seeklogo-489986.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   npr_world: {
-    icon: "radio",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/radio/default/48px.svg",
-    className: "icon-news",
+    icon: null, // not an SVG icon
+    url: "https://www.liblogo.com/img-logo/np8320fb2b-npr-logo-find-npr-everywhere-npr.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   nyt_home: {
-    icon: "newspaper",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/newspaper/default/48px.svg",
-    className: "icon-news",
+    icon: null, // not an SVG icon
+    url: "https://static0.anpoimages.com/wordpress/wp-content/uploads/2014/05/nexusae0_NYTimes-Thumb_thumb.png?w=1200&h=675&fit=crop",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
 
   // -------------------- ALTERNATIVE NEWS --------------------
   intercept: {
-    icon: "target",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/target/default/48px.svg",
-    className: "icon-altnews",
+    // icon: "target",
+    // url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/target/default/48px.svg",
+    // className: "icon-altnews",
+    icon: null, // not an SVG icon
+    url: "https://ground.news/_next/image?url=https:%2F%2Fgroundnews.b-cdn.net%2Finterests%2Fbecc1b44e5bcc5638c8b28dd6e12257d2c5c55d9.jpg%3Fwidth%3D96&w=256&q=75",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   propublica: {
-    icon: "account_balance",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/account_balance/default/48px.svg",
-    className: "icon-altnews",
+    icon: null, // not an SVG icon
+    url: "https://www-tc.pbs.org/wgbh/pages/frontline/the-spill/art/h_propublica.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   reason: {
-    icon: "lightbulb",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/lightbulb/default/48px.svg",
-    className: "icon-altnews",
+    icon: null, // not an SVG icon
+    url: "https://3.bp.blogspot.com/-wNMDiISstqM/WdGjtWDANfI/AAAAAAAAJxs/LQ3XwbNuCXQWPbAwbfaUXzcblC9w24ESQCLcBGAs/s320/reasonlogo.jpg",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   atlantic: {
-    icon: "waves",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/waves/default/48px.svg",
-    className: "icon-altnews",
+    icon: null, // not an SVG icon
+    url: "https://thedrilldown.com/wp-content/uploads/2015/05/gai-atlantic-logo.jpg",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   the_hill: {
-    icon: "account_balance_wallet",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/account_balance_wallet/default/48px.svg",
-    className: "icon-altnews",
+    icon: null, // not an SVG icon
+    url: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/The_Hill_(2020-01-15).svg/120px-The_Hill_(2020-01-15).svg.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   axios: {
-    icon: "article",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/article/default/48px.svg",
-    className: "icon-altnews",
+    icon: null, // not an SVG icon
+    url: "https://static0.anpoimages.com/wordpress/wp-content/uploads/2014/05/nexusae0_NYTimes-Thumb_thumb.png?w=1200&h=675&fit=crop",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   vice_world: {
-    icon: "movie",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/movie/default/48px.svg",
-    className: "icon-altnews",
+    icon: null, // not an SVG icon
+    url: "https://1ststepaccounting.com/wp-content/uploads/2022/03/vice-logo-white.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
 
   // -------------------- AWS --------------------
   aws_news: {
-    icon: "cloud",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/cloud/default/48px.svg",
-    className: "icon-aws",
+    icon: null, // not an SVG icon
+    url: "https://www.pngall.com/wp-content/uploads/13/AWS-Logo-PNG-File-180x180.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   aws_official_blog: {
-    icon: "security",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/security/default/48px.svg",
-    className: "icon-aws",
+    icon: null, // not an SVG icon
+    url: "https://www.pngall.com/wp-content/uploads/13/AWS-Logo-PNG-File-180x180.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
 
   // -------------------- SPRING --------------------
   spring_blog: {
-    icon: "eco",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/eco/default/48px.svg",
-    className: "icon-spring",
+    icon: null, // not an SVG icon
+    url: "https://www.fisver.eu/img/spring-logo.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   spring_cloud_blog: {
-    icon: "eco",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/eco/default/48px.svg",
-    className: "icon-spring",
+    icon: null, // not an SVG icon
+    url: "https://www.fisver.eu/img/spring-logo.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   spring_releases: {
-    icon: "eco",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/eco/default/48px.svg",
-    className: "icon-spring",
+    icon: null, // not an SVG icon
+    url: "https://www.fisver.eu/img/spring-logo.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
-  spring_security_blog: {
-    icon: "eco",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/eco/default/48px.svg",
-    className: "icon-spring",
-  },
+  icon: null, // not an SVG icon
+    url: "https://www.fisver.eu/img/spring-logo.png",
+    className: null, // no color class for PNG
+    isImage: true,    // <-- important flag
 
   // -------------------- JAVA --------------------
   baeldung: {
-    icon: "menu_book",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/menu_book/default/48px.svg",
-    className: "icon-java",
+    icon: null, // not an SVG icon
+    url: "https://images.seeklogo.com/logo-png/44/3/java-logo-png_seeklogo-449175.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   dzone_java: {
-    icon: "extension",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/extension/default/48px.svg",
-    className: "icon-java",
+    icon: null, // not an SVG icon
+    url: "https://images.seeklogo.com/logo-png/44/3/java-logo-png_seeklogo-449175.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   infoq_java: {
-    icon: "psychology",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/psychology/default/48px.svg",
-    className: "icon-java",
+    icon: null, // not an SVG icon
+    url: "https://images.seeklogo.com/logo-png/44/3/java-logo-png_seeklogo-449175.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   jetbrains_java: {
-    icon: "science",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/science/default/48px.svg",
-    className: "icon-java",
+    icon: null, // not an SVG icon
+    url: "https://images.seeklogo.com/logo-png/44/3/java-logo-png_seeklogo-449175.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
 
   // -------------------- REACT --------------------
   devto_react: {
-    icon: "blur_circular",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/blur_circular/default/48px.svg",
-    className: "icon-react",
+    icon: null, // not an SVG icon
+    url: "https://d2fltix0v2e0sb.cloudfront.net/dev-badge.svg",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   javascript_weekly: {
-    icon: "inventory_2",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/inventory_2/default/48px.svg",
-    className: "icon-react",
+    icon: null, // not an SVG icon
+    url: "https://reactjs.org/logo-og.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   logrocket_react: {
-    icon: "rocket_launch",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/rocket_launch/default/48px.svg",
-    className: "icon-react",
+    icon: null, // not an SVG icon
+    url: "https://reactjs.org/logo-og.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   overreacted: {
-    icon: "chat_bubble",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/chat_bubble/default/48px.svg",
-    className: "icon-react",
+    icon: null, // not an SVG icon
+    url: "https://reactjs.org/logo-og.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   react_blog: {
-    icon: "blur_circular",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/blur_circular/default/48px.svg",
-    className: "icon-react",
+    icon: null, // not an SVG icon
+    url: "https://reactjs.org/logo-og.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
 
   // -------------------- SPORTS --------------------
   bbc_sport: {
-    icon: "emoji_events",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/emoji_events/default/48px.svg",
-    className: "icon-sports",
+    icon: null, // not an SVG icon
+    url: "https://static.files.bbci.co.uk/core/website/assets/static/sport/bbc-sport-logo.ebbfcde41a.webp",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   bleacher_report: {
-    icon: "newspaper",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/newspaper/default/48px.svg",
-    className: "icon-sports",
+    icon: null, // not an SVG icon
+    url: "",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   espn: {
-    icon: "sports_football",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/sports_football/default/48px.svg",
-    className: "icon-sports",
+    icon: null, // not an SVG icon
+    url: "https://support.espn.com/hc/theming_assets/01J42FAMAC7R7PTPTXDZQ8ZXTE",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   sky_sports: {
-    icon: "sports_soccer",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/sports_soccer/default/48px.svg",
-    className: "icon-sports",
+    icon: null, // not an SVG icon
+    url: "https://images.seeklogo.com/logo-png/12/3/sky-sports-logo-png_seeklogo-127721.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
   yahoo_sports: {
-    icon: "military_medal",
-    url: "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/military_medal/default/48px.svg",
-    className: "icon-sports",
+    icon: null, // not an SVG icon
+    url: "https://images.seeklogo.com/logo-png/15/3/yahoo-sports-logo-png_seeklogo-154862.png",
+    className: null, // no color class for PNG
+    isImage: true    // <-- important flag
   },
 };
