@@ -187,9 +187,11 @@ export default function MarketChart({ symbol }) {
       {/* Chart */}
       <ResponsiveContainer width="100%" height={180}>
         <LineChart
+          key={range}   // full chart remount for full animation
           data={data}
           margin={{ top: 10, right: 20, bottom: 20, left: 10 }}
         >
+
           <CartesianGrid strokeDasharray="3 3" />
 
           <XAxis
@@ -215,13 +217,25 @@ export default function MarketChart({ symbol }) {
           />
 
           <Line
+            key={range}
             type="monotone"
             dataKey="price"
             stroke="#1976d2"
+            fill="url(#priceGradient)"
             dot={false}
             strokeWidth={2}
-            isAnimationActive={false}
+            isAnimationActive={true}
+            animationDuration={600}
+            animationEasing="ease-in-out"
           />
+
+          <defs>
+            <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1976d2" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="#1976d2" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+
         </LineChart>
       </ResponsiveContainer>
     </Box>
