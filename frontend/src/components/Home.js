@@ -29,6 +29,7 @@ import {
   Container,
   Typography,
   Box,
+  Chip
 } from "@mui/material";
 
 import RssFeedIcon from "@mui/icons-material/RssFeed";
@@ -87,8 +88,8 @@ export default function Home() {
         <Container maxWidth="xl" sx={{ mt: 2, mb: 6 }}>
 
           {/* ----------------------------------------------------
-             Banner — top section with title + icon
-          ----------------------------------------------------- */}
+     Banner — top section with title + icon
+----------------------------------------------------- */}
           <Box
             sx={{
               display: "flex",
@@ -104,9 +105,23 @@ export default function Home() {
             }}
           >
             <RssFeedIcon fontSize="large" />
+
             <Typography variant="h5" sx={{ fontWeight: 600 }}>
-              News Feeds (RSS)
+              News Feed (RSS)
             </Typography>
+
+            {/* Spacer pushes chip to the right */}
+            <Box sx={{ flexGrow: 1 }} />
+
+            <Chip
+              label="v1.2.0"
+              size="large"
+              sx={{
+                backgroundColor: "#fff",
+                color: "#1976d2",
+                fontWeight: 600
+              }}
+            />
           </Box>
 
           {/* ----------------------------------------------------
@@ -146,7 +161,7 @@ export default function Home() {
                 flexDirection: "column",
                 overflow: "hidden",
               }}
-            > 
+            >
               {/* Mini Sparkline (global now) */}
               <MiniSparkline />
 

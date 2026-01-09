@@ -4,15 +4,12 @@ import {
   Box,
   Typography,
   Button,
-  Chip,
   Stack,
   Drawer,
-
   Tooltip
 } from "@mui/material";
 
 import {
-  Home as HomeIcon,
   ContactSupport as ContactSupportIcon,
   Menu as MenuIcon
 } from "@mui/icons-material";
@@ -22,83 +19,56 @@ import FeedHealthDashboard from "../newsfeed/FeedHealthDashboard";
 import NavDrawerMain from "../navigation/NavDrawerMain";
 import TickerBar from "./TickerBar";
 
-
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 
 import { googleLogout } from "@react-oauth/google";
+import logo from "../../images/bg/ksBanner06.jpeg";
 
 export default function HeaderShell({ onHeightChange, activeCategory }) {
-
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [strictMode, setStrictMode] = useState(true);
-
 
   const navigate = useNavigate();
-
-  // THIS ref measures the ENTIRE header (AppBar + Banner + Ticker)
   const ref = useRef(null);
 
+  // Measure header height
   useEffect(() => {
     if (!ref.current) return;
-
-    const observer = new ResizeObserver(([entry]) => {
-      onHeightChange(entry.contentRect.height);
-    });
-
+    const observer = new ResizeObserver(([entry]) =>
+      onHeightChange(entry.contentRect.height)
+    );
     observer.observe(ref.current);
     return () => observer.disconnect();
   }, [onHeightChange]);
 
-  //NavDrawerMain.js
-
-  const handleClick = () => {
-    alert("Emailing webmaster... ");
-    sendEmail();
-  };
-
-
-  // ------------------------------------------------------------
-  // Login Validation
-  // ------------------------------------------------------------
-
-  const goToRegister = () => {
-    //reload page to clear cache
-    navigate("/register");
-    // window.location.reload()
-  }
-  const goToLogin = () => {
-    //reload page to clear cache
-    navigate("/login");
-    // window.location.reload();
-  }
+  const handleClick = () => sendEmail();
+  const goToRegister = () => navigate("/register");
+  const goToLogin = () => navigate("/login");
 
   function handleRegister() {
-    if (localStorage.getItem('isLoggedIn'))
-      alert('Please logout before registering a new account');
-    else
-      goToRegister();
+    if (localStorage.getItem("isLoggedIn"))
+      alert("Please logout before registering a new account");
+    else goToRegister();
   }
 
   function handleLogin() {
-    if (localStorage.getItem('isLoggedIn')) {
-      alert('You are currently logged in');
-    }
-    else
-      goToLogin();
+    if (localStorage.getItem("isLoggedIn"))
+      alert("You are currently logged in");
+    else goToLogin();
   }
 
   function handleLogout() {
-    if (!localStorage.getItem('isLoggedIn'))
-      alert('You are currently logged out');
+    if (!localStorage.getItem("isLoggedIn"))
+      alert("You are currently logged out");
     else {
-      googleLogout(); // disables auto-login
+      googleLogout();
       alert(`Logged out successfully`);
-      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem("isLoggedIn");
       goToLogin();
     }
   }
+
   function sendEmail() {
     const recipient = "admin@kofisolutions.com";
     const subject = encodeURIComponent("Attention: ");
@@ -108,41 +78,113 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
 
   return (
     <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000 }}>
-      {/* Wrapper that is measured */}
-      <Box ref={ref}>
-
+      <Box ref={ref} sx={{ p: 0, m: 0 }}>
         <NavDrawerMain
           isDrawerOpen={isDrawerOpen}
           setIsDrawerOpen={setIsDrawerOpen}
         />
 
-        {/* NAVBAR */}
-        <AppBar position="static" color="default" elevation={1}>
-          <Toolbar sx={{ justifyContent: "space-between" }}>
-            <Typography variant="h6">
-              <Tooltip title="Compose Email">
-                <Chip
-                  label="Contact"
-                  variant="filled"
-                  color="primary"
-                  onClick={handleClick}
-                />
-              </Tooltip>
-            </Typography>
+        {/* ----------------------------------------------------
+            TOP NAVBAR — CLEAN + PROFESSIONAL
+        ---------------------------------------------------- */}
+        <AppBar position="static" color="default" elevation={1} sx={{ p: 0 }}>
+          <Toolbar
+            disableGutters
+            sx={{
+              px: 0,
+              minHeight: 72,
+              backgroundColor: "#f9f9f9",
+              display: "flex",
+              justifyContent: "space-between"
+            }}
+          >
+            {/* LEFT: Logo */}
+            <Box sx={{ display: "flex", alignItems: "center", pl: 0 }}>
+              <img
+                src={logo}
+                alt="Kofi Solutions"
+                style={{ height: 80, objectFit: "cover", display: "block" }}
+              />
+            </Box>
 
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Button color="inherit" component={Link} to="/home">HOME</Button>
-              <Button color="inherit" onClick={handleRegister}>REGISTER</Button>
-              <Button color="inherit" onClick={handleLogin}>LOGIN</Button>
-              <Button color="inherit" onClick={handleLogout}>LOGOUT</Button>
+            {/* RIGHT: Nav + Contact */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 3,
+                pr: 3,
+                height: 80
+              }}
+            >
+              {/* Nav items */}
+              {["Home", "Register", "Login", "Logout"].map((label) => (
+                <Box
+                  key={label}
+                  onClick={() => {
+                    if (label === "Home") navigate("/home");
+                    else if (label === "Register") handleRegister();
+                    else if (label === "Login") handleLogin();
+                    else if (label === "Logout") handleLogout();
+                  }}
+                  sx={{
+                    cursor: "pointer",
+                    fontSize: "0.95rem",
+                    fontWeight: 500,
+                    color: "#1e3c72",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    padding: "6px 4px",
+                    display: "flex",
+                    alignItems: "center",
+                    transition: "0.2s ease",
+                    "&:hover": {
+                      color: "#3b78e2",
+                      borderBottom: "2px solid #3b78e2"
+                    }
+                  }}
+                >
+                  {label}
+                </Box>
+              ))}
+
+              {/* Contact pill button */}
+              <Tooltip title="Compose Email">
+                <Box
+                  onClick={handleClick}
+                  sx={{
+                    cursor: "pointer",
+                    backgroundColor: "#3b78e2",
+                    color: "#fff",
+                    px: 2.5,
+                    py: 1,
+                    borderRadius: "20px",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    display: "flex",
+                    alignItems: "center",
+                    transition: "0.25s ease",
+                    "&:hover": {
+                      backgroundColor: "#1e3c72"
+                    }
+                  }}
+                >
+                  Contact
+                </Box>
+              </Tooltip>
             </Box>
           </Toolbar>
+
         </AppBar>
 
-        {/* BANNER */}
+        {/* ----------------------------------------------------
+            BANNER
+        ---------------------------------------------------- */}
         <Box
           sx={{
-            background: "linear-gradient(to right, #1e3c72, #2a5298)",
+            background: "linear-gradient(to right, #1e3c72, #3b78e2)",
             color: "#fff",
             px: 3,
             py: 2,
@@ -157,36 +199,15 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
               sx={{ cursor: "pointer" }}
               onClick={() => setIsDrawerOpen(true)}
             />
-
-            <Box>
-              {/* <Typography variant="h3" sx={{ fontWeight: 600 }}>
-                Dashboard
-              </Typography> */}
-              <Chip
-                label="v1.2"
-                size="large"
-                sx={{
-                  backgroundColor: "#fff",
-                  color: "#1976d2",
-                  fontWeight: 600
-                }}
-              />
-            </Box>
           </Stack>
 
-          {/* HEALTH DRAWER BUTTON */}
           <Tooltip title="Feed & Market Health">
             <HealthAndSafetyIcon
-              sx={{
-                cursor: "pointer",
-                color: "#ffffff",
-                position: "relative"
-              }}
+              sx={{ cursor: "pointer", color: "#ffffff" }}
               onClick={() => setIsHealthOpen(true)}
             />
           </Tooltip>
 
-          {/* SYSTEM HEALTH DRAWER */}
           <Drawer
             anchor="right"
             open={isHealthOpen}
@@ -208,9 +229,11 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
           </Drawer>
         </Box>
 
-        {/* TickerBar */}
+        {/* ----------------------------------------------------
+            TICKER BAR
+        ---------------------------------------------------- */}
         <TickerBar activeCategory={activeCategory} />
       </Box>
     </Box>
-  )
+  );
 }
