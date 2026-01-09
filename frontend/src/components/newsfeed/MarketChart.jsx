@@ -34,7 +34,7 @@ export default function MarketChart({ symbol }) {
   const [data, setData] = useState([]);
   const [price, setPrice] = useState(null);
   const [change24h, setChange24h] = useState(null);
-  const [range, setRange] = useState("1W");
+  const [range, setRange] = useState("1D");
 
   const normalize = (s) =>
     String(s || "").toLowerCase().replace(/\./g, "-");
