@@ -1,12 +1,18 @@
 // ------------------------------------------------------------
-// fetchYahooEtf.js — v1.205 (Yahoo‑Corrected + Ticker‑Safe)
+// fetchYahooEtf.js — v1.400 (Range-Aware Yahoo ETF Fetcher)
 // ------------------------------------------------------------
 //
-// Fixes:
-//   ✓ Uses latestClose from indicators.quote[0].close
-//   ✓ Computes change_24h manually
-//   ✓ Handles missing data safely
-//   ✓ Fully compatible with handleMarket + handleHealth
+// Supports:
+//   ✓ SPY, VTI, VOO
+//   ✓ IBIT, ARKG, BLOK
+//   ✓ Any Yahoo ETF ticker
+//
+// Features:
+//   ✓ Range-aware Yahoo queries (1D / 1W / 1M / 1Y)
+//   ✓ Full history reconstruction
+//   ✓ Numeric-safe parsing
+//   ✓ Caching
+//   ✓ Minimal branching
 //
 // ------------------------------------------------------------
 
@@ -14,28 +20,41 @@ const axios = require("axios");
 const { ETF_MAP } = require("../config/etfMap.js");
 const { getCache, setCache } = require("./marketCache.js");
 
+const RANGE_MAP = {
+  "1D": { range: "1d", interval: "5m" },
+  "1W": { range: "5d", interval: "30m" },
+  "1M": { range: "1mo", interval: "1d" },
+  "1Y": { range: "1y", interval: "1wk" }
+};
+
 async function fetchYahooEtf(symbol, opts = {}) {
-  const cacheKey = `etf_${symbol}`;
+  console.log('[fetchYahooStock] opts.range:', opts.range, 'opts.interval:', opts.interval);
+
+
+  const lower = String(symbol).trim().toLowerCase();
+  const cacheKey = `etf_${lower}_${opts.range || "1W"}`;
+
+  // ------------------------------------------------------------
+  // 1. Cache check
+  // ------------------------------------------------------------
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
-  const yahooSymbol = ETF_MAP[symbol];
-  if (!yahooSymbol) {
-    return {
-      type: "etf",
-      symbol,
-      price: null,
-      change_24h: null,
-      history: [],
-      source: "yahoo",
-      timestamp: Date.now(),
-      debug: opts.debug ? { error: "Unknown ETF symbol" } : null,
-      error: `Unknown ETF symbol: ${symbol}`
-    };
-  }
+  // ------------------------------------------------------------
+  // 2. Resolve Yahoo symbol
+  // ------------------------------------------------------------
+  const yahooSymbol = ETF_MAP[lower] || lower.toUpperCase();
+
+  // ------------------------------------------------------------
+  // 3. Yahoo interval (range-aware)
+  // ------------------------------------------------------------
+  const uiRange = opts.range || "1W";
+  const mapped = RANGE_MAP[uiRange] || RANGE_MAP["1W"];
+  const { range, interval } = mapped;
+
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?range=${range}&interval=${interval}`;
 
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
     const res = await axios.get(url, {
       timeout: opts.timeout || 5000,
       headers: { "User-Agent": "Mozilla/5.0" }
@@ -43,85 +62,84 @@ async function fetchYahooEtf(symbol, opts = {}) {
 
     const result = res.data?.chart?.result?.[0];
     if (!result) {
-      return {
+      const payload = {
         type: "etf",
-        symbol,
+        symbol: lower,
         price: null,
         change_24h: null,
         history: [],
         source: "yahoo",
         timestamp: Date.now(),
-        debug: opts.debug ? { raw: res.data } : null,
-        error: "Invalid Yahoo Finance response"
+        error: "Invalid Yahoo Finance response",
+        debug: opts.debug ? res.data : null
       };
+      setCache(cacheKey, payload);
+      return payload;
     }
 
     const meta = result.meta;
     const quote = result.indicators?.quote?.[0] || {};
     const closes = quote.close || [];
+    const timestamps = result.timestamp || [];
 
     // ------------------------------------------------------------
-    // Extract latest valid close price
+    // 4. Latest close
     // ------------------------------------------------------------
-    const latestClose = [...closes].reverse().find((p) => typeof p === "number") ?? null;
+    const latestClose =
+      [...closes].reverse().find((p) => typeof p === "number") ?? null;
 
-    // Previous close from meta
+    // ------------------------------------------------------------
+    // 5. Previous close → % change
+    // ------------------------------------------------------------
     const prevClose = meta?.chartPreviousClose ?? null;
 
-    // Compute change %
     let change_24h = null;
     if (latestClose != null && prevClose != null && prevClose !== 0) {
       change_24h = ((latestClose - prevClose) / prevClose) * 100;
     }
 
     // ------------------------------------------------------------
-    // Build history (optional)
+    // 6. Build history array
     // ------------------------------------------------------------
-    let history = [];
-    try {
-      const timestamps = result.timestamp || [];
-      if (Array.isArray(timestamps) && Array.isArray(closes)) {
-        history = timestamps
-          .map((t, i) => ({
-            time: t ? new Date(t * 1000).toISOString() : null,
-            price: typeof closes[i] === "number" ? closes[i] : null
-          }))
-          .filter((p) => p.time && p.price != null);
-      }
-    } catch (err) {
-      console.error("[fetchYahooEtf][HISTORY_ERROR]", symbol, err);
-      history = [];
-    }
+    const history = timestamps
+      .map((t, i) => ({
+        time: t ? new Date(t * 1000).toISOString() : null,
+        price: typeof closes[i] === "number" ? closes[i] : null
+      }))
+      .filter((p) => p.time && p.price != null);
 
+    // ------------------------------------------------------------
+    // 7. Final payload
+    // ------------------------------------------------------------
     const data = {
       type: "etf",
-      symbol,
-      price: latestClose,
-      change_24h,
+      symbol: lower,
+      price: latestClose != null ? Number(latestClose) : null,
+      change_24h: change_24h != null ? Number(change_24h) : null,
       history,
       source: "yahoo",
       timestamp: Date.now(),
-      debug: opts.debug ? { meta, quote, closes } : null,
-      error: null
+      error: null,
+      debug: opts.debug ? { meta, quote, closes } : null
     };
 
     setCache(cacheKey, data);
     return data;
 
   } catch (err) {
-    console.error("[fetchYahooEtf][ERROR]", symbol, err.code || err.message);
-
-    return {
+    const payload = {
       type: "etf",
-      symbol,
+      symbol: lower,
       price: null,
       change_24h: null,
       history: [],
       source: "yahoo",
       timestamp: Date.now(),
-      debug: opts.debug ? { error: String(err) } : null,
-      error: String(err)
+      error: String(err.message || err),
+      debug: opts.debug ? { error: String(err) } : null
     };
+    setCache(cacheKey, payload);
+    return payload;
   }
 }
 

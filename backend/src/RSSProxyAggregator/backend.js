@@ -1,20 +1,14 @@
 // ------------------------------------------------------------
-// backend.js — v1.205 (Hardened Routing + Explicit Debug Isolation)
+// backend.js — v1.206 (Hardened Routing + Range-Aware Market)
 // ------------------------------------------------------------
 //
-// Goals of v1.205:
+// Goals of v1.206:
 //   ✓ Debug routing is fully isolated and cannot hijack feed/market
 //   ✓ Health mode ignores stray debug params unless explicitly allowed
 //   ✓ Mode routing is explicit, ordered, and crash‑proof
 //   ✓ All handlers return standardized jsonResponse()
 //   ✓ Bundle debug preserved for AWS Lambda cold starts
-//
-// This router is the single entrypoint for:
-//   • Feed requests
-//   • Market requests
-//   • Market-all aggregation
-//   • System health
-//   • Debug utilities
+//   ✓ Range is forwarded to handleMarket() via opts.range
 //
 // ------------------------------------------------------------
 
@@ -74,7 +68,10 @@ function handleDebug(debug) {
       return jsonResponse(200, { status: "ok", debug: "market" });
 
     case "debug_env":
-      return jsonResponse(200, { status: "ok", env: "AWS_LAMBDA_FUNCTION_VERSION: $LATEST, AWS_EXECUTION_ENV: AWS_Lambda_nodejs24.x" });
+      return jsonResponse(200, {
+        status: "ok",
+        env: "AWS_LAMBDA_FUNCTION_VERSION: $LATEST, AWS_EXECUTION_ENV: AWS_Lambda_nodejs24.x"
+      });
 
     default:
       return jsonResponse(200, {
@@ -98,6 +95,10 @@ exports.handler = async (event) => {
     const debug = query.debug || null;
     const test = query.test || null;
     const force = query.force || null;
+    const range = query.range || null;
+
+    const opts = { test, debug, force, range };
+    console.log("[Router] opts:", opts);
 
     // ------------------------------------------------------------
     // OPTIONS preflight (CORS)
@@ -176,7 +177,8 @@ exports.handler = async (event) => {
         });
       }
 
-      return await handleMarket(symbol, { test, debug, force });
+      // Forward range into handleMarket via opts
+      return await handleMarket(symbol, opts);
     }
 
     // ------------------------------------------------------------
@@ -192,7 +194,7 @@ exports.handler = async (event) => {
     // MARKET_ALL MODE
     // ------------------------------------------------------------
     if (mode === "market_all") {
-      return await handleMarketAll({ test, debug, force });
+      return await handleMarketAll({ test, debug, force, range });
     }
 
     // ------------------------------------------------------------

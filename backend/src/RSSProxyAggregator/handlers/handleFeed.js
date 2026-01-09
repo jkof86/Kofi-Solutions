@@ -26,7 +26,9 @@
 
 const Parser = require("rss-parser");
 const axios = require("axios");
+const { normalizeItems } = require("../utils/normalize.js");
 const { htmlFallback } = require("../utils/htmlFallback.js");
+
 
 const parser = new Parser();
 
@@ -97,17 +99,21 @@ async function handleFeed(feedConfig, opts = {}) {
         const feedData = await parser.parseURL(url);
         const items = Array.isArray(feedData.items) ? feedData.items : [];
 
+        const normalized = opts.raw ? items : normalizeItems(items, id);
+
         return {
           id,
           status: "ok",
           fallback: false,
-          count: items.length,
-          items,
+          count: normalized.length,
+          items: normalized,
           type: "rss",
           ok: true,
           error: null,
           debug: opts.debug ? { head } : null
         };
+
+
       } catch (rssErr) {
         console.warn("[handleFeed][RSS_PARSE_FAIL]", id, rssErr.message);
 
@@ -149,21 +155,24 @@ async function handleFeed(feedConfig, opts = {}) {
       const raw = res.data;
       const items =
         Array.isArray(raw?.data) ? raw.data :
-        Array.isArray(raw?.items) ? raw.items :
-        Array.isArray(raw) ? raw :
-        [];
+          Array.isArray(raw?.items) ? raw.items :
+            Array.isArray(raw) ? raw :
+              [];
+
+      const normalized = opts.raw ? items : normalizeItems(items, id);
 
       return {
         id,
         status: "ok",
         fallback: false,
-        count: items.length,
-        items,
+        count: normalized.length,
+        items: normalized,
         type: "json",
         ok: true,
         error: null,
         debug: opts.debug ? { head, raw } : null
       };
+
     }
 
     // ------------------------------------------------------------

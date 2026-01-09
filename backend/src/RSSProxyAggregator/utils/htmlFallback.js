@@ -1,29 +1,38 @@
 // ------------------------------------------------------------
-// htmlFallback.js — v2.1 (Normalized + Debug + Safe)
+// htmlFallback.js — v2.2 (Normalized + Image Extraction + Safe HTML)
 // ------------------------------------------------------------
 //
-// Standardized return shape:
+// Purpose:
+//   Provide a resilient HTML scraping fallback when RSS/JSON parsing fails.
+//   Extracts title, URL, description, and image from common article layouts.
 //
+// Standardized return shape:
 //   {
 //     status: "fallback",
 //     fallback: true,
 //     count: Number,
-//     items: [ { title, link, description, source } ],
+//     items: [ normalizedItem, ... ],
 //     debug: { ... } | null
 //   }
 //
-// Improvements in v2.1:
-//   • Always returns normalized object (never raw array)
-//   • Added debug passthrough
-//   • Hardened selectors + URL resolution
-//   • Safe guards for malformed HTML
-//   • Fully compatible with handleFeed v1.190
+// Improvements in v2.2:
+//   ✓ Normalizes ALL fallback items using normalizeItem()
+//   ✓ Extracts <img> tags from article blocks
+//   ✓ Hardened selectors for modern news layouts
+//   ✓ Safe URL resolution for relative links
+//   ✓ Debug passthrough for handleFeed debug mode
+//   ✓ Fully compatible with normalize.js v1.200
+//   ✓ Fully compatible with handleFeed v1.208
 //
 // ------------------------------------------------------------
 
 const cheerio = require("cheerio");
 const axios = require("axios");
+const { normalizeItem } = require("./normalize.js");
 
+// ------------------------------------------------------------
+// Resolve relative URLs safely
+// ------------------------------------------------------------
 function resolveUrl(base, href) {
   try {
     return new URL(href, base).href;
@@ -32,10 +41,25 @@ function resolveUrl(base, href) {
   }
 }
 
-async function htmlFallback(url, label, opts = {}) {
+// ------------------------------------------------------------
+// Extract first <img> from an element
+// ------------------------------------------------------------
+function extractImageFromEl($, el) {
+  const img = $(el).find("img").first().attr("src");
+  if (!img) return null;
+  return img.startsWith("http") ? img : null;
+}
+
+// ------------------------------------------------------------
+// HTML Fallback Scraper
+// ------------------------------------------------------------
+async function htmlFallback(url, label = "", opts = {}) {
   const debug = opts.debug ? {} : null;
 
   try {
+    // --------------------------------------------------------
+    // Fetch HTML
+    // --------------------------------------------------------
     const res = await axios.get(url, { timeout: 5000 });
     const html = res.data;
 
@@ -44,6 +68,9 @@ async function htmlFallback(url, label, opts = {}) {
     const $ = cheerio.load(html);
     const items = [];
 
+    // --------------------------------------------------------
+    // Target common article containers
+    // --------------------------------------------------------
     const selectors = [
       "article",
       ".post",
@@ -56,22 +83,45 @@ async function htmlFallback(url, label, opts = {}) {
     ];
 
     $(selectors.join(",")).each((i, el) => {
-      const title = $(el).find("h1, h2, h3, a").first().text().trim();
+      // Title
+      const title =
+        $(el).find("h1, h2, h3, a").first().text().trim() ||
+        $(el).find("header").text().trim();
+
+      // URL
       const href = $(el).find("a").first().attr("href");
-      const description = $(el).find("p").first().text().trim() || "";
+
+      // Description
+      const description =
+        $(el).find("p").first().text().trim() ||
+        $(el).text().trim().slice(0, 200);
+
+      // Image
+      const image = extractImageFromEl($, el);
 
       if (!title || !href) return;
 
-      items.push({
-        title,
-        link: resolveUrl(url, href),
-        description,
-        source: label
-      });
+      // ------------------------------------------------------
+      // Normalize using normalizeItem() for consistent shape
+      // ------------------------------------------------------
+      const normalized = normalizeItem(
+        {
+          title,
+          link: resolveUrl(url, href),
+          description,
+          enclosure: image ? { url: image } : null
+        },
+        label
+      );
+
+      items.push(normalized);
     });
 
     if (debug) debug.itemCount = items.length;
 
+    // --------------------------------------------------------
+    // Final normalized fallback response
+    // --------------------------------------------------------
     return {
       status: "fallback",
       fallback: true,

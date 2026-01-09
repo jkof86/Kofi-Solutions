@@ -1,16 +1,36 @@
 // ------------------------------------------------------------
-// feedsHelpers.js — v1.180 (Category + Lookup Utilities)
+// feedsHelpers.js — v1.200 (Hardened + Normalized + Safe)
 // ------------------------------------------------------------
 //
-// Utilities for working with FEEDS:
+// Purpose:
+//   Provide safe, AWS‑friendly utilities for working with FEEDS.
+//   These helpers are used across the backend (handleFeed,
+//   handleHealth, category routing, etc.)
+//
+// Exports:
 //   • getFeedsForCategory(categoryId)
 //   • getAllCategories()
 //   • getFeedMetadata(feedId)
 //
-// Fully AWS-safe, pure functions, no side effects.
+// Improvements in v1.200:
+//   ✓ Hardened against malformed FEEDS entries
+//   ✓ Normalizes category + feedId lookups
+//   ✓ Safe fallback behavior (never throws)
+//   ✓ Fully compatible with handleFeed.js v1.208
+//   ✓ Pure functions — no mutation, no side effects
+//
 // ------------------------------------------------------------
 
 const { FEEDS } = require("./feedsMap.js");
+
+// ------------------------------------------------------------
+// normalizeKey(str)
+// ------------------------------------------------------------
+// Ensures consistent lowercase lookup for feed IDs + categories.
+// ------------------------------------------------------------
+function normalizeKey(str) {
+  return String(str || "").trim().toLowerCase();
+}
 
 // ------------------------------------------------------------
 // getFeedsForCategory(categoryId)
@@ -21,11 +41,12 @@ const { FEEDS } = require("./feedsMap.js");
 function getFeedsForCategory(categoryId) {
   if (!categoryId || typeof categoryId !== "string") return [];
 
-  const lower = categoryId.trim().toLowerCase();
+  const target = normalizeKey(categoryId);
 
-  return Object.values(FEEDS).filter(
-    (feed) => feed.category.toLowerCase() === lower
-  );
+  return Object.values(FEEDS).filter((feed) => {
+    const cat = normalizeKey(feed?.category);
+    return cat === target;
+  });
 }
 
 // ------------------------------------------------------------
@@ -38,9 +59,8 @@ function getAllCategories() {
   const categories = new Set();
 
   for (const feed of Object.values(FEEDS)) {
-    if (feed.category) {
-      categories.add(feed.category.toLowerCase());
-    }
+    const cat = normalizeKey(feed?.category);
+    if (cat) categories.add(cat);
   }
 
   return Array.from(categories).sort();
@@ -55,8 +75,8 @@ function getAllCategories() {
 function getFeedMetadata(feedId) {
   if (!feedId || typeof feedId !== "string") return null;
 
-  const lower = feedId.trim().toLowerCase();
-  return FEEDS[lower] || null;
+  const key = normalizeKey(feedId);
+  return FEEDS[key] || null;
 }
 
 module.exports = {

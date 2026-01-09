@@ -1,5 +1,10 @@
 // ------------------------------------------------------------
 // marketSymbols.js — v1.205 (Validated + Map‑Aligned)
+// IMPORTANT:
+// Do NOT use MARKET_SYMBOLS inside handleHealth.js.
+// It will cause 70+ Yahoo calls → Lambda timeout → 503 errors.
+// handleHealth must use a curated list instead.
+
 // ------------------------------------------------------------
 
 const MARKET_SYMBOLS = [
