@@ -101,6 +101,64 @@ async function handleFeed(feedConfig, opts = {}) {
 
         const normalized = opts.raw ? items : normalizeItems(items, id);
 
+        // ------------------------------------------------------------
+        // ARTICLE METADATA ENRICHMENT (Images + Description + More)
+        // ------------------------------------------------------------
+        if (!opts.raw) {
+          const getExtractor = require("../extractors");
+
+          for (const item of normalized) {
+            const needsImage = !item.image;
+            const needsDescription = !item.description;
+
+            // If nothing is missing, skip
+            if (!needsImage && !needsDescription) continue;
+
+            // Per-item safety: never attempt enrichment more than once
+            let attempted = false;
+
+            if (item.url && (needsImage || needsDescription)) {
+              try {
+                if (attempted) continue;
+                attempted = true;
+
+                const html = await axios
+                  .get(item.url, { timeout: 3000 })
+                  .then((r) => r.data);
+
+                const extractor = getExtractor(item.url);
+                const meta = await extractor(html, item.url);
+
+                // If extractor returned nothing, stop — do NOT retry
+                if (!meta || typeof meta !== "object") {
+                  console.warn("[extractor][EMPTY_META]", id, item.url);
+                  continue;
+                }
+
+                // Fill missing image
+                if (needsImage && meta.image) {
+                  item.image = meta.image;
+                }
+
+                // Fill missing description
+                if (needsDescription && meta.description) {
+                  item.description = meta.description;
+                }
+
+                // Store extra metadata for future use
+                item.raw.articleMeta = {
+                  author: meta.author || null,
+                  published: meta.published || null,
+                  tags: Array.isArray(meta.tags) ? meta.tags : []
+                };
+
+              } catch (err) {
+                console.warn("[extractor][FAIL]", id, item.url, err.message);
+              }
+            }
+          }
+        }
+
         return {
           id,
           status: "ok",
@@ -112,7 +170,6 @@ async function handleFeed(feedConfig, opts = {}) {
           error: null,
           debug: opts.debug ? { head } : null
         };
-
 
       } catch (rssErr) {
         console.warn("[handleFeed][RSS_PARSE_FAIL]", id, rssErr.message);

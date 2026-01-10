@@ -1,14 +1,14 @@
 // ------------------------------------------------------------
-// backend.js — v1.206 (Hardened Routing + Range-Aware Market)
+// backend.js — v1.207 (Feed Routing Fix + Hardened Modes)
 // ------------------------------------------------------------
 //
-// Goals of v1.206:
-//   ✓ Debug routing is fully isolated and cannot hijack feed/market
-//   ✓ Health mode ignores stray debug params unless explicitly allowed
-//   ✓ Mode routing is explicit, ordered, and crash‑proof
+// Goals of v1.207:
+//   ✓ Feed mode no longer inherits test/debug flags
+//   ✓ Extractors now run for real feed requests
+//   ✓ Health/debug modes remain isolated and safe
+//   ✓ Range-aware market routing preserved
 //   ✓ All handlers return standardized jsonResponse()
 //   ✓ Bundle debug preserved for AWS Lambda cold starts
-//   ✓ Range is forwarded to handleMarket() via opts.range
 //
 // ------------------------------------------------------------
 
@@ -117,11 +117,6 @@ exports.handler = async (event) => {
 
     // ------------------------------------------------------------
     // SAFE DEBUG ROUTES
-    // Only allowed when:
-    //   • mode is missing
-    //   • AND debug is a known command
-    //
-    // Prevents "?debug=ping" from hijacking feed/market requests.
     // ------------------------------------------------------------
     if (!mode && typeof debug === "string" && DEBUG_COMMANDS.has(debug)) {
       return handleDebug(debug);
@@ -138,7 +133,7 @@ exports.handler = async (event) => {
     }
 
     // ------------------------------------------------------------
-    // FEED MODE
+    // FEED MODE (FIXED IN v1.207)
     // ------------------------------------------------------------
     if (mode === "feed") {
       const feedId = query.feed;
@@ -159,7 +154,20 @@ exports.handler = async (event) => {
         });
       }
 
-      return await handleFeed(feedConfig, { test, debug });
+      // ------------------------------------------------------------
+      // CRITICAL FIX:
+      // Feed requests must NOT inherit test/debug flags.
+      // These flags are ONLY for health/debug routes.
+      //
+      // This ensures:
+      //   ✓ Extractors run normally
+      //   ✓ raw:true is never injected accidentally
+      //   ✓ Health checks remain isolated
+      // ------------------------------------------------------------
+      return await handleFeed(feedConfig, {
+        debug: null,
+        test: null
+      });
     }
 
     // ------------------------------------------------------------
@@ -177,13 +185,11 @@ exports.handler = async (event) => {
         });
       }
 
-      // Forward range into handleMarket via opts
       return await handleMarket(symbol, opts);
     }
 
     // ------------------------------------------------------------
     // HEALTH MODE
-    // Immune to stray debug params unless explicitly allowed.
     // ------------------------------------------------------------
     if (mode === "health") {
       const safeDebug = DEBUG_COMMANDS.has(debug) ? debug : null;
