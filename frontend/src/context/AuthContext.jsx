@@ -60,7 +60,7 @@ export function AuthProvider({ children }) {
 
     if (type === "google"){navigate("/users/GoogleUser");}
     if (type === "apple"){navigate("/users/AppleUser");}
-    if (type === "guest"){navigate("/home");}
+    if (type === "guest"){navigate("/GuestUser");}
 
     // navigate("/home");
   }

@@ -138,7 +138,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                         </Box>
                     ))}
 
-                    {isLoggedIn && (
+                    {/* {isLoggedIn && (
                         <Chip
                             label={`${authType.toUpperCase()} • ${user?.email || ""}`}
                             sx={{
@@ -155,7 +155,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                                 maxWidth: 200,
                             }}
                         />
-                    )}
+                    )} */}
 
                     <Tooltip title="Compose Email">
                         <Box

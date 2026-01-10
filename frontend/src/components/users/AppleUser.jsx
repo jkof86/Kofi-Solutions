@@ -29,13 +29,13 @@ export default function AppleUser() {
         }}
       >
         <Typography variant="h5" sx={{ fontWeight: 600 }}>
-          Google User Dashboard
+          Apple User Dashboard
         </Typography>
 
         <Box sx={{ flexGrow: 1 }} />
 
         <Chip
-          label={`v1.2.0.4 • ${user?.email || "Unknown Google User"}`}
+          label={`v1.2.0.4 • ${user?.email || "Unknown Apple User"}`}
           sx={{
             backgroundColor: "#fff",
             color: "#1976d2",

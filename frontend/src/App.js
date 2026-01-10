@@ -38,6 +38,9 @@ import RegisterComponent from "./components/auth/RegisterComponent";
 
 // Users
 import GoogleUser from "./components/users/GoogleUser";
+import AppleUser from "./components/users/AppleUser";
+import GuestUser from "./components/users/GuestUser";
+
 
 
 
@@ -82,6 +85,22 @@ export default function App() {
           element={
             <ProtectedRoute>
               <GoogleUser />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users/AppleUser"
+          element={
+            <ProtectedRoute>
+              <AppleUser />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users/GuestUser"
+          element={
+            <ProtectedRoute>
+              <GuestUser />
             </ProtectedRoute>
           }
         />

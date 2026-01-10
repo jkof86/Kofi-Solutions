@@ -70,6 +70,28 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
     window.location.href = `mailto:${recipient}?subject=Attention:&body=`;
   }
 
+  const handleUserChipClick = () => {
+    if (!isLoggedIn) {
+      navigate("/login");
+      return;
+    }
+
+    switch (authType) {
+      case "google":
+        navigate("/users/GoogleUser");
+        break;
+      case "apple":
+        navigate("/users/AppleUser");
+        break;
+      case "guest":
+        navigate("/users/GuestUser");
+        break;
+      default:
+        navigate("/home");
+    }
+  };
+
+
   return (
     <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000 }}>
       <Box ref={ref} sx={{ p: 0, m: 0 }}>
@@ -138,20 +160,24 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                 </Box>
               ))}
 
-              {isLoggedIn && (
-                <Chip
-                  label={`${authType.toUpperCase()} • ${user?.email || ""}`}
-                  sx={{
-                    backgroundColor: "#e3f2fd",
-                    color: "#0d47a1",
-                    fontWeight: 600,
-                    borderRadius: "16px",
-                    px: 1.5,
-                    py: 0.5,
-                    fontSize: "0.8rem"
-                  }}
-                />
-              )}
+              <Chip
+                label={`${authType.toUpperCase()} • ${user?.email || ""}`}
+                onClick={handleUserChipClick}
+                sx={{
+                  backgroundColor: "#e3f2fd",
+                  color: "#0d47a1",
+                  fontWeight: 600,
+                  borderRadius: "16px",
+                  px: 1.5,
+                  py: 0.5,
+                  fontSize: "0.8rem",
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: "#bbdefb"
+                  }
+                }}
+              />
+
 
               <Tooltip title="Compose Email">
                 <Box
