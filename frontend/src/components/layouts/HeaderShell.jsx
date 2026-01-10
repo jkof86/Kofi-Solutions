@@ -1,28 +1,29 @@
+// ------------------------------------------------------------
+// HeaderShell.jsx — v1.2.0.5 (Auth‑Safe, No Alerts)
+// ------------------------------------------------------------
+
 import {
   AppBar,
   Toolbar,
   Box,
   Typography,
-  Button,
   Stack,
   Drawer,
-  Tooltip
+  Tooltip,
+  Chip
 } from "@mui/material";
 
-import {
-  ContactSupport as ContactSupportIcon,
-  Menu as MenuIcon
-} from "@mui/icons-material";
-
+import { Menu as MenuIcon } from "@mui/icons-material";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+
 import FeedHealthDashboard from "../newsfeed/FeedHealthDashboard";
 import NavDrawerMain from "../navigation/NavDrawerMain";
 import TickerBar from "./TickerBar";
 
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 
-import { googleLogout } from "@react-oauth/google";
+import { useAuth } from "../../context/AuthContext";
 import logo from "../../images/bg/ksBanner06.jpeg";
 
 export default function HeaderShell({ onHeightChange, activeCategory }) {
@@ -31,6 +32,8 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
 
   const navigate = useNavigate();
   const ref = useRef(null);
+
+  const { isLoggedIn, authType, user, logout } = useAuth();
 
   // Measure header height
   useEffect(() => {
@@ -42,38 +45,29 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
     return () => observer.disconnect();
   }, [onHeightChange]);
 
-  const handleClick = () => sendEmail();
+  // Navigation
   const goToRegister = () => navigate("/register");
   const goToLogin = () => navigate("/login");
+  const goToHome = () => navigate("/home");
 
-  function handleRegister() {
-    if (localStorage.getItem("isLoggedIn"))
-      alert("Please logout before registering a new account");
-    else goToRegister();
-  }
+  // Clean handlers — NO alerts, NO auth checks
+  const handleRegister = () => {
+    if (isLoggedIn) return alert("You are already logged in — logout first.");
+    goToRegister();
+  };
 
   function handleLogin() {
-    if (localStorage.getItem("isLoggedIn"))
-      alert("You are currently logged in");
-    else goToLogin();
+    if (isLoggedIn) return alert("You are already logged in — logout first.");
+    goToLogin();
   }
 
   function handleLogout() {
-    if (!localStorage.getItem("isLoggedIn"))
-      alert("You are currently logged out");
-    else {
-      googleLogout();
-      alert(`Logged out successfully`);
-      localStorage.removeItem("isLoggedIn");
-      goToLogin();
-    }
+    logout();
   }
 
   function sendEmail() {
     const recipient = "admin@kofisolutions.com";
-    const subject = encodeURIComponent("Attention: ");
-    const body = encodeURIComponent("");
-    window.location.href = `mailto:${recipient}?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${recipient}?subject=Attention:&body=`;
   }
 
   return (
@@ -84,9 +78,6 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
           setIsDrawerOpen={setIsDrawerOpen}
         />
 
-        {/* ----------------------------------------------------
-            TOP NAVBAR — CLEAN + PROFESSIONAL
-        ---------------------------------------------------- */}
         <AppBar position="static" color="default" elevation={1} sx={{ p: 0 }}>
           <Toolbar
             disableGutters
@@ -107,7 +98,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
               />
             </Box>
 
-            {/* RIGHT: Nav + Contact */}
+            {/* RIGHT: Nav + UserBadge + Contact */}
             <Box
               sx={{
                 display: "flex",
@@ -117,12 +108,11 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                 height: 80
               }}
             >
-              {/* Nav items */}
               {["Home", "Register", "Login", "Logout"].map((label) => (
                 <Box
                   key={label}
                   onClick={() => {
-                    if (label === "Home") navigate("/home");
+                    if (label === "Home") goToHome();
                     else if (label === "Register") handleRegister();
                     else if (label === "Login") handleLogin();
                     else if (label === "Logout") handleLogout();
@@ -148,10 +138,24 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                 </Box>
               ))}
 
-              {/* Contact pill button */}
+              {isLoggedIn && (
+                <Chip
+                  label={`${authType.toUpperCase()} • ${user?.email || ""}`}
+                  sx={{
+                    backgroundColor: "#e3f2fd",
+                    color: "#0d47a1",
+                    fontWeight: 600,
+                    borderRadius: "16px",
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: "0.8rem"
+                  }}
+                />
+              )}
+
               <Tooltip title="Compose Email">
                 <Box
-                  onClick={handleClick}
+                  onClick={sendEmail}
                   sx={{
                     cursor: "pointer",
                     backgroundColor: "#3b78e2",
@@ -176,12 +180,9 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
               </Tooltip>
             </Box>
           </Toolbar>
-
         </AppBar>
 
-        {/* ----------------------------------------------------
-            BANNER
-        ---------------------------------------------------- */}
+        {/* BANNER */}
         <Box
           sx={{
             background: "linear-gradient(to right, #1e3c72, #3b78e2)",
@@ -229,9 +230,6 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
           </Drawer>
         </Box>
 
-        {/* ----------------------------------------------------
-            TICKER BAR
-        ---------------------------------------------------- */}
         <TickerBar activeCategory={activeCategory} />
       </Box>
     </Box>

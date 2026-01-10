@@ -9,7 +9,6 @@ import {
 
 import { useState } from "react";
 import PieChart from "./PieChart";
-import NavDrawerFitness from "../navigation/NavDrawerFitness";
 
 export default function Calculator() {
 
@@ -167,10 +166,6 @@ export default function Calculator() {
     /***************************************************************************/
 
     return (<>
-
-        {<NavDrawerFitness />}
-
-        {/* <Container disableGutters sx={{ width: '100vw' }}> */}
         <center>
             <Box padding={0} sx={{
                 justifyContent: 'center',

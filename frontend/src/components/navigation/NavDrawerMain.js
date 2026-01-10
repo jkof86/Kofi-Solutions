@@ -24,7 +24,6 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import WorkIcon from '@mui/icons-material/Work';
 
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
 
 import { googleLogout } from "@react-oauth/google";
 import avatarImage from '../../images/icons/avatar_full.jpg';
@@ -46,10 +45,34 @@ const navItems = [
   { label: "Fitness & Nutrition", icon: <FitnessCenterIcon />, to: "/fitness/calculator" }
 ];
 
-
 export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
 
   const navigate = useNavigate();
+
+  function goToLogin() {
+    navigate("/login");
+    window.location.reload();
+  }
+
+  function handleLogout() {
+    const isLoggedIn = localStorage.getItem("isLoggedIn");
+    const tempUser = localStorage.getItem("tempUser");
+
+    if (!isLoggedIn && !tempUser) {
+      alert("You are currently LOGGED OUT");
+      return;
+    }
+
+    googleLogout();
+
+    alert("LOGGING OUT...");
+
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("tempUser");
+
+    goToLogin();
+  }
+
 
   const navItems2 = [
     { label: "Account", icon: <AccountCircleIcon />, to: "/home" },
@@ -57,12 +80,7 @@ export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
     {
       label: "Logout",
       icon: <LogoutIcon />,
-      action: () => {
-        googleLogout();
-        alert("Logged out successfully");
-        localStorage.removeItem("isLoggedIn");
-        navigate("/login");
-      }
+      action: handleLogout
     }
   ];
 

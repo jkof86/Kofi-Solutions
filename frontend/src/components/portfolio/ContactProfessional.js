@@ -4,7 +4,6 @@ import {
     CardMedia
 } from "@mui/material";
 import { Link } from 'react-router-dom';
-import NavDrawerProfessional from "../navigation/NavDrawerProfessional";
 
 import banner from '../../images/bg/ksAvatar01.jpg';
 
@@ -12,11 +11,7 @@ export default function ContactProfessional() {
 
     return (<>
         
-        {<NavDrawerProfessional />}
-
         {/********************************************************/}
-
-        {/* <Container disableGutters={false} sx={{ width: '100vw' }}> */}
         <center>
             <Box padding={0} sx={{
                 justifyContent: 'center',

@@ -5,16 +5,12 @@ import {
 } from "@mui/material";
 import { Link } from 'react-router-dom';
 import SlideShowFitness from "./SlideShowFitness";
-import NavDrawerFitness from "../navigation/NavDrawerFitness";
 
 export default function ContactFitness() {
 
     return (<>
-        {<NavDrawerFitness />}
 
         {/********************************************************/}
-
-        {/* <Container disableGutters={false} sx={{ width: '100vw' }}> */}
         <center>
             <Box padding={0} sx={{
                 // justifyContent: 'center',

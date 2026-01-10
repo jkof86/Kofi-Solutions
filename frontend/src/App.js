@@ -1,26 +1,28 @@
 /**
- * App.jsx
- * -------------------------------
+ * App.jsx — v1.2.0.4
+ * ---------------------------------------------------------
  * Central routing configuration for the Kofi Solutions frontend.
  *
- * This file defines all top‑level routes using React Router v6.
- * It should remain clean, declarative, and free of business logic.
+ * Responsibilities:
+ *   • Declare all top‑level routes (React Router v6)
+ *   • Protect authenticated routes using <ProtectedRoute>
  *
- * IMPORTANT:
- * - All components imported here must come from the *current* src/components tree.
- * - Avoid duplicate or shadowed paths (common cause of stale UI rendering).
- * - Keep route definitions consistent and predictable.
+ * Notes:
+ *   • <AuthProvider> MUST wrap <App /> in index.js, not here
+ *   • Keep this file declarative and free of business logic
+ *   • Avoid duplicate or shadowed paths
  */
 
-import { Routes, Route } from "react-router";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
 // Core dashboard
 import Home from "./components/Home";
 
 // Portfolio sections
 import About from "./components/portfolio/About";
-import Account from "./components/portfolio/Account";
-import Settings from "./components/portfolio/Settings";
+import Account from "./components/users/Account";
+import Settings from "./components/users/Settings";
 import Calculator from "./components/portfolio/Calculator";
 import Fitness from "./components/portfolio/Fitness";
 import Professional from "./components/portfolio/Professional";
@@ -29,34 +31,72 @@ import Gaming from "./components/portfolio/Gaming";
 // Contact pages
 import ContactFitness from "./components/portfolio/ContactFitness";
 import ContactProfessional from "./components/portfolio/ContactProfessional";
-import ContactGaming from "./components/portfolio/ContactGaming";
 
 // Auth
-import LoginComponent from "./auth/LoginComponent";
-import RegisterComponent from "./auth/RegisterComponent";
+import LoginComponent from "./components/auth/LoginComponent";
+import RegisterComponent from "./components/auth/RegisterComponent";
+
+// Users
+import GoogleUser from "./components/users/GoogleUser";
+
+
+
+
+/* ---------------------------------------------------------
+   ProtectedRoute — simple wrapper for authenticated pages
+--------------------------------------------------------- */
+function ProtectedRoute({ children }) {
+  const { isLoggedIn, loading } = useAuth();
+
+  // Wait until AuthContext finishes restoring state
+  if (loading) {
+    return null; // or a spinner component
+  }
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
 
 export default function App() {
   return (
     <>
-      {/**
-       * ROUTE TABLE
-       * -----------------------------------------
-       * Notes:
-       * - "/" defaults to LoginComponent (user must log in first)
-       * - "/home" is the main dashboard (FeedStatusProvider wraps App in index.js)
-       * - Portfolio routes are grouped by category for clarity
-       * - Avoid duplicate paths (e.g., gaming/about was incorrectly mapped)
-       */}
-
+      {/* -----------------------------------------------------
+          ROUTE TABLE — v1.2.0.4
+          "/" defaults to LoginComponent
+          "/home" is protected by <ProtectedRoute>
+      ------------------------------------------------------ */}
       <Routes>
 
         {/* AUTH ROUTES */}
         <Route path="/" element={<LoginComponent />} />
         <Route path="/login" element={<LoginComponent />} />
-        {/* <Route path="/register" element={<RegisterComponent />} /> */}
+        <Route path="/register" element={<RegisterComponent />} />
 
-        {/* MAIN DASHBOARD */}
-        <Route path="/home" element={<Home />} />
+        {/* USERS */}
+        <Route
+          path="/users/GoogleUser"
+          element={
+            <ProtectedRoute>
+              <GoogleUser />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/users/account" element={<Account />} />
+        <Route path="/users/settings" element={<Settings />} />
+
+        {/* MAIN DASHBOARD (PROTECTED) */}
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
 
         {/* PROFESSIONAL SECTION */}
         <Route path="/professional" element={<Professional />} />
@@ -70,13 +110,6 @@ export default function App() {
 
         {/* GAMING SECTION */}
         <Route path="/gaming" element={<Gaming />} />
-        <Route path="/gaming/about" element={<Gaming />} /> 
-        <Route path="/gaming/contact" element={<ContactGaming />} />
-
-        {/* USER SETTINGS */}
-        <Route path="/account" element={<Account />} />
-        <Route path="/settings" element={<Settings />} />
-
       </Routes>
     </>
   );

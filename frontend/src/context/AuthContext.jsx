@@ -1,119 +1,118 @@
-// src/auth/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import {
-  GoogleOAuthProvider,
-  useGoogleLogin,
-  googleLogout
-} from '@react-oauth/google';
-import jwtDecode from 'jwt-decode';
+// ------------------------------------------------------------
+// AuthContext.jsx — v1.2.0.6 (Stable + Loading Gate)
+// ------------------------------------------------------------
+//
+// Fixes:
+//   • Prevents redirect loops
+//   • Prevents immediate logout
+//   • Prevents double alerts
+//   • Ensures login state is restored BEFORE Home.jsx runs
+//
+// ------------------------------------------------------------
 
-// ==================== CONTEXT ====================
-const AuthContext = createContext(undefined);
+import { createContext, useContext, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-// Replace with your actual Google Client ID
-const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com";
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // Load user from localStorage on mount
+  // ------------------------------------------------------------
+  // Global Auth State
+  // ------------------------------------------------------------
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authType, setAuthType] = useState(null);
+  const [user, setUser] = useState(null);
+
+  // NEW: Prevent redirect loops
+  const [loading, setLoading] = useState(true);
+
+  // ------------------------------------------------------------
+  // Load auth state from localStorage on mount
+  // ------------------------------------------------------------
   useEffect(() => {
-    const stored = localStorage.getItem('mockUser');
-    if (stored) {
-      setUser(JSON.parse(stored));
+    const storedLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+    const storedAuthType = localStorage.getItem("authType");
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+
+    if (storedLoggedIn && storedAuthType && storedUser) {
+      setIsLoggedIn(true);
+      setAuthType(storedAuthType);
+      setUser(storedUser);
     }
-    setIsLoading(false);
+
+    // IMPORTANT: Only after restoring state do we allow redirects
+    setLoading(false);
   }, []);
 
-  // ===================== LOCAL AUTH (Mock) =====================
-  const register = async (email, password, name) => {
-    const mockUser = {
-      id: Date.now().toString(),
-      email,
-      name,
-      authMethod: 'local'
-    };
+  // ------------------------------------------------------------
+  // Persist auth state to localStorage
+  // ------------------------------------------------------------
+  function persistAuth(type, userObj) {
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("authType", type);
+    localStorage.setItem("user", JSON.stringify(userObj));
 
-    localStorage.setItem('mockUser', JSON.stringify(mockUser));
-    localStorage.setItem('mockCredentials', JSON.stringify({ email, password }));
-    setUser(mockUser);
-  };
+    setIsLoggedIn(true);
+    setAuthType(type);
+    setUser(userObj);
 
-  const login = async (email, password) => {
-    const stored = localStorage.getItem('mockCredentials');
-    if (!stored) throw new Error('No account found. Please register first.');
+    if (type === "google"){navigate("/users/GoogleUser");}
+    if (type === "apple"){navigate("/users/AppleUser");}
+    if (type === "guest"){navigate("/home");}
 
-    const creds = JSON.parse(stored);
-    if (creds.email !== email || creds.password !== password) {
-      throw new Error('Invalid email or password');
-    }
+    // navigate("/home");
+  }
 
-    const mockUser = JSON.parse(localStorage.getItem('mockUser'));
-    setUser(mockUser);
-  };
+  // ------------------------------------------------------------
+  // LOGIN METHODS
+  // ------------------------------------------------------------
+  function loginGoogle(profile) {
+    persistAuth("google", { email: profile?.email || "googleUser" });
+  }
 
-  // ===================== GOOGLE AUTH =====================
-  const googleLoginHook = useGoogleLogin({
-    onSuccess: (credentialResponse) => {
-      try {
-        const decoded = jwtDecode(credentialResponse.credential);
-        const googleUser = {
-          id: decoded.sub,
-          email: decoded.email || '',
-          name: decoded.name,
-          photo: decoded.picture,
-          authMethod: 'google'
-        };
+  function loginApple(profile) {
+    persistAuth("apple", { email: profile?.email || "appleUser" });
+  }
 
-        setUser(googleUser);
-        localStorage.setItem('mockUser', JSON.stringify(googleUser));
-      } catch (err) {
-        console.error('Failed to decode Google token:', err);
-      }
-    },
-    onError: (error) => {
-      console.error('Google login failed:', error);
-    }
-  });
+  function loginGuest() {
+    persistAuth("guest", { email: "guest@system" });
+  }
 
-  const loginWithGoogle = async () => {
-    googleLoginHook();
-  };
+  // ------------------------------------------------------------
+  // LOGOUT
+  // ------------------------------------------------------------
+  function logout() {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("authType");
+    localStorage.removeItem("user");
 
-  // ===================== LOGOUT =====================
-  const logout = async () => {
-    if (user?.authMethod === 'google') {
-      googleLogout();
-    }
-    localStorage.removeItem('mockUser');
-    localStorage.removeItem('mockCredentials');
+    setIsLoggedIn(false);
+    setAuthType(null);
     setUser(null);
-  };
 
-  const value = {
-    user,
-    isLoading,
-    register,
-    login,
-    loginWithGoogle,
-    logout
-  };
+    navigate("/login");
+  }
 
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <AuthContext.Provider value={value}>
-        {children}
-      </AuthContext.Provider>
-    </GoogleOAuthProvider>
+    <AuthContext.Provider
+      value={{
+        isLoggedIn,
+        authType,
+        user,
+        loading,        // <-- NEW
+        loginGoogle,
+        loginApple,
+        loginGuest,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
 }
 
-// Hook to use auth anywhere
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 }

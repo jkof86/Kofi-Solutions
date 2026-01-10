@@ -1,14 +1,22 @@
 // ------------------------------------------------------------
-// Home.jsx — v1.197 (Two‑Column Layout + Stable Containers)
+// Home.jsx — v1.2.0.3 (AuthContext‑Integrated + Stable Layout)
 // ------------------------------------------------------------
 //
-// Goals of v1.197:
-//   ✓ Fix container overflow (FeedStatusBar, MarketChart)
-//   ✓ Introduce right‑side MarketChart column
-//   ✓ Ensure all content lives inside MainContainer
-//   ✓ Prevent horizontal stretching with minWidth: 0
-//   ✓ Move Drawer outside MainContainer for proper overlay
-//   ✓ Clean, production‑grade comments
+// Goals of v1.2.0.3:
+//   ✓ Replace localStorage checks with AuthContext
+//   ✓ Redirect unauthenticated users cleanly
+//   ✓ Maintain stable two‑column layout (Feed | Market)
+//   ✓ Preserve MainContainer offset logic
+//   ✓ Keep Drawer outside MainContainer for proper overlay
+//   ✓ Production‑grade comments for long‑term maintainability
+//
+// Auth Model (via AuthContext):
+//   isLoggedIn: boolean
+//   authType: "google" | "apple" | "guest"
+//   user: { email }
+//
+// Redirect Rules:
+//   - If !isLoggedIn → /login
 //
 // Layout Structure:
 //   <HeaderShell />
@@ -42,31 +50,24 @@ import MarketCarousel from "./newsfeed/MarketCarousel";
 import MiniSparkline from "./newsfeed/MiniSparkline";
 
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 import MainContainer from "./layouts/MainContainer";
 import HeaderShell from "./layouts/HeaderShell";
 import Drawer from "@mui/material/Drawer";
+
+
 
 export default function Home() {
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
 
-  const navigate = useNavigate();
-
   // ------------------------------------------------------------
-  // Redirect unauthenticated users
+  // AUTH VALIDATION (v1.2.0.3)
+  // Ensures only authenticated users can access the dashboard.
   // ------------------------------------------------------------
-  useEffect(() => {
-    const loggedIn = localStorage.getItem("isLoggedIn");
-
-    if (!loggedIn) {
-      console.log("User NOT logged in → redirecting to /login");
-      navigate("/login");
-    } else {
-      console.log("User IS logged in");
-    }
-  }, [navigate]);
-
+  
   return (
     <>
       {/* --------------------------------------------------------
@@ -88,8 +89,8 @@ export default function Home() {
         <Container maxWidth="xl" sx={{ mt: 2, mb: 6 }}>
 
           {/* ----------------------------------------------------
-     Banner — top section with title + icon
------------------------------------------------------ */}
+             Banner — top section with title + icon
+          ----------------------------------------------------- */}
           <Box
             sx={{
               display: "flex",
@@ -114,7 +115,7 @@ export default function Home() {
             <Box sx={{ flexGrow: 1 }} />
 
             <Chip
-              label="v1.2.0"
+              label="v1.2.0.3"
               size="large"
               sx={{
                 backgroundColor: "#fff",
