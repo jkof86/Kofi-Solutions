@@ -1,28 +1,14 @@
 // ------------------------------------------------------------
-// rssParser.js — v2.2 (Normalized + CDATA‑Safe + Image Extraction)
+// rssParser.js — v2.4 (FAST MODE + FULL MODE)
 // ------------------------------------------------------------
 //
 // Purpose:
 //   Parse RSS feeds using rss-parser, then normalize items into
 //   the unified backend shape used by handleFeed + normalize.js.
 //
-// Standardized item shape:
-//   {
-//     title,
-//     url,
-//     description,
-//     image,
-//     date,
-//     source,
-//     raw
-//   }
-//
-// Improvements in v2.2:
-//   ✓ Uses normalizeItem() from normalize.js
-//   ✓ Extracts images from enclosure/media/content
-//   ✓ Handles CDATA + HTML safely
-//   ✓ Safe fallback for malformed RSS fields
-//   ✓ Fully compatible with handleFeed.js v1.208
+// Modes:
+//   • fast = true  → raw items only (for health checks)
+//   • fast = false → full normalizeItem pipeline (for feed mode)
 //
 // ------------------------------------------------------------
 
@@ -32,17 +18,21 @@ const { normalizeItem } = require("./normalize.js");
 const parser = new Parser();
 
 // ------------------------------------------------------------
-// rssParser(url, sourceLabel)
+// rssParser(url, sourceLabel, fast)
 // ------------------------------------------------------------
-async function rssParser(url, sourceLabel = "") {
+async function rssParser(url, sourceLabel = "", fast = false) {
   if (!url) throw new Error("Missing RSS URL");
 
   try {
     const feed = await parser.parseURL(url);
-
     const items = Array.isArray(feed.items) ? feed.items : [];
 
-    // Normalize each RSS item using your global normalization logic
+    // FAST MODE → return raw items only (no normalizeItem, no heavy work)
+    if (fast) {
+      return { items };
+    }
+
+    // FULL MODE → normalize each item
     const normalized = items.map((item) =>
       normalizeItem(item, sourceLabel || feed.title || "")
     );
@@ -50,7 +40,7 @@ async function rssParser(url, sourceLabel = "") {
     return { items: normalized };
 
   } catch (err) {
-    console.error("[rssParser] ERROR:", err);
+    console.error("[rssParser] ERROR:", err.message || err);
     return { items: [] };
   }
 }

@@ -31,7 +31,7 @@ export default function GuestUser() {
       case "Gaming":
         return <Gaming />;
 
-      case "Firtness / Nutrition":
+      case "Fitness / Nutrition":
         return <Calculator />;
 
       case "Portfolio":

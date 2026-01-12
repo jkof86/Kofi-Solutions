@@ -1,13 +1,5 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.199 (Backend-Normalized + Stable Rendering)
-// ------------------------------------------------------------
-//
-// Fixes in v1.199:
-//   ✓ TRUSTS backend-normalized items (no re-normalization)
-//   ✓ Uses item.description / item.image / item.url directly
-//   ✓ Keeps debug + health behavior intact
-//   ✓ Safer guards for malformed backend responses
-//   ✓ Fully aligned with normalize.js v1.201 + FeedCard v1.198
+// RSSFeed.jsx — v1.207 (Hooks-Safe + Fully Aligned)
 // ------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
@@ -21,20 +13,23 @@ import {
 } from "@mui/material";
 
 import FeedCard from "./FeedCard";
-import { FEEDS } from "../../data/feedsMap";
 
-console.log("RSSFeed v1.199 loaded");
+console.log("RSSFeed v1.207 loaded");
 
 const BATCH_SIZE = 4;
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
-export default function RSSFeed({ feedId }) {
+export default function RSSFeed({
+  feedId,
+  feedMeta,
+  feedStatus,
+  categoryLabel,
+  symbol
+}) {
   // ------------------------------------------------------------
-  // Feed metadata lookup
+  // ALL HOOKS MUST BE AT THE TOP (no early returns above)
   // ------------------------------------------------------------
-  const feedMeta = FEEDS[feedId];
-
   const [items, setItems] = useState([]);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const [loading, setLoading] = useState(false);
@@ -68,7 +63,7 @@ export default function RSSFeed({ feedId }) {
   // ------------------------------------------------------------
   const fetchFeed = async (id = feedId, debug = false) => {
     if (!feedMeta?.url) {
-      console.warn("RSSFeed: Missing URL for feed:", feedId);
+      setError("Feed has no URL");
       return;
     }
 
@@ -92,8 +87,6 @@ export default function RSSFeed({ feedId }) {
 
       console.log("Feed response:", json);
 
-      // Backend now always returns:
-      // { id, status, fallback, count, items, type, ok, error, debug }
       if (!json || typeof json !== "object") {
         setError("Malformed backend response");
         setItems([]);
@@ -129,7 +122,7 @@ export default function RSSFeed({ feedId }) {
   };
 
   // ------------------------------------------------------------
-  // Auto-fetch when feedId changes or debug toggles
+  // Auto-fetch when feedId or debug changes
   // ------------------------------------------------------------
   useEffect(() => {
     setItems([]);
@@ -142,14 +135,18 @@ export default function RSSFeed({ feedId }) {
     if (feedMeta?.id) fetchFeed(feedMeta.id);
   }, [feedId, globalDebug]);
 
+  const visibleItems = items.slice(0, visibleCount);
+  const feedLabel = feedMeta?.label || feedMeta?.name || feedId;
+
   // ------------------------------------------------------------
-  // Early returns (invalid feed)
-// ------------------------------------------------------------
+  // CONDITIONAL RENDERING (AFTER HOOKS)
+  // ------------------------------------------------------------
+
   if (!feedMeta) {
     return (
       <Box sx={{ p: 2 }}>
         <Typography color="error">
-          This feed (“{feedId}”) is not defined in FEEDS.
+          Feed “{feedId}” is missing metadata.
         </Typography>
       </Box>
     );
@@ -159,14 +156,11 @@ export default function RSSFeed({ feedId }) {
     return (
       <Box sx={{ p: 2 }}>
         <Typography color="error">
-          Invalid feed (“{feedId}”): missing URL.
+          Feed “{feedId}” has no URL defined.
         </Typography>
       </Box>
     );
   }
-
-  const visibleItems = items.slice(0, visibleCount);
-  const feedLabel = feedMeta.label || feedMeta.name || feedId;
 
   // ------------------------------------------------------------
   // Render
@@ -182,7 +176,25 @@ export default function RSSFeed({ feedId }) {
           mb: 2
         }}
       >
-        <Typography variant="h6">{feedLabel}</Typography>
+        <Typography variant="h6">
+          {feedLabel}
+          {feedStatus && (
+            <Chip
+              label={feedStatus}
+              size="small"
+              sx={{
+                ml: 1,
+                textTransform: "uppercase",
+                backgroundColor:
+                  feedStatus === "ok"
+                    ? "#c8e6c9"
+                    : feedStatus === "fallback"
+                    ? "#fff3cd"
+                    : "#ffcdd2"
+              }}
+            />
+          )}
+        </Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>
           {globalDebug && (
@@ -256,6 +268,8 @@ export default function RSSFeed({ feedId }) {
             key={`${item.url || idx}-${idx}`}
             item={item}
             feedMeta={feedMeta}
+            feedStatus={feedStatus}
+            symbol={symbol}
             onRefresh={() => fetchFeed(feedId)}
           />
         ))}

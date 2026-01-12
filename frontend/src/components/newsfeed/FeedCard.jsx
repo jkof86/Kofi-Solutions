@@ -1,15 +1,16 @@
 // ------------------------------------------------------------
-// FeedCard.jsx — v1.300 (Icons via Google API + Per-Article Images)
+// FeedCard.jsx — v1.400 (Stable + Fully Aligned)
 // ------------------------------------------------------------
 //
-// Improvements in v1.300:
-//   ✓ Per-article image logic preserved
-//   ✓ Feed-level Material icon fallback (Google API)
-//   ✓ ksBanner as final fallback
-//   ✓ Safe description handling
-//   ✓ Safe image handling (http/https only)
-//   ✓ Added referrerPolicy="no-referrer"
-//   ✓ Layout-stable and null-safe
+// Improvements in v1.400:
+//   ✓ Accepts feedStatus + symbol props (from RSSFeed v1.207)
+//   ✓ No redundant context lookups unless needed
+//   ✓ Stronger fallback chain for images
+//   ✓ Cleaner layout + spacing
+//   ✓ Unified health refresh logic
+//   ✓ Fully null-safe
+//   ✓ Zero ESLint warnings
+//
 // ------------------------------------------------------------
 
 import React, { useContext } from "react";
@@ -21,8 +22,7 @@ import {
   Button,
   Chip,
   IconButton,
-  Tooltip,
-  Icon
+  Tooltip
 } from "@mui/material";
 
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -30,16 +30,14 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+
 import FeedIcon from "./FeedIcon";
-
-
 import { FEED_IMAGE_OVERRIDES } from "../../data/feedImageOverrides";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
-// Global fallback image
 const FALLBACK_IMAGE = require("../../images/bg/ksBanner04.jpeg");
 
 // ------------------------------------------------------------
@@ -55,15 +53,21 @@ function isValidHttpUrl(str) {
   }
 }
 
-export default function FeedCard({ item, feedMeta, onRefresh }) {
-  const { status: feedHealth, setStatus } = useContext(FeedStatusContext);
+export default function FeedCard({
+  item,
+  feedMeta,
+  feedStatus,
+  symbol,
+  onRefresh
+}) {
+  const { setStatus } = useContext(FeedStatusContext);
   const feedId = feedMeta?.id;
-
-  const status = feedHealth[feedId] || "unknown";
 
   // ------------------------------------------------------------
   // Status → Icon + Label mapping
   // ------------------------------------------------------------
+  const status = feedStatus || "unknown";
+
   let statusIcon = null;
   let statusLabel = "";
 
@@ -121,7 +125,6 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
   const safeTitle = item?.title || "Untitled";
   const safeUrl = item?.url || "#";
 
-  // Description: allow blank, but never undefined/null
   const safeDescription =
     typeof item?.description === "string" ? item.description : "";
 
@@ -132,23 +135,13 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
 
   const safeDate = item?.date ? new Date(item.date).toLocaleString() : "";
 
-
   // ------------------------------------------------------------
-  // Per-article image + icon logic
+  // Image + icon logic
   // ------------------------------------------------------------
-
-
-  // 1. Article-level image (if valid)
   const extractedImage =
     item?.image && isValidHttpUrl(item.image) ? item.image : null;
 
-  // 2. Feed-level icon object (Material Symbols Rounded)
   const overrideImage = FEED_IMAGE_OVERRIDES[item?.source] || null;
-
-  // 3. Feed-level icon key (if needed elsewhere)
-  const feedIconKey = overrideImage?.icon || null;
-
-
 
   // ------------------------------------------------------------
   // Render
@@ -227,7 +220,6 @@ export default function FeedCard({ item, feedMeta, onRefresh }) {
         {/* Visual: Article image → Feed icon → ksBanner */}
         <Box
           onClick={() => window.open(safeUrl, "_blank")}
-          className="feed-image-container"
           sx={{
             mb: 1,
             borderRadius: 1,

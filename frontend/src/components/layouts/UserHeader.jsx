@@ -2,7 +2,7 @@
 // UserHeader.jsx — v1.1 (Sticky + Logo Left + Center Nav)
 // ------------------------------------------------------------
 
-import { AppBar, Toolbar, Box, Stack, Tooltip } from "@mui/material";
+import { AppBar, Toolbar, Box, Tooltip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
@@ -13,7 +13,7 @@ export default function UserHeader({ onHeightChange = () => { } }) {
     const navigate = useNavigate();
     const ref = useRef(null);
 
-    const { isLoggedIn, authType, user, logout } = useAuth();
+    const { isLoggedIn, authType, logout } = useAuth();
 
     // Provides access to BannerThemes
     // theme.gradient

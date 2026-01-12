@@ -1,3 +1,7 @@
+// ------------------------------------------------------------
+// TabsLayout.jsx — v1.206 (Feed Rendering Fix + Full Context)
+// ------------------------------------------------------------
+
 import React, {
   useContext,
   useMemo,
@@ -9,11 +13,10 @@ import { Box, Tabs, Tab, Typography } from "@mui/material";
 
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 import { FEEDS } from "../../data/feedsMap";
-import RSSFeed from "..//newsfeed/RSSFeed";
-import { categoryLabelMap } from "../../data/labelMap";
-import { feedLabelMap } from "../../data/labelMap";
+import RSSFeed from "../newsfeed/RSSFeed";
+import { categoryLabelMap, feedLabelMap } from "../../data/labelMap";
 
-console.log("TabsLayout v1.205 — Category + Feed Label Maps Enabled");
+console.log("TabsLayout v1.206 — Feed Rendering Fix Enabled");
 
 function TabPanel({ children, value, index }) {
   return (
@@ -30,6 +33,8 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
   // BUILD CATEGORIES (sorted by label)
   // ------------------------------------------------------------
   const categories = useMemo(() => {
+    if (!FEEDS || Object.keys(FEEDS).length === 0) return {};
+
     const map = {};
 
     for (const [feedId, meta] of Object.entries(FEEDS)) {
@@ -48,16 +53,21 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
         acc[key] = map[key];
         return acc;
       }, {});
-  }, [FEEDS]);
+  }, []);
 
   const categoryList = Object.keys(categories);
   const categoryIndex = categoryList.indexOf(activeCategory);
+
   const safeCategory =
     categoryIndex === -1 ? categoryList[0] : activeCategory;
 
   const feedsInCategory = categories[safeCategory] || [];
+
   const [feedIndex, setFeedIndex] = useState(0);
 
+  // ------------------------------------------------------------
+  // FILTER FEEDS BASED ON HEALTH
+  // ------------------------------------------------------------
   const filteredFeeds = useMemo(() => {
     if (!strictMode) return feedsInCategory;
 
@@ -68,11 +78,13 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
     });
   }, [feedsInCategory, status, strictMode]);
 
+  // Reset feed index when category changes
   useEffect(() => {
     setFeedIndex(0);
   }, [safeCategory, filteredFeeds.length]);
 
   const activeFeed = filteredFeeds[feedIndex] || null;
+
   const activeSymbol =
     typeof activeFeed?.symbol === "string" && activeFeed.symbol.trim()
       ? activeFeed.symbol.trim().toLowerCase()
@@ -80,6 +92,7 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
 
   return (
     <Box sx={{ width: "100%" }}>
+      {/* CATEGORY TABS */}
       <Box sx={{ mb: 1 }}>
         <Tabs
           value={categoryIndex === -1 ? 0 : categoryIndex}
@@ -97,7 +110,7 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
         </Tabs>
       </Box>
 
-      {/* FEED TABS — NOW USING feedLabelMap */}
+      {/* FEED TABS */}
       <Tabs
         value={feedIndex}
         onChange={(_, v) => setFeedIndex(v)}
@@ -119,16 +132,24 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
         ))}
       </Tabs>
 
+      {/* FEED PANELS */}
       {filteredFeeds.map((f, i) => (
         <TabPanel key={f.feedId} value={feedIndex} index={i}>
           <Box sx={{ display: "flex", flexDirection: "row", gap: 2 }}>
             <Box sx={{ flex: 2 }}>
-              <RSSFeed feedId={f.feedId} categoryLabel={safeCategory} />
+              <RSSFeed
+                feedId={f.feedId}
+                categoryLabel={safeCategory}
+                feedMeta={f}
+                feedStatus={status[f.feedId]}
+                symbol={activeSymbol}
+              />
             </Box>
           </Box>
         </TabPanel>
       ))}
 
+      {/* EMPTY CATEGORY MESSAGE */}
       {filteredFeeds.length === 0 && (
         <Box sx={{ p: 2 }}>
           <Typography>No healthy feeds in this category.</Typography>

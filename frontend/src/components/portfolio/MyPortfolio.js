@@ -19,7 +19,7 @@ export default function MyPortfolio() {
 
   const pdfWrapper = useRef(null);
 
-  // Track container width for responsive scaling
+  // Track container width for responsive PDF scaling
   useEffect(() => {
     const updateSize = () => {
       if (pdfWrapper.current) {
@@ -37,7 +37,7 @@ export default function MyPortfolio() {
     setNumPages(numPages);
   };
 
-  // Capture height of first page
+  // Capture the height of the first rendered page
   const onPageLoadSuccess = (page) => {
     if (!pageHeight) {
       setPageHeight(page.originalHeight);
@@ -48,15 +48,15 @@ export default function MyPortfolio() {
     <Box
       sx={{
         width: "100%",
-        height: pageHeight ? pageHeight-280 : "100%",
+        height: pageHeight ? pageHeight - 50 : "100%",
         maxHeight: "100%",
         overflowY: "auto",
         borderRadius: 2,
         backgroundColor: "#fff",
       }}
     >
-      {/*
-      // OPTIONAL PAGE NAVIGATION — KEEP COMMENTED OUT
+      {/* 
+      // OPTIONAL PAGE NAVIGATION — KEEPING COMMENTED OUT AS REQUESTED
 
       <Stack
         direction="row"
@@ -91,7 +91,15 @@ export default function MyPortfolio() {
       </Stack>
       */}
 
-      <div ref={pdfWrapper} style={{ width: "100%", overflow: "hidden" }}>
+      <div
+        ref={pdfWrapper}
+        style={{
+          width: "100%",
+          maxWidth: "550px",   // ← cap the actual render width
+          margin: "0 auto",    // ← center it
+          overflow: "hidden",
+        }}
+      >
         <Document file={pdfFile} onLoadSuccess={onDocumentLoadSuccess}>
           {Array.from(new Array(numPages || 0), (el, index) => (
             <Page

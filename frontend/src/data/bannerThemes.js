@@ -11,10 +11,10 @@ export const BannerThemes = {
         textColor: "#204b29"
     },
     apple: {
-        gradient: "linear-gradient(45deg, #1976d2, #93b4d5)",
-        background: "#ffffff",
+        gradient: "linear-gradient(45deg, #ffffff, #93b4d5)",
+        background: "#000000",
         image: appleLogo,
-        textColor: "#204b29"
+        textColor: "#1976d2"
     },
     guest: {
         gradient: "linear-gradient(to right, #1976d2,  #eceef1)",

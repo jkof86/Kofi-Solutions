@@ -31,7 +31,7 @@ export default function AppleUser() {
       case "Gaming":
         return <Gaming />;
 
-      case "Firtness / Nutrition":
+      case "Fitness / Nutrition":
         return <Calculator />;
 
       case "Portfolio":
@@ -80,7 +80,7 @@ export default function AppleUser() {
               alignItems: "center",
               gap: 2,
               background: theme.gradient,
-              color: "#fff",
+              color: theme.textColor,
               px: 3,
               py: 2,
               borderRadius: 2,

@@ -21,6 +21,18 @@
 //
 // ------------------------------------------------------------
 
+// ------------------------------------------------------------
+// handleHealth.js — v1.300 (FAST MODE + Correct JSON Parsing)
+// ------------------------------------------------------------
+//
+// Fixes:
+//   ✓ Correctly parses jsonResponse() wrapper from handleFeed
+//   ✓ Health mode now returns real statuses + counts
+//   ✓ StrictMode-safe (frontend sees ok/json/fallback correctly)
+//   ✓ Fully compatible with handleFeed.js v1.302 + rssParser v2.4
+//
+// ------------------------------------------------------------
+
 const { jsonResponse } = require("../utils/jsonResponse.js");
 const feedsModule = require("../config/feedsMap.js");
 const { handleFeed } = require("./handleFeed.js");
@@ -32,33 +44,11 @@ const FEEDS = feedsModule?.FEEDS || {};
 // Curated symbol list (prevents 30s Yahoo timeouts)
 // ------------------------------------------------------------
 const HEALTH_SYMBOLS = [
-  // Crypto (Yahoo format)
-  "btc-usd",
-  "eth-usd",
-  "sol-usd",
-  "doge-usd",
-  "xrp-usd",
-  "zec-usd",
-
-  // Tech
-  "aapl",
-  "msft",
-  "amzn",
-  "goog",
-  "nvda",
-  "tsla",
-  "meta",
-
-  // ETFs
-  "spy",
-  "vti",
-  "voo",
-  "ibit",
-  "arkg",
-  "blok"
+  "btc-usd", "eth-usd", "sol-usd", "doge-usd", "xrp-usd", "zec-usd",
+  "aapl", "msft", "amzn", "goog", "nvda", "tsla", "meta",
+  "spy", "vti", "voo", "ibit", "arkg", "blok"
 ];
 
-// Normalize symbols (BRK.B → brk-b)
 function normalizeSymbol(sym) {
   return String(sym || "")
     .trim()
@@ -66,7 +56,9 @@ function normalizeSymbol(sym) {
     .replace(/\./g, "-");
 }
 
+// ------------------------------------------------------------
 // Simple concurrency limiter (batch size 3)
+// ------------------------------------------------------------
 async function runBatched(items, worker, batchSize = 3) {
   const results = {};
   const keys = [...items];
@@ -87,17 +79,20 @@ async function runBatched(items, worker, batchSize = 3) {
   return results;
 }
 
+// ------------------------------------------------------------
+// handleHealth
+// ------------------------------------------------------------
 async function handleHealth(opts = {}) {
   console.log("[handleHealth] Starting health check", opts);
 
   if (!FEEDS || Object.keys(FEEDS).length === 0) {
-    console.error("[handleHealth] FATAL: FEEDS map is empty or undefined:", FEEDS);
+    console.error("[handleHealth] FATAL: FEEDS map is empty:", FEEDS);
     return jsonResponse(200, {
       status: "error",
       error: "FEEDS map is empty — backend misconfigured",
       feeds: {},
       markets: {},
-      timestamp: Date.now(),
+      timestamp: Date.now()
     });
   }
 
@@ -116,7 +111,22 @@ async function handleHealth(opts = {}) {
       feedIds,
       async (feedId) => {
         const feedConfig = FEEDS[feedId];
-        const result = await handleFeed(feedConfig, { test: "health", raw: true });
+
+        // handleFeed returns { statusCode, headers, body }
+        const raw = await handleFeed(feedConfig, {
+          test: "health",
+          raw: true
+        });
+
+        // Parse JSON body
+        let result = raw;
+        if (raw && typeof raw.body === "string") {
+          try {
+            result = JSON.parse(raw.body);
+          } catch {
+            result = raw;
+          }
+        }
 
         const status = result?.status || "error";
         const fallback = status === "fallback";
@@ -143,7 +153,7 @@ async function handleHealth(opts = {}) {
     }
 
     // ------------------------------------------------------------
-    // MARKET HEALTH — curated symbols only
+    // MARKET HEALTH
     // ------------------------------------------------------------
     console.log("[health] Starting per‑symbol market processing");
 
@@ -152,14 +162,12 @@ async function handleHealth(opts = {}) {
     const marketResults = await runBatched(
       symbols,
       async (sym) => {
-        // Explicit opts for handleMarket — prevents undefined opts crash
         const res = await handleMarket(sym, {
-          range: "1W",              // stable, fast, health-safe
+          range: "1W",
           test: "health",
           debug: opts.debug || null
         });
 
-        // handleMarket returns { statusCode, body }
         let body = res;
         if (res && typeof res.body === "string") {
           try {
@@ -201,7 +209,7 @@ async function handleHealth(opts = {}) {
       status: "ok",
       feeds,
       markets,
-      timestamp: Date.now(),
+      timestamp: Date.now()
     });
 
   } catch (err) {
@@ -210,7 +218,7 @@ async function handleHealth(opts = {}) {
     return jsonResponse(200, {
       status: "error",
       error: "Health handler crashed",
-      detail: String(err),
+      detail: String(err)
     });
   }
 }

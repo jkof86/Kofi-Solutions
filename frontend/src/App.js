@@ -119,13 +119,13 @@ export default function App() {
 
         {/* PROFESSIONAL SECTION */}
         <Route path="/professional" element={<Professional />} />
-        <Route path="/professional/about" element={<About />} />
-        <Route path="/professional/contact" element={<ContactProfessional />} />
+        {/* <Route path="/professional/about" element={<About />} /> */}
+        {/* <Route path="/professional/contact" element={<ContactProfessional />} /> */}
 
         {/* FITNESS SECTION */}
         <Route path="/fitness" element={<Fitness />} />
-        <Route path="/fitness/calculator" element={<Calculator />} />
-        <Route path="/fitness/contact" element={<ContactFitness />} />
+        {/* <Route path="/fitness/calculator" element={<Calculator />} /> */}
+        {/* <Route path="/fitness/contact" element={<ContactFitness />} /> */}
 
         {/* GAMING SECTION */}
         <Route path="/gaming" element={<Gaming />} />

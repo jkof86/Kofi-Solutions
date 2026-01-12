@@ -48,7 +48,7 @@ export default function MyPortfolio() {
     <Box
       sx={{
         width: "100%",
-        height: pageHeight ? pageHeight-50 : "100%",
+        height: pageHeight ? pageHeight : "100%",
         maxHeight: "100%",
         overflowY: "auto",
         borderRadius: 2,

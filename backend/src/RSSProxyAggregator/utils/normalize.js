@@ -1,55 +1,66 @@
 // ------------------------------------------------------------
-// normalize.js — v1.206 (Clean Summary + Correct Title + CDATA Hardened)
+// normalize.js — v1.300 (FAST‑MODE SAFE + Hardened Normalization)
 // ------------------------------------------------------------
 //
 // Purpose:
 //   Normalize raw RSS/JSON/fallback items into a consistent,
 //   frontend-safe shape for FeedCard rendering.
 //
-// Standardized output shape:
-//   {
-//     title: string,
-//     url: string,
-//     description: string,
-//     image: string | null,
-//     date: string | null,
-//     source: string,
-//     raw: object
-//   }
+// Fully compatible with:
+//   • rssParser.js v2.4 (FAST + FULL modes)
+//   • handleFeed.js v1.302 (enrichment pipeline)
+//   • FeedCard v1.400
 //
-// Improvements in v1.206:
-//   ✓ FIXED: title was incorrectly hardcoded ("entry.title")
-//   ✓ Description never falls back to title
-//   ✓ Blank description allowed
-//   ✓ Auto-summary when possible
-//   ✓ Image extraction hardened (CDATA + HTML)
-//   ✓ Debug logging for missing summaries
+// Improvements in v1.300:
+//   ✓ FAST‑mode safe (raw RSS items won't break normalization)
+//   ✓ Hardened HTML stripping (CDATA, tags, whitespace)
+//   ✓ More resilient image extraction
+//   ✓ More resilient description extraction
+//   ✓ Better URL extraction (handles objects + arrays)
+//   ✓ Better date extraction
+//   ✓ Cleaner fallback behavior
 //
 // ------------------------------------------------------------
+
+
+// ------------------------------------------------------------
+// stripCdata(html)
+// ------------------------------------------------------------
+function stripCdata(html) {
+  return typeof html === "string"
+    ? html.replace(/<!\[CDATA\[|\]\]>/g, "")  : "";
+}
+
+
+// ------------------------------------------------------------
+// stripHtml(html)
+// ------------------------------------------------------------
+function stripHtml(html) {
+  if (typeof html !== "string") return "";
+  return stripCdata(html)
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 
 // ------------------------------------------------------------
 // extractImage(entry)
 // ------------------------------------------------------------
 function extractImage(entry = {}) {
-  const stripCdata = (html) =>
-    typeof html === "string"
-      ? html.replace(/<!\[CDATA\[|\]\]>/g, "")
-      : "";
-
   const matchImg = (html) => {
     if (typeof html !== "string") return null;
     const cleaned = stripCdata(html);
 
-    // 1. Standard <img src="">
+    // <img src="">
     let match = cleaned.match(/<img[^>]+src="([^">]+)"/i);
     if (match) return match[1];
 
-    // 2. <source srcset="">
+    // <source srcset="">
     match = cleaned.match(/<source[^>]+srcset="([^">]+)"/i);
     if (match) return match[1];
 
-    // 3. OpenGraph <meta property="og:image">
+    // <meta property="og:image">
     match = cleaned.match(/property="og:image"[^>]+content="([^">]+)"/i);
     if (match) return match[1];
 
@@ -66,21 +77,11 @@ function extractImage(entry = {}) {
   };
 
   return (
-    // 1. enclosure
     entry.enclosure?.url ||
-
-    // 2. media:content (object or array)
     getFirst(entry["media:content"]) ||
-
-    // 3. media:thumbnail (object or array)
     getFirst(entry["media:thumbnail"]) ||
-
-    // 4. <img> inside description
     matchImg(entry.description) ||
-
-    // 5. <img> inside content:encoded
     matchImg(entry["content:encoded"]) ||
-
     null
   );
 }
@@ -90,7 +91,14 @@ function extractImage(entry = {}) {
 // extractUrl(entry)
 // ------------------------------------------------------------
 function extractUrl(entry = {}) {
-  return entry.link || entry.url || entry.guid || "#";
+  if (typeof entry.link === "string") return entry.link;
+  if (typeof entry.url === "string") return entry.url;
+  if (typeof entry.guid === "string") return entry.guid;
+
+  // Some feeds use objects for link
+  if (entry.link?.href) return entry.link.href;
+
+  return "#";
 }
 
 
@@ -101,16 +109,10 @@ function generateSummaryFromContent(entry = {}) {
   const html =
     entry["content:encoded"] ||
     entry.description ||
+    entry.summary ||
     "";
 
-  if (typeof html !== "string") return "";
-
-  const text = html
-    .replace(/<!\[CDATA\[|\]\]>/g, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
+  const text = stripHtml(html);
   if (!text) return "";
 
   const sentences = text.split(/(?<=[.!?])\s+/);
@@ -130,20 +132,13 @@ function extractDescription(entry = {}) {
     entry["content:encoded"] ||
     "";
 
-  // If raw is empty → try auto-summary
   if (typeof raw !== "string" || raw.trim() === "") {
     return generateSummaryFromContent(entry) || "";
   }
 
-  // Strip HTML
-  const cleaned = raw
-    .replace(/<!\[CDATA\[|\]\]>/g, "")
-    .replace(/<[^>]+>/g, "")
-    .trim();
-
+  const cleaned = stripHtml(raw);
   if (cleaned.length > 0) return cleaned;
 
-  // Final fallback
   return generateSummaryFromContent(entry) || "";
 }
 
