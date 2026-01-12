@@ -1,52 +1,59 @@
 // ------------------------------------------------------------
-// LoginComponent.jsx — v1.2.0.7 (Clean + Working)
+// LoginComponent.jsx — v1.2.0.8 (Bug‑Free + Clean)
 // ------------------------------------------------------------
 
 import { Box, Button } from "@mui/material";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../../context/AuthContext";
+import { BannerThemes } from "../../data/bannerThemes";
 
-import Header from "../layouts/Header";
+import UserHeader from "../layouts/UserHeader";
+
+// FIX: Static import for image (require() breaks in Vite/Webpack 5)
+import loginBanner from "../../images/bg/ksBanner08.jpeg";
 
 export default function LoginComponent() {
-  const auth = useAuth();
+  const { loginGoogle, loginApple, loginGuest, authType } = useAuth();
 
   // GOOGLE LOGIN
   const handleGoogleSuccess = () => {
-    auth.loginGoogle({ email: "googleUser" });
+    loginGoogle({ email: "googleUser" });
   };
 
   const handleGoogleError = () => {
     alert("Google Login Failed");
   };
 
-  // APPLE LOGIN (placeholder)
+  // APPLE LOGIN
   const handleAppleLogin = () => {
-    auth.loginApple({ email: "appleUser" });
+    loginApple({ email: "appleUser" });
   };
 
   // GUEST LOGIN
   const handleGuestLogin = () => {
-    console.log("Guest login clicked");
-    auth.loginGuest();
+    loginGuest();
   };
+
+  const theme = BannerThemes[authType] || BannerThemes.default;
 
   return (
     <>
-      <Header sx={{ m: 0, p: 0 }} />
+      {/* FIX: UserHeader does NOT accept sx props */}
+      <UserHeader />
 
       <Box
         sx={{
-          pt: "20px",
+          pt: 10,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           width: "100%",
         }}
       >
+        {/* FIX: Static import instead of require() */}
         <Box
           component="img"
-          src={require("../../images/bg/ksBanner08.jpeg")}
+          src={loginBanner}
           alt="Login Banner"
           sx={{
             width: "420px",
@@ -81,10 +88,12 @@ export default function LoginComponent() {
           <Button
             type="button"
             variant="contained"
-            color="secondary"
             fullWidth
             onClick={handleAppleLogin}
-            sx={{ mt: 1 }}
+            sx={{
+              mt: 1,
+              background: theme.gradient,
+            }}
           >
             Sign in with Apple
           </Button>

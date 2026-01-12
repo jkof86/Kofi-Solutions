@@ -1,32 +1,24 @@
 // ------------------------------------------------------------
-// HeaderShell.jsx — v1.2.0.5 (Auth‑Safe, No Alerts)
+// UserHeader.jsx — v1.1 (Sticky + Logo Left + Center Nav)
 // ------------------------------------------------------------
 
-import {
-    AppBar,
-    Toolbar,
-    Box,
-    Typography,
-    Stack,
-    Drawer,
-    Tooltip,
-    Chip
-} from "@mui/material";
-
+import { AppBar, Toolbar, Box, Stack, Tooltip } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
-
+import { useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
-import logo from "../../images/bg/ksBanner06.jpeg";
+import ContactSupportIcon from "@mui/icons-material/ContactSupport";
+import { BannerThemes } from "../../data/bannerThemes";
 
-export default function HeaderShell({ onHeightChange, activeCategory }) {
-    const [isHealthOpen, setIsHealthOpen] = useState(false);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
+export default function UserHeader({ onHeightChange = () => { } }) {
     const navigate = useNavigate();
     const ref = useRef(null);
 
     const { isLoggedIn, authType, user, logout } = useAuth();
+
+    // Provides access to BannerThemes
+    // theme.gradient
+    // theme.image
+    // theme.textColor
 
     // Measure header height
     useEffect(() => {
@@ -39,155 +31,152 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
     }, [onHeightChange]);
 
     // Navigation
-    const goToRegister = () => navigate("/register");
-    const goToLogin = () => navigate("/login");
-    const goToHome = () => {
-        // if (type === "google"){navigate("/users/GoogleUser");}
-        // if (type === "apple"){navigate("/users/AppleUser");}
-        // if (type === "guest"){navigate("/home");}
-        navigate("/home");
-    }
+    const goTo = (path) => navigate(path);
 
-
-    // Clean handlers — NO alerts, NO auth checks
     const handleRegister = () => {
-        if (isLoggedIn) return alert("You are already logged in — logout first.");
-        goToRegister();
+        if (isLoggedIn) return alert("You are already LOGGED IN");
+        goTo("/register");
     };
 
-    function handleLogin() {
-        if (isLoggedIn) return alert("You are already logged in — logout first.");
-        goToLogin();
-    }
+    const handleLogin = () => {
+        if (isLoggedIn) return alert("You are already LOGGED IN");
+        goTo("/login");
+    };
 
-    function handleLogout() {
+    const handleLogout = () => {
+        if (!isLoggedIn) return alert("You are already LOGGED OUT");
         logout();
-    }
+    };
 
-    function sendEmail() {
+    const sendEmail = () => {
         const recipient = "admin@kofisolutions.com";
         window.location.href = `mailto:${recipient}?subject=Attention:&body=`;
-    }
+    };
+
+    const theme = BannerThemes[authType] || BannerThemes.default;
 
     return (
-        <AppBar position="static" color="default" elevation={1} sx={{ p: 0 }}>
+        <AppBar
+            position="fixed"
+            color="default"
+            elevation={1}
+            sx={{ p: 0, zIndex: 1000 }}
+            ref={ref}
+        >
             <Toolbar
                 disableGutters
                 sx={{
-                    px: 2,
-                    minHeight: 72,
-                    backgroundColor: "#f9f9f9",
+                    px: 0,                   // remove left/right padding
+                    minHeight: 56,
                     display: "flex",
-                    justifyContent: "space-between",
-                    flexWrap: "wrap",
-                    overflow: "hidden",
+                    alignItems: "center",
+                    background: theme.gradient,
+                    color: theme.textColor,
                 }}
             >
-                {/* LEFT: Logo */}
-                <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
-                    <img
-                        src={logo}
+
+                {/* LEFT SECTION — Logo */}
+                <Box
+                    sx={{
+                        flex: "0 0 180px",
+                        display: "flex",
+                        alignItems: "center",
+                        pl: 0,
+                        ml: 0,
+                    }}
+                >
+                    <Box
+                        component="img"
+                        // src={require("../../images/bg/ksLogo2.png")}
+                        src={theme.image}
                         alt="Kofi Solutions"
-                        style={{ height: 80, objectFit: "cover", display: "block" }}
+                        sx={{
+                            height: 56,
+                            objectFit: "contain",
+                            display: "block",
+                        }}
                     />
                 </Box>
 
-                {/* RIGHT: Nav + UserBadge + Contact */}
-                <Stack
-                    direction="row"
-                    spacing={2}
+                {/* CENTER SECTION — Navigation */}
+                <Box
                     sx={{
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        maxWidth: "100%",
-                        overflow: "hidden",
-                        height: 80,
+                        flex: 1,
+                        display: "flex",
+                        justifyContent: "center",
+                        gap: 3,
                     }}
                 >
                     {["Home", "Register", "Login", "Logout"].map((label) => (
                         <Box
                             key={label}
                             onClick={() => {
-                                if (label === "Home") goToHome();
+                                if (label === "Home") goTo("/home");
                                 else if (label === "Register") handleRegister();
                                 else if (label === "Login") handleLogin();
                                 else if (label === "Logout") handleLogout();
                             }}
                             sx={{
                                 cursor: "pointer",
-                                fontSize: "0.95rem",
-                                fontWeight: 500,
-                                color: "#1e3c72",
+                                fontSize: "0.9rem",
+                                fontWeight: 600,
+                                color: theme.textColor,
                                 textTransform: "uppercase",
                                 letterSpacing: "0.5px",
-                                padding: "6px 4px",
-                                display: "flex",
-                                alignItems: "center",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                maxWidth: 120,
+                                px: 1,
+                                py: 0.5,
                                 transition: "0.2s ease",
                                 "&:hover": {
-                                    color: "#3b78e2",
-                                    borderBottom: "2px solid #3b78e2"
-                                }
+                                    color: "rgba(255,255,255,0.6)",
+                                    borderBottom: "2px solid rgba(255,255,255,0.6)",
+                                },
                             }}
                         >
                             {label}
                         </Box>
                     ))}
+                </Box>
 
-                    {/* {isLoggedIn && (
-                        <Chip
-                            label={`${authType.toUpperCase()} • ${user?.email || ""}`}
-                            sx={{
-                                backgroundColor: "#e3f2fd",
-                                color: "#0d47a1",
-                                fontWeight: 600,
-                                borderRadius: "16px",
-                                px: 1.5,
-                                py: 0.5,
-                                fontSize: "0.8rem",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                maxWidth: 200,
-                            }}
-                        />
-                    )} */}
-
+                {/* RIGHT SECTION — Contact Button */}
+                <Box
+                    sx={{
+                        flex: "0 0 180px",
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        pr: 2,
+                    }}
+                >
                     <Tooltip title="Compose Email">
                         <Box
                             onClick={sendEmail}
                             sx={{
                                 cursor: "pointer",
-                                backgroundColor: "#3b78e2",
-                                color: "#fff",
+                                backgroundColor: "white",
+                                color: "#1976d2",
                                 px: 2.5,
                                 py: 1,
                                 borderRadius: "20px",
+                                border: "1px solid #1976d2",
                                 fontWeight: 600,
                                 fontSize: "0.9rem",
                                 textTransform: "uppercase",
                                 letterSpacing: "0.5px",
                                 display: "flex",
                                 alignItems: "center",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
                                 transition: "0.25s ease",
                                 "&:hover": {
-                                    backgroundColor: "#1e3c72"
-                                }
+                                    backgroundColor: "rgba(255, 255, 255, 0.77)",
+                                },
                             }}
                         >
+                            <Box sx={{ mr: 1 }}>
+                                <ContactSupportIcon />
+                            </Box>
                             Contact
                         </Box>
                     </Tooltip>
-                </Stack>
+                </Box>
             </Toolbar>
-        </AppBar>
-
+        </AppBar >
     );
 }

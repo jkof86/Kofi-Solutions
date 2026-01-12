@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// HeaderShell.jsx — v1.2.0.5 (Auth‑Safe, No Alerts)
+// HeaderShell.jsx — v1.2.0.6 (Drawer‑Safe, Auth‑Safe, No Alerts)
 // ------------------------------------------------------------
 
 import {
@@ -7,14 +7,14 @@ import {
   Toolbar,
   Box,
   Typography,
-  Stack,
   Drawer,
   Tooltip,
   Chip
 } from "@mui/material";
 
-import { Menu as MenuIcon } from "@mui/icons-material";
+import { ContactSupport, Menu as MenuIcon } from "@mui/icons-material";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import ContactSupportIcon from "@mui/icons-material/ContactSupport";
 
 import FeedHealthDashboard from "../newsfeed/FeedHealthDashboard";
 import NavDrawerMain from "../navigation/NavDrawerMain";
@@ -50,31 +50,25 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
   const goToLogin = () => navigate("/login");
   const goToHome = () => navigate("/home");
 
-  // Clean handlers — NO alerts, NO auth checks
   const handleRegister = () => {
-    if (isLoggedIn) return alert("You are already logged in — logout first.");
+    if (isLoggedIn) return;
     goToRegister();
   };
 
-  function handleLogin() {
-    if (isLoggedIn) return alert("You are already logged in — logout first.");
+  const handleLogin = () => {
+    if (isLoggedIn) return;
     goToLogin();
-  }
+  };
 
-  function handleLogout() {
-    logout();
-  }
+  const handleLogout = () => logout();
 
-  function sendEmail() {
+  const sendEmail = () => {
     const recipient = "admin@kofisolutions.com";
     window.location.href = `mailto:${recipient}?subject=Attention:&body=`;
-  }
+  };
 
   const handleUserChipClick = () => {
-    if (!isLoggedIn) {
-      navigate("/login");
-      return;
-    }
+    if (!isLoggedIn) return navigate("/login");
 
     switch (authType) {
       case "google":
@@ -91,15 +85,20 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
     }
   };
 
-
+  // ------------------------------------------------------------
+  // RETURN JSX (this was missing!)
+  // ------------------------------------------------------------
   return (
     <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000 }}>
       <Box ref={ref} sx={{ p: 0, m: 0 }}>
+
+        {/* Drawer Component */}
         <NavDrawerMain
           isDrawerOpen={isDrawerOpen}
           setIsDrawerOpen={setIsDrawerOpen}
         />
 
+        {/* TOP APP BAR */}
         <AppBar position="static" color="default" elevation={1} sx={{ p: 0 }}>
           <Toolbar
             disableGutters
@@ -108,26 +107,37 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
               minHeight: 72,
               backgroundColor: "#f9f9f9",
               display: "flex",
-              justifyContent: "space-between"
+              alignItems: "center",
             }}
           >
-            {/* LEFT: Logo */}
-            <Box sx={{ display: "flex", alignItems: "center", pl: 0 }}>
-              <img
+
+            {/* LEFT SECTION — Logo */}
+            <Box
+              sx={{
+                flex: "0 0 200px",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <Box
+                component="img"
                 src={logo}
                 alt="Kofi Solutions"
-                style={{ height: 80, objectFit: "cover", display: "block" }}
+                sx={{
+                  height: 80,
+                  objectFit: "contain",
+                  display: "block",
+                }}
               />
             </Box>
 
-            {/* RIGHT: Nav + UserBadge + Contact */}
+            {/* CENTER SECTION — Navigation */}
             <Box
               sx={{
+                flex: 1,
                 display: "flex",
-                alignItems: "center",
+                justifyContent: "center",
                 gap: 3,
-                pr: 3,
-                height: 80
               }}
             >
               {["Home", "Register", "Login", "Logout"].map((label) => (
@@ -142,43 +152,34 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                   sx={{
                     cursor: "pointer",
                     fontSize: "0.95rem",
-                    fontWeight: 500,
+                    fontWeight: 600,
                     color: "#1e3c72",
                     textTransform: "uppercase",
                     letterSpacing: "0.5px",
-                    padding: "6px 4px",
+                    px: 1,
+                    py: 0.5,
                     display: "flex",
                     alignItems: "center",
                     transition: "0.2s ease",
                     "&:hover": {
                       color: "#3b78e2",
-                      borderBottom: "2px solid #3b78e2"
-                    }
+                      borderBottom: "2px solid #3b78e2",
+                    },
                   }}
                 >
                   {label}
                 </Box>
               ))}
+            </Box>
 
-              <Chip
-                label={`${authType.toUpperCase()} • ${user?.email || ""}`}
-                onClick={handleUserChipClick}
-                sx={{
-                  backgroundColor: "#e3f2fd",
-                  color: "#0d47a1",
-                  fontWeight: 600,
-                  borderRadius: "16px",
-                  px: 1.5,
-                  py: 0.5,
-                  fontSize: "0.8rem",
-                  cursor: "pointer",
-                  "&:hover": {
-                    backgroundColor: "#bbdefb"
-                  }
-                }}
-              />
-
-
+            {/* RIGHT SECTION — Contact Button */}
+            <Box
+              sx={{
+                flex: "0 0 200px",
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
               <Tooltip title="Compose Email">
                 <Box
                   onClick={sendEmail}
@@ -197,14 +198,18 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                     alignItems: "center",
                     transition: "0.25s ease",
                     "&:hover": {
-                      backgroundColor: "#1e3c72"
-                    }
+                      backgroundColor: "#1e3c72",
+                    },
                   }}
                 >
+                  <Box sx={{ mr: 1 }}>
+                    <ContactSupportIcon />
+                  </Box>
                   Contact
                 </Box>
               </Tooltip>
             </Box>
+
           </Toolbar>
         </AppBar>
 
@@ -217,16 +222,32 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
             py: 2,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between"
+            justifyContent: "space-between",
           }}
         >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <MenuIcon
-              fontSize="large"
-              sx={{ cursor: "pointer" }}
-              onClick={() => setIsDrawerOpen(true)}
-            />
-          </Stack>
+          <MenuIcon
+            fontSize="large"
+            sx={{ cursor: "pointer" }}
+            onClick={() => setIsDrawerOpen(true)}
+          />
+
+          <Chip
+            label={user?.email || authType?.toUpperCase()}
+            onClick={handleUserChipClick}
+            sx={{
+              backgroundColor: "#e3f2fd",
+              color: "#0d47a1",
+              fontWeight: 600,
+              borderRadius: "16px",
+              px: 1.5,
+              py: 0.5,
+              fontSize: "0.8rem",
+              cursor: "pointer",
+              "&:hover": {
+                backgroundColor: "#bbdefb",
+              },
+            }}
+          />
 
           <Tooltip title="Feed & Market Health">
             <HealthAndSafetyIcon
@@ -235,6 +256,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
             />
           </Tooltip>
 
+          {/* HEALTH DRAWER */}
           <Drawer
             anchor="right"
             open={isHealthOpen}
@@ -244,8 +266,8 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                 width: "22rem",
                 padding: 2,
                 backgroundColor: "#fafafa",
-                zIndex: 2000
-              }
+                zIndex: 2000,
+              },
             }}
           >
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
@@ -256,7 +278,9 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
           </Drawer>
         </Box>
 
+        {/* TICKER BAR */}
         <TickerBar activeCategory={activeCategory} />
+
       </Box>
     </Box>
   );

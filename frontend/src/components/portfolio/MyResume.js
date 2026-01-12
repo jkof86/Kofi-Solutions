@@ -1,101 +1,110 @@
-import { useState, useRef, useEffect } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
-import { Button, Box } from '@mui/material';
-import pdfFile from '../../misc/jkof_resume.pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+import { useState, useRef, useEffect } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
+import { Box, Stack, Button, Typography } from "@mui/material";
+import pdfFile from "../../misc/jkof_resume.pdf";
 
-//we have to set up the pdf worker
-// const pdfWorker = "node_modules/pdfjs-dist/build/pdf.worker.mjs";
-// pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url,
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
 ).toString();
 
-export default function MyResume() {
+export default function MyPortfolio() {
+  const [numPages, setNumPages] = useState(null);
+  const [width, setWidth] = useState(null);
+  const [pageHeight, setPageHeight] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-    const [numPages, setNumPages] = useState();
-    const [pageNumber, setPageNumber] = useState(1);
+  const pdfWrapper = useRef(null);
 
-    const [width, setWidth] = useState(null);
-    const [height, setHeight] = useState(null);
+  // Track container width for responsive PDF scaling
+  useEffect(() => {
+    const updateSize = () => {
+      if (pdfWrapper.current) {
+        const rect = pdfWrapper.current.getBoundingClientRect();
+        setWidth(rect.width);
+      }
+    };
 
-    const pdfWrapper = useRef(null);
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
 
-    // we use this to dynamically update the pdf width on resize
-    useEffect(() => {
-        const updateSize = () => {
-            if (pdfWrapper.current) {
-                setWidth(pdfWrapper.current.getBoundingClientRect().width);
-                setHeight(pdfWrapper.current.getBoundingClientRect().height);
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
+  };
 
-            }
-        };
-
-        updateSize();
-        window.addEventListener('resize', updateSize);
-
-        return () => {
-            window.removeEventListener('resize', updateSize);
-        };
-    }, []);
-
-
-    function onDocumentLoadSuccess({ numPages }) {
-        setNumPages(numPages);
+  // Capture the height of the first rendered page
+  const onPageLoadSuccess = (page) => {
+    if (!pageHeight) {
+      setPageHeight(page.originalHeight);
     }
+  };
 
-    function previousPage() {
-        pageNumber <= 1 ? alert("You're at the beginning of the Document") : setPageNumber(pageNumber - 1);
-    }
+  return (
+    <Box
+      sx={{
+        width: "100%",
+        height: pageHeight ? pageHeight-50 : "100%",
+        maxHeight: "100%",
+        overflowY: "auto",
+        borderRadius: 2,
+        backgroundColor: "#fff",
+      }}
+    >
+      {/* 
+      // OPTIONAL PAGE NAVIGATION — KEEPING COMMENTED OUT AS REQUESTED
 
-    function nextPage() {
-        pageNumber >= numPages ? alert("You're at the end of the Document") : setPageNumber(pageNumber + 1);
-    }
+      <Stack
+        direction="row"
+        spacing={2}
+        alignItems="center"
+        justifyContent="center"
+        sx={{ p: 1, borderBottom: "1px solid #ddd" }}
+      >
+        <Button
+          variant="outlined"
+          size="small"
+          disabled={currentPage <= 1}
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+        >
+          Previous
+        </Button>
 
+        <Typography sx={{ fontSize: 14 }}>
+          Page {currentPage} of {numPages || "?"}
+        </Typography>
 
-    return (<>
-        {/*we add a scroll bar to deal with PDF document overflow*/}
-        <div ref={pdfWrapper} style={{ width: '100%', height: '100%', overflow: 'scroll' }}>
-            <p>
-                Page {pageNumber} of {numPages}
-            </p>
-            <Box>
-                <Button variant='contained' onClick={previousPage}
-                    sx={{ margin: ['10px'] }}>
-                    previous
-                </Button>
-                <Button variant='contained' onClick={nextPage}
-                    sx={{ margin: ['10px'] }}>
-                    Next
-                </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          disabled={!numPages || currentPage >= numPages}
+          onClick={() =>
+            setCurrentPage((p) => (numPages ? Math.min(numPages, p + 1) : p))
+          }
+        >
+          Next
+        </Button>
+      </Stack>
+      */}
 
-                <Document file={pdfFile} onLoadSuccess={onDocumentLoadSuccess}>
-                    <Page
-                        pageNumber={pageNumber}
-                        width={width}
-                        height={height}
-                    />
-
-                </Document>
-
-                <p>
-                Page {pageNumber} of {numPages}
-            </p>
-            <Box>
-                <Button variant='contained' onClick={previousPage}
-                    sx={{ margin: ['10px'] }}>
-                    previous
-                </Button>
-                <Button variant='contained' onClick={nextPage}
-                    sx={{ margin: ['10px'] }}>
-                    Next
-                </Button>
-                </Box>
-            </Box>
-            
-        </div>
-    </>);
+      <div ref={pdfWrapper} style={{ width: "100%", overflow: "hidden" }}>
+        <Document file={pdfFile} onLoadSuccess={onDocumentLoadSuccess}>
+          {Array.from(new Array(numPages || 0), (el, index) => (
+            <Page
+              key={`page_${index + 1}`}
+              pageNumber={index + 1}
+              width={width}
+              renderAnnotationLayer={false}
+              renderTextLayer={false}
+              onLoadSuccess={index === 0 ? onPageLoadSuccess : undefined}
+            />
+          ))}
+        </Document>
+      </div>
+    </Box>
+  );
 }

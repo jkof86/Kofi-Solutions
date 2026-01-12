@@ -1,96 +1,115 @@
-import {
-    Box, Button,
-    Grid, Card, CardActionArea,
-    CardMedia, CardContent, CardActions
-} from "@mui/material";
-import { Link } from 'react-router-dom';
+import { Box, Typography, Chip, Paper, Button, Container } from "@mui/material";
+import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { BannerThemes } from "../../data/bannerThemes";
+import UserHeader from "../layouts/UserHeader";
+import MainContainer from "../layouts/MainContainer";
+
+import MyResume from "./MyResume";
+import MyPortfolio from "./MyPortfolio";
+
+
+const cardLabels = ["Resume", "Portfolio", "Fitness", "Gaming"];
 
 export default function Professional() {
+  const { authType } = useAuth();
+  const [activeCard, setActiveCard] = useState("Resume");
+  const theme = BannerThemes[authType] || BannerThemes.default;
 
-    return (
-        <>
-            <center>
-                <Box padding={0} sx={{
-                    justifyContent: 'center',
-                    backgroundColor: 'white',
-                    borderRadius: '25px',
-                    border: '1px solid black',
-                    boxShadow: '0px 0px 2px 2px white',
-                    padding: '10px',
-                    margin: '20px',
-                    width: '90vw'
-                }}>
 
-                    <Grid container spacing={4} sx={{ justifyContent: 'center' }}>
+  // NEW: store header height
+  const [headerHeight, setHeaderHeight] = useState(0);
 
-                        {/*********************** CARD 1 ************************/}
+  return (
+    <>
+      {/* UserHeader reports its height dynamically */}
+      <UserHeader onHeightChange={setHeaderHeight} />
 
-                        <Grid item xs={12} md={6}>
-                            <Card sx={{
-                                minWidth: '40vw',
-                                borderRadius: '25px',
-                                padding: '5px',
-                                margin: '20px',
-                                textAlign: 'center',
-                            }}>
-                                <CardActionArea
-                                    component={Link}
-                                    to="https://www.youtube.com/@jkof86"
-                                    target="_blank"
-                                >
-                                    <CardContent></CardContent>
+      <MainContainer headerHeight={headerHeight}>
+        <Container maxWidth="xl" sx={{ mt: 2, mb: 6 }}>
 
-                                    <CardMedia
-                                        component="img"
-                                        alt="Jkof Gaming"
-                                        image={require("../../images/bg/jkofGamingBanner01.png")}
-                                        sx={{ borderRadius: '25px' }}
-                                    />
-                                </CardActionArea>
+          {/* Main content offset by header height */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              backgroundColor: theme.gradient,
+              color: "#fff",
+              px: 3,
+              py: 2,
+              borderRadius: 2,
+              boxShadow: 3,
+              mb: 3,
+            }}
+          >
+            <Typography variant="h5" sx={{ fontWeight: 600 }}>
+              Google User Dashboard
+            </Typography>
 
-                                <CardActions>
-                                    <Button size="small">Share</Button>
-                                    <Button size="small">Learn More</Button>
-                                </CardActions>
-                            </Card>
-                        </Grid>
+            <Box sx={{ flexGrow: 1 }} />
 
-                        {/*********************** CARD 2 ************************/}
+            <Chip
+              label={`v1.2.0.4`}
+              sx={{
+                backgroundColor: "#fff",
+                color: "#1976d2",
+                fontWeight: 600
+              }}
+            />
+          </Box>
 
-                        <Grid item xs={12} md={6}>
-                            <Card sx={{
-                                minWidth: '40vw',
-                                borderRadius: '25px',
-                                padding: '5px',
-                                margin: '20px',
-                                textAlign: 'center',
-                            }}>
-                                <CardActionArea
-                                    component={Link}
-                                    to="https://www.twitch.tv/"
-                                    target="_blank"
-                                >
-                                    <CardContent></CardContent>
+          {/* Two-column layout */}
+          <Box sx={{ display: "flex", gap: 3 }}>
+            {/* LEFT COLUMN — Cards */}
+            <Box sx={{ flex: "0 0 300px", display: "flex", flexDirection: "column", gap: 2 }}>
+              {cardLabels.map((label) => (
+                <Paper
+                  key={label}
+                  elevation={activeCard === label ? 6 : 2}
+                  sx={{
+                    p: 2,
+                    cursor: "pointer",
+                    backgroundColor: activeCard === label ? "#e3f2fd" : "#fff",
+                    border: activeCard === label ? "2px solid #1976d2" : "1px solid #ccc",
+                    transition: "0.2s ease",
+                  }}
+                  onClick={() => setActiveCard(label)}
+                >
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    {activeCard}
+                  </Typography>
+                </Paper>
+              ))}
+            </Box>
 
-                                    <CardMedia
-                                        component="img"
-                                        alt="Second Card"
-                                        image={require("../../images/bg/jkofGamingBanner01.png")}
-                                        sx={{ borderRadius: '25px' }}
-                                    />
-                                </CardActionArea>
+            {/* RIGHT COLUMN — Dynamic Content */}
+            <Box
+              sx={{
+                flex: "1 1 auto",
+                minHeight: 240,
+                p: 3,
+                borderRadius: 2,
+                backgroundColor: "#f5f5f5",
+                border: "1px solid #ddd",
+                boxShadow: 2,
+              }}
+            >
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                {activeCard} Panel
+              </Typography>
 
-                                <CardActions>
-                                    <Button size="small">Share</Button>
-                                    <Button size="small">Learn More</Button>
-                                </CardActions>
-                            </Card>
-                        </Grid>
+              <Typography variant="body1" sx={{ opacity: 0.8 }}>
+                This is a placeholder for {activeCard.toLowerCase()}‑specific content.
+              </Typography>
 
-                    </Grid>
-
-                </Box>
-            </center>
-        </>
-    );
+              <Button variant="outlined" sx={{ mt: 3 }}>
+                Action for {activeCard}
+              </Button>
+            </Box>
+          </Box>
+        </Container>
+      </MainContainer>
+    </>
+  );
 }

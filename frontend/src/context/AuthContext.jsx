@@ -58,9 +58,10 @@ export function AuthProvider({ children }) {
     setAuthType(type);
     setUser(userObj);
 
-    if (type === "google"){navigate("/users/GoogleUser");}
-    if (type === "apple"){navigate("/users/AppleUser");}
-    if (type === "guest"){navigate("/GuestUser");}
+    const {email} = userObj; 
+    if (type === "google"){alert(`Welcome back ${email}`); navigate("/users/GoogleUser");}
+    if (type === "apple"){alert(`Welcome back ${email}`); navigate("/users/AppleUser");}
+    if (type === "guest"){alert(`Welcome ${email}`); navigate("/users/GuestUser");}
 
     // navigate("/home");
   }
@@ -77,7 +78,7 @@ export function AuthProvider({ children }) {
   }
 
   function loginGuest() {
-    persistAuth("guest", { email: "guest@system" });
+    persistAuth("guest", { email: "guest@system" || "Guest" });
   }
 
   // ------------------------------------------------------------
@@ -92,6 +93,7 @@ export function AuthProvider({ children }) {
     setAuthType(null);
     setUser(null);
 
+    alert("LOGGED OUT successfully")
     navigate("/login");
   }
 
@@ -101,7 +103,7 @@ export function AuthProvider({ children }) {
         isLoggedIn,
         authType,
         user,
-        loading,        // <-- NEW
+        loading,       
         loginGoogle,
         loginApple,
         loginGuest,

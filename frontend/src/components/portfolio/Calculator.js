@@ -166,225 +166,215 @@ export default function Calculator() {
     /***************************************************************************/
 
     return (<>
-        <center>
-            <Box padding={0} sx={{
-                justifyContent: 'center',
-                backgroundColor: 'white',
-                borderRadius: '25px',
-                border: '1px solid black',
-                boxShadow: '0px 0px 2px 2px white',
-                padding: '10px',
-                margin: '20px',
-                width: '75vw'
-            }}>
+        <Box sx={{ display: "flex", 
+            flexDirection: "column", 
+            gap: 3, overflow: "hidden" }}>
+                
+            <center>
+                <img alt="Macronutrients" src={require("../../images/macros.jpg")} width={'50%'} height={'50%'} />
+            </center>
+            {/* for each TextField, we use onChange to store the values */}
 
-                <center>
-                    <img alt="Macronutrients" src={require("../../images/macros.jpg")} width={'50%'} height={'50%'} />
-                </center>
+            <Grid container spacing={2}>
+                <Grid item xs={3}
+                    sx={{ alignContent: 'center' }}>
+                    <TextField
+                        required={true}
+                        type="number"
+                        label="Calorie Limit"
+                        variant="standard"
+                        // ref={calorieLimit}
+                        name="calorieLimit"
+                        value={state.calorieLimit}
+                        onChange={handleChange}
+                        // onInput={e => setCalorieLimit(e.target.value)}
+                        // onSubmit={handleChange}
+                        sx={{
+                            color: 'white',
+                            margin: '5px'
+                        }} InputProps={{
+                            endAdornment: <InputAdornment position='end'>
+                                kcal
+                            </InputAdornment>,
+                        }} />
 
-                {/* for each TextField, we use onChange to store the values */}
+                    <TextField
+                        required={true}
+                        type="number"
+                        label="Carb Percentage"
+                        variant="standard"
+                        // ref={carbPercent}
+                        name="carbPercent"
+                        value={state.carbPercent}
+                        onChange={handleChange}
+                        // onSubmit={handleChange}
+                        sx={{
+                            margin: '5px'
+                        }} InputProps={{
+                            endAdornment: <InputAdornment position='end'>
+                                %
+                            </InputAdornment>,
+                        }} />
 
-                <Grid container spacing={2}>
-                    <Grid item xs={3}
-                        sx={{ alignContent: 'center' }}>
-                        <TextField
-                            required={true}
-                            type="number"
-                            label="Calorie Limit"
-                            variant="standard"
-                            // ref={calorieLimit}
-                            name="calorieLimit"
-                            value={state.calorieLimit}
-                            onChange={handleChange}
-                            // onInput={e => setCalorieLimit(e.target.value)}
-                            // onSubmit={handleChange}
-                            sx={{
-                                color: 'white',
-                                margin: '5px'
-                            }} InputProps={{
-                                endAdornment: <InputAdornment position='end'>
-                                    kcal
-                                </InputAdornment>,
-                            }} />
+                    <TextField
+                        required={true}
+                        type="number"
+                        label="Protein Percentage"
+                        variant="standard"
+                        // ref={proteinPercent}
+                        name="proteinPercent"
+                        value={state.proteinPercent}
+                        onChange={handleChange}
+                        // onSubmit={handleChange}
+                        sx={{
+                            margin: '5px'
+                        }} InputProps={{
+                            endAdornment: <InputAdornment position='end'>
+                                %
+                            </InputAdornment>,
+                        }} />
 
-                        <TextField
-                            required={true}
-                            type="number"
-                            label="Carb Percentage"
-                            variant="standard"
-                            // ref={carbPercent}
-                            name="carbPercent"
-                            value={state.carbPercent}
-                            onChange={handleChange}
-                            // onSubmit={handleChange}
-                            sx={{
-                                margin: '5px'
-                            }} InputProps={{
-                                endAdornment: <InputAdornment position='end'>
-                                    %
-                                </InputAdornment>,
-                            }} />
+                    <TextField
+                        required={true}
+                        type="number"
+                        label="Fat Percentage"
+                        variant="standard"
+                        // ref={fatPercent}
+                        name="fatPercent"
+                        value={state.fatPercent}
+                        onChange={handleChange}
+                        // onSubmit={handleChange}
+                        sx={{
+                            margin: '5px'
+                        }} InputProps={{
+                            endAdornment: <InputAdornment position='end'>
+                                %
+                            </InputAdornment>,
+                        }} />
 
-                        <TextField
-                            required={true}
-                            type="number"
-                            label="Protein Percentage"
-                            variant="standard"
-                            // ref={proteinPercent}
-                            name="proteinPercent"
-                            value={state.proteinPercent}
-                            onChange={handleChange}
-                            // onSubmit={handleChange}
-                            sx={{
-                                margin: '5px'
-                            }} InputProps={{
-                                endAdornment: <InputAdornment position='end'>
-                                    %
-                                </InputAdornment>,
-                            }} />
+                    <Divider sx={{
+                        marginTop: '10px',
+                        marginBottom: '10px',
+                        borderBottomWidth: '2px',
+                        borderColor: 'black'
+                    }} />
 
-                        <TextField
-                            required={true}
-                            type="number"
-                            label="Fat Percentage"
-                            variant="standard"
-                            // ref={fatPercent}
-                            name="fatPercent"
-                            value={state.fatPercent}
-                            onChange={handleChange}
-                            // onSubmit={handleChange}
-                            sx={{
-                                margin: '5px'
-                            }} InputProps={{
-                                endAdornment: <InputAdornment position='end'>
-                                    %
-                                </InputAdornment>,
-                            }} />
+                    <Box textAlign={'center'}>
+                        <Button variant="contained"
+                            id="calculateButton"
+                            type="button"
+                            onClick={handleClick}
+                        >
+                            Calculate
+                        </Button>
 
                         <Divider sx={{
                             marginTop: '10px',
                             marginBottom: '10px',
-                            borderBottomWidth: '2px',
-                            borderColor: 'black'
+                            borderBottomWidth: '1px',
+                            borderColor: 'gray'
                         }} />
 
-                        <Box textAlign={'center'}>
-                            <Button variant="contained"
-                                id="calculateButton"
-                                type="button"
-                                onClick={handleClick}
-                            >
-                                Calculate
-                            </Button>
+                        <Button variant="contained"
+                            id="clearButton"
+                            type="button"
+                            onClick={resetAll}
+                        >
+                            Clear
+                        </Button>
+                    </Box>
 
-                            <Divider sx={{
-                                marginTop: '10px',
-                                marginBottom: '10px',
-                                borderBottomWidth: '1px',
-                                borderColor: 'gray'
-                            }} />
+                </Grid>
 
-                            <Button variant="contained"
-                                id="clearButton"
-                                type="button"
-                                onClick={resetAll}
-                            >
-                                Clear
-                            </Button>
-                        </Box>
-
-                    </Grid>
-
-                    <Grid item xs={6}>
-                        <Card sx={{
-                            // border: '2px solid black',
-                            maxWidth: '100%',
-                            borderRadius: '25px',
-                            margin: '10px',
-                            padding: '10px',
-                            textAlign: 'center',
-                        }}>
-                            <CardActionArea>
-                                {/* <CardMedia
+                <Grid item xs={6}>
+                    <Card sx={{
+                        // border: '2px solid black',
+                        maxWidth: '100%',
+                        borderRadius: '25px',
+                        margin: '10px',
+                        padding: '10px',
+                        textAlign: 'center',
+                    }}>
+                        <CardActionArea>
+                            {/* <CardMedia
                                     component="img"
                                     alt="Macronutrient Image"
                                     image={require("../images/macros.jpg")}
                                 >
                                 </CardMedia> */}
-                                {/* <CardMedia sx={{ width: '50%', border: '1px solid black' }}> */}
-                                {/* </CardMedia> */}
-                                <CardContent >
-                                    <Typography gutterBottom
-                                        variant="h5"
-                                        component="div"
-                                        sx={{ fontWeight: 'bold' }}>
-                                        Macronutrient Results
-                                    </Typography>
-                                    <Table sx={{ border: '1px solid black' }}>
-                                        <TableHead sx={{
+                            {/* <CardMedia sx={{ width: '50%', border: '1px solid black' }}> */}
+                            {/* </CardMedia> */}
+                            <CardContent >
+                                <Typography gutterBottom
+                                    variant="h5"
+                                    component="div"
+                                    sx={{ fontWeight: 'bold' }}>
+                                    Macronutrient Results
+                                </Typography>
+                                <Table sx={{ border: '1px solid black' }}>
+                                    <TableHead sx={{
+                                        border: '1px solid black',
+                                        backgroundColor: 'lightgrey',
+                                    }}>
+                                        <TableCell sx={{
                                             border: '1px solid black',
-                                            backgroundColor: 'lightgrey',
+                                            fontWeight: 'bold',
+                                            textAlign: 'center',
+                                            backgroundColor: 'rgba(0, 0, 255, 0.5)'
                                         }}>
-                                            <TableCell sx={{
-                                                border: '1px solid black',
-                                                fontWeight: 'bold',
-                                                textAlign: 'center',
-                                                backgroundColor: 'rgba(0, 0, 255, 0.5)'
-                                            }}>
-                                                Carbs
-                                            </TableCell>
-                                            <TableCell sx={{
-                                                border: '1px solid black',
-                                                fontWeight: 'bold',
-                                                textAlign: 'center',
-                                                backgroundColor: 'rgba(255, 0, 0, 0.5)'
-                                            }}>
-                                                Protein
-                                            </TableCell>
-                                            <TableCell sx={{
-                                                border: '1px solid black',
-                                                fontWeight: 'bold',
-                                                textAlign: 'center',
-                                                backgroundColor: 'rgba(0, 255, 0, 0.5)'
-                                            }}>
-                                                Fats
-                                            </TableCell>
-                                        </TableHead>
+                                            Carbs
+                                        </TableCell>
+                                        <TableCell sx={{
+                                            border: '1px solid black',
+                                            fontWeight: 'bold',
+                                            textAlign: 'center',
+                                            backgroundColor: 'rgba(255, 0, 0, 0.5)'
+                                        }}>
+                                            Protein
+                                        </TableCell>
+                                        <TableCell sx={{
+                                            border: '1px solid black',
+                                            fontWeight: 'bold',
+                                            textAlign: 'center',
+                                            backgroundColor: 'rgba(0, 255, 0, 0.5)'
+                                        }}>
+                                            Fats
+                                        </TableCell>
+                                    </TableHead>
 
-                                        {/* by using state values we can update the results automatically */}
-                                        <TableBody>
-                                            <TableCell sx={{ border: '1px solid black', textAlign: 'center' }}>
-                                                {display.showCarbs.toFixed(2)} grams
-                                            </TableCell>
-                                            <TableCell sx={{ border: '1px solid black', textAlign: 'center' }}>
-                                                {display.showProtein.toFixed(2)} grams
-                                            </TableCell>
-                                            <TableCell sx={{ border: '1px solid black', textAlign: 'center' }}>
-                                                {display.showFat.toFixed(2)} grams
-                                            </TableCell>
-                                        </TableBody>
-                                    </Table>
-                                </CardContent>
+                                    {/* by using state values we can update the results automatically */}
+                                    <TableBody>
+                                        <TableCell sx={{ border: '1px solid black', textAlign: 'center' }}>
+                                            {display.showCarbs.toFixed(2)} grams
+                                        </TableCell>
+                                        <TableCell sx={{ border: '1px solid black', textAlign: 'center' }}>
+                                            {display.showProtein.toFixed(2)} grams
+                                        </TableCell>
+                                        <TableCell sx={{ border: '1px solid black', textAlign: 'center' }}>
+                                            {display.showFat.toFixed(2)} grams
+                                        </TableCell>
+                                    </TableBody>
+                                </Table>
+                            </CardContent>
 
-                            </CardActionArea>
+                        </CardActionArea>
 
-                            <CardActions>
-                                <Button size="small">Share</Button>
-                                <Button size="small">Learn More</Button>
-                            </CardActions>
+                        <CardActions>
+                            <Button size="small">Share</Button>
+                            <Button size="small">Learn More</Button>
+                        </CardActions>
 
-                        </Card >
-                    </Grid>
-                    <Grid item xs={3} alignContent={'center'}>
-                        {/*Here we pass in our values to the PieChart component*/}
-                        <PieChart
-                            carb={state.carbPercent}
-                            protein={state.proteinPercent}
-                            fat={state.fatPercent}
-                        />
-                    </Grid>
+                    </Card >
                 </Grid>
-            </Box>
-        </center>
+                <Grid item xs={3} alignContent={'center'}>
+                    {/*Here we pass in our values to the PieChart component*/}
+                    <PieChart
+                        carb={state.carbPercent}
+                        protein={state.proteinPercent}
+                        fat={state.fatPercent}
+                    />
+                </Grid>
+            </Grid>
+        </Box>
     </>);
 }

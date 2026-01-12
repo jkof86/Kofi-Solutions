@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TextField, Button, Box, Typography } from '@mui/material';
 import { useNavigate } from "react-router-dom";
 
-import Header from '../layouts/Header';
+import UserHeader from '../layouts/UserHeader';
 
 export default function RegisterComponent() {
 
@@ -43,12 +43,12 @@ export default function RegisterComponent() {
   return (
     <>
       {/* Fixed header */}
-      <Header sx={{ m: 0, p: 0 }} />
+      <UserHeader sx={{ m: 0, p: 0 }} />
 
       {/* Main wrapper */}
       <Box
         sx={{
-          pt: "20px",
+          pt: 10,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -86,10 +86,6 @@ export default function RegisterComponent() {
             boxShadow: 3,
           }}
         >
-          <Typography variant="h6" textAlign="center">
-            Register
-          </Typography>
-
           <TextField
             label="Email"
             name="email"
@@ -120,9 +116,9 @@ export default function RegisterComponent() {
           </Button>
 
           <Typography variant="caption" sx={{ mt: 1 }}>
-            * This is a temporary registration system.  
-            * Credentials are stored unencrypted in localStorage.  
-            * Do NOT use real passwords.
+            * This is a temporary registration system. <br /> 
+            * Credentials are stored unencrypted in localStorage. <br /> 
+            * DO NOT use real passwords.
           </Typography>
         </Box>
       </Box>

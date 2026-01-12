@@ -5,13 +5,8 @@ import {
 } from "@mui/material";
 import { Link } from 'react-router-dom';
 
-import banner from '../../images/bg/ksAvatar01.jpg';
-
 export default function ContactProfessional() {
-
     return (<>
-        
-        {/********************************************************/}
         <center>
             <Box padding={0} sx={{
                 justifyContent: 'center',
@@ -23,24 +18,6 @@ export default function ContactProfessional() {
                 margin: '20px',
                 width: '90vw'
             }}>
-                <center>
-                    {/* <SlideShowProfessional /> */}
-                    <Box sx={{
-                              justifyContent: 'center',
-                              backgroundImage: `url(${banner})`,
-                              backgroundSize: 'cover',
-                              backgroundRepeat: 'no-repeat',
-                              backgroundPosition: 'center',
-                              backgroundColor: 'white',
-                              borderRadius: '25px',
-                              border: '1px solid black',
-                              boxShadow: '0px 0px 8px 2px white',
-                              height: '874px',
-                              width: '655px'
-                            }}
-                            ></Box>
-                </center>
-
                 <Grid container spacing={4} sx={{ justifyContent: 'center' }}>
 
                     <Grid item xs={2} >
@@ -114,12 +91,9 @@ export default function ContactProfessional() {
 
                     {/********************************************************/}
 
-                   
                 </Grid>
 
             </Box>
         </center>
-
-        {/* </Container > */}
     </>);
 }
