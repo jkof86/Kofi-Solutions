@@ -17,7 +17,7 @@ export const BannerThemes = {
         textColor: "#204b29"
     },
     guest: {
-        gradient: "linear-gradient(to right, #eceef1, #1976d2)",
+        gradient: "linear-gradient(to right, #1976d2,  #eceef1)",
         background: "#ffffff",
         image: guestLogo,
         textColor: "#000000"

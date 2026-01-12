@@ -165,7 +165,7 @@ export default function UserHeader({ onHeightChange = () => { } }) {
                                 alignItems: "center",
                                 transition: "0.25s ease",
                                 "&:hover": {
-                                    backgroundColor: "rgba(255, 255, 255, 0.77)",
+                                    backgroundColor: "rgba(179, 176, 176, 0.77)",
                                 },
                             }}
                         >

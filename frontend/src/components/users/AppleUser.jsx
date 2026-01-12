@@ -8,18 +8,23 @@ import MyResume from "../portfolio/MyResume";
 import MyPortfolio from "../portfolio/MyPortfolio";
 import Calculator from "../portfolio/Calculator";
 import { BannerThemes } from "../../data/bannerThemes";
+import { useNavigate } from "react-router-dom";
 
-const cardLabels = ["Resume", "Portfolio", "Gaming", "WordPress", "Fitness / Nutrition"];
+const cardLabels = ["News Feed", "Resume", "Portfolio", "Gaming", "WordPress", "Fitness / Nutrition"];
 
 export default function AppleUser() {
-  const { authType } = useAuth();
-  const [activeCard, setActiveCard] = useState("Resume");
+  const { authType, user } = useAuth();
+  const [activeCard, setActiveCard] = useState(null);
+  const nav = useNavigate();
 
   // Header height from UserHeader
   const [headerHeight, setHeaderHeight] = useState(0);
 
   function renderContent() {
     switch (activeCard) {
+      case "News Feed":
+        return nav("/home");
+
       case "Resume":
         return <MyResume />;
 
@@ -35,7 +40,7 @@ export default function AppleUser() {
       default:
         return (
           <Typography variant="body1" sx={{ opacity: 0.8 }}>
-            This is a placeholder for {activeCard.toLowerCase()}‑specific content.
+            Welcome {user?.email}
           </Typography>
         );
     }
@@ -83,7 +88,9 @@ export default function AppleUser() {
               mb: 3,
             }}
           >
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>
+            <Typography variant="h4" sx={{ fontWeight: 600,
+              
+             }}>
               Apple User Dashboard
             </Typography>
 
@@ -93,6 +100,7 @@ export default function AppleUser() {
               label="v1.2.0.4"
               sx={{
                 backgroundColor: "#fff",
+                border: "1px solid #1976d2",
                 color: "#1976d2",
                 fontWeight: 600,
               }}
@@ -116,7 +124,7 @@ export default function AppleUser() {
                   }}
                   onClick={() => setActiveCard(label)}
                 >
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                  <Typography variant="overline" sx={{ fontWeight: 600 }}>
                     {label}
                   </Typography>
                 </Paper>
@@ -127,17 +135,18 @@ export default function AppleUser() {
             <Box
               sx={{
                 flex: "1 1 auto",
+                maxWidth: "100%",           // ✅ prevents overflow beyond container
                 minHeight: 240,
                 p: 3,
                 borderRadius: 2,
                 backgroundColor: "#f5f5f5",
                 border: "1px solid #ddd",
                 boxShadow: 2,
+                overflowWrap: "break-word", // ✅ wraps long text
+                wordBreak: "break-word",    // ✅ breaks long strings
+                overflow: "hidden",         // ✅ hides accidental overflow
               }}
             >
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                {activeCard} Panel
-              </Typography>
 
               {/* Dynamic content rendered */}
               {renderContent()}
