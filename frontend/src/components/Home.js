@@ -73,14 +73,14 @@ export default function Home() {
       {/* --------------------------------------------------------
          HeaderShell controls the top navigation + health drawer.
          It reports its height so MainContainer can offset content.
-      --------------------------------------------------------- */}
+      ---------------------------------------------------------- */}
       <HeaderShell
         onHeightChange={setHeaderHeight}
         isHealthOpen={isHealthOpen}
         setIsHealthOpen={setIsHealthOpen}
         activeCategory={activeCategory}
       />
-
+ 
       {/* --------------------------------------------------------
          Main page container — applies header offset + full height.
          All page content MUST live inside this container.
@@ -106,6 +106,7 @@ export default function Home() {
             }}
           >
             <RssFeedIcon fontSize="large" />
+            
 
             <Typography variant="h5" sx={{ fontWeight: 600 }}>
               News Feed (RSS)
