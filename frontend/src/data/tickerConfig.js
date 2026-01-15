@@ -1,89 +1,49 @@
 // ------------------------------------------------------------
-// tickerConfig.js — Kofi Solutions v1.300
+// tickerConfig.js — v1.301 (Fully Normalized, Lowercase Everywhere)
 // ------------------------------------------------------------
-// Fully updated to support:
-//   ✓ Crypto (Yahoo format: BTC-USD, ETH-USD, etc.)
-//   ✓ Tech stocks
-//   ✓ Finance ETFs
-//   ✓ New additions: DOGE, XRP, ZEC, GOOG, NVDA, TSLA, META,
-//                    IBIT, ARKG, BLOK
+// This version ensures 100% alignment with backend normalized keys.
+// All symbols are lowercase, Yahoo-style crypto included.
 // ------------------------------------------------------------
 
-
 // ------------------------------------------------------------
-// 1. Category → Symbols (UI-facing, Yahoo-compatible)
+// 1. Category → Symbols (all lowercase, normalized)
 // ------------------------------------------------------------
-// IMPORTANT:
-// Crypto *must* use Yahoo symbols (BTC-USD, ETH-USD, etc.)
-// Stocks/ETFs use uppercase tickers as usual.
-// ------------------------------------------------------------
-
 export const CATEGORY_SYMBOLS = {
   crypto: [
-    "BTC-USD",
-    "ETH-USD",
-    "SOL-USD",
-    "DOGE-USD",
-    "XRP-USD",
-    "ZEC-USD"
+    "btc-usd",
+    "eth-usd",
+    "sol-usd",
+    "doge-usd",
+    "xrp-usd",
+    "zec-usd"
   ],
 
   tech: [
-    "AAPL",
-    "MSFT",
-    "AMZN",
-    "GOOG",
-    "NVDA",
-    "TSLA",
-    "META"
+    "aapl",
+    "msft",
+    "amzn",
+    "goog",
+    "nvda",
+    "tsla",
+    "meta"
   ],
 
   finance: [
-    "SPY",
-    "VTI",
-    "VOO",
-    "IBIT",
-    "ARKG",
-    "BLOK"
+    "spy",
+    "vti",
+    "voo",
+    "ibit",
+    "arkg",
+    "blok"
   ]
 };
 
+// ------------------------------------------------------------
+// 2. Flatten + dedupe (all lowercase)
+// ------------------------------------------------------------
 export const ALL_MARKET_SYMBOLS = [
-  // Crypto (Yahoo format)
-  "BTC-USD",
-  "ETH-USD",
-  "SOL-USD",
-  "DOGE-USD",
-  "XRP-USD",
-  "ZEC-USD",
-
-  // Tech
-  "AAPL",
-  "MSFT",
-  "AMZN",
-  "GOOG",
-  "NVDA",
-  "TSLA",
-  "META",
-
-  // Finance / ETFs
-  "SPY",
-  "VTI",
-  "VOO",
-  "IBIT",
-  "ARKG",
-  "BLOK"
-];
-
-
-
-// ------------------------------------------------------------
-// 2. Flatten + dedupe
-// ------------------------------------------------------------
-export const TICKER_SYMBOLS = [
   ...new Set(Object.values(CATEGORY_SYMBOLS).flat())
 ];
-
 
 // ------------------------------------------------------------
 // 3. Category Colors
@@ -94,60 +54,42 @@ export const CATEGORY_COLORS = {
   finance: "#1976d2"
 };
 
-
 // ------------------------------------------------------------
-// 4. Symbol Icons (UI-facing)
+// 4. Symbol Icons (lowercase keys)
 // ------------------------------------------------------------
-// Clean, readable, emoji-safe icons for all active symbols.
-// ------------------------------------------------------------
-
 export const SYMBOL_ICONS = {
-  // Crypto (Yahoo format)
-  "BTC-USD": "₿",
-  "ETH-USD": "◆",
-  "SOL-USD": "◎",
-  "DOGE-USD": "🐶",
-  "XRP-USD": "✦",
-  "ZEC-USD": "ⓩ",
+  // Crypto
+  "btc-usd": "₿",
+  "eth-usd": "◆",
+  "sol-usd": "◎",
+  "doge-usd": "🐶",
+  "xrp-usd": "✦",
+  "zec-usd": "ⓩ",
 
   // Tech
-  AAPL: "🍎",
-  MSFT: "🪟",
-  AMZN: "🛒",
-  GOOG: "🔍",
-  NVDA: "🎮",
-  TSLA: "⚡",
-  META: "∞",
+  aapl: "🍎",
+  msft: "🪟",
+  amzn: "🛒",
+  goog: "🔍",
+  nvda: "🎮",
+  tsla: "⚡",
+  meta: "∞",
 
   // Finance / ETFs
-  SPY: "📈",
-  VTI: "📊",
-  VOO: "📘",
-  IBIT: "🟦",
-  ARKG: "🧬",
-  BLOK: "🧱"
+  spy: "📈",
+  vti: "📊",
+  voo: "📘",
+  ibit: "🟦",
+  arkg: "🧬",
+  blok: "🧱"
 };
 
 // ------------------------------------------------------------
-// 5. Lowercase icon map (backend-safe)
+// 5. Lowercase icon map (redundant now, but kept for compatibility)
 // ------------------------------------------------------------
-export const SYMBOL_ICONS_LOWER = Object.fromEntries(
-  Object.entries(SYMBOL_ICONS).map(([k, v]) => [
-    k.toLowerCase(),
-    v
-  ])
-);
-
+export const SYMBOL_ICONS_LOWER = SYMBOL_ICONS;
 
 // ------------------------------------------------------------
-// 6. Normalized symbol list (backend-safe)
+// 6. Normalized symbol list (already normalized)
 // ------------------------------------------------------------
-// Converts:
-//   BTC-USD → btc-usd
-//   AAPL    → aapl
-//   IBIT    → ibit
-// ------------------------------------------------------------
-
-export const NORMALIZED_SYMBOLS = TICKER_SYMBOLS.map((s) =>
-  s.toLowerCase().replace(/\./g, "-")
-);
+export const NORMALIZED_SYMBOLS = ALL_MARKET_SYMBOLS;

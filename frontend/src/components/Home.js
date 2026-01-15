@@ -1,14 +1,22 @@
 // ------------------------------------------------------------
-// Home.jsx — v1.197 (Two‑Column Layout + Stable Containers)
+// Home.jsx — v1.2.0.3 (AuthContext‑Integrated + Stable Layout)
 // ------------------------------------------------------------
 //
-// Goals of v1.197:
-//   ✓ Fix container overflow (FeedStatusBar, MarketChart)
-//   ✓ Introduce right‑side MarketChart column
-//   ✓ Ensure all content lives inside MainContainer
-//   ✓ Prevent horizontal stretching with minWidth: 0
-//   ✓ Move Drawer outside MainContainer for proper overlay
-//   ✓ Clean, production‑grade comments
+// Goals of v1.2.0.3:
+//   ✓ Replace localStorage checks with AuthContext
+//   ✓ Redirect unauthenticated users cleanly
+//   ✓ Maintain stable two‑column layout (Feed | Market)
+//   ✓ Preserve MainContainer offset logic
+//   ✓ Keep Drawer outside MainContainer for proper overlay
+//   ✓ Production‑grade comments for long‑term maintainability
+//
+// Auth Model (via AuthContext):
+//   isLoggedIn: boolean
+//   authType: "google" | "apple" | "guest"
+//   user: { email }
+//
+// Redirect Rules:
+//   - If !isLoggedIn → /login
 //
 // Layout Structure:
 //   <HeaderShell />
@@ -29,56 +37,50 @@ import {
   Container,
   Typography,
   Box,
+  Chip
 } from "@mui/material";
 
 import RssFeedIcon from "@mui/icons-material/RssFeed";
 import TabsLayout from "./layouts/TabsLayout";
-import FeedStatusBar from "./FeedStatusBar";
-import MarketStatusBar from "./MarketStatusBar";
-import HealthSummaryCard from "./HealthSummaryCard";
-import FeedHealthDashboard from "./FeedHealthDashboard";
-import MarketCarousel from "./MarketCarousel";
-import MiniSparkline from "./MiniSparkline";
+import FeedStatusBar from "./newsfeed/FeedStatusBar";
+import MarketStatusBar from "./newsfeed/MarketStatusBar";
+import HealthSummaryCard from "./newsfeed/HealthSummaryCard";
+import FeedHealthDashboard from "./newsfeed/FeedHealthDashboard";
+import MarketCarousel from "./newsfeed/MarketCarousel";
+import MiniSparkline from "./newsfeed/MiniSparkline";
 
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 import MainContainer from "./layouts/MainContainer";
 import HeaderShell from "./layouts/HeaderShell";
 import Drawer from "@mui/material/Drawer";
+
+
 
 export default function Home() {
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
 
-  const navigate = useNavigate();
-
   // ------------------------------------------------------------
-  // Redirect unauthenticated users
+  // AUTH VALIDATION (v1.2.0.3)
+  // Ensures only authenticated users can access the dashboard.
   // ------------------------------------------------------------
-  useEffect(() => {
-    const loggedIn = localStorage.getItem("isLoggedIn");
-
-    if (!loggedIn) {
-      console.log("User NOT logged in → redirecting to /login");
-      navigate("/login");
-    } else {
-      console.log("User IS logged in");
-    }
-  }, [navigate]);
-
+  
   return (
     <>
       {/* --------------------------------------------------------
          HeaderShell controls the top navigation + health drawer.
          It reports its height so MainContainer can offset content.
-      --------------------------------------------------------- */}
+      ---------------------------------------------------------- */}
       <HeaderShell
         onHeightChange={setHeaderHeight}
         isHealthOpen={isHealthOpen}
         setIsHealthOpen={setIsHealthOpen}
         activeCategory={activeCategory}
       />
-
+ 
       {/* --------------------------------------------------------
          Main page container — applies header offset + full height.
          All page content MUST live inside this container.
@@ -104,9 +106,24 @@ export default function Home() {
             }}
           >
             <RssFeedIcon fontSize="large" />
+            
+
             <Typography variant="h5" sx={{ fontWeight: 600 }}>
-              News Feeds (RSS)
+              News Feed (RSS)
             </Typography>
+
+            {/* Spacer pushes chip to the right */}
+            <Box sx={{ flexGrow: 1 }} />
+
+            <Chip
+              label="v1.2.0.3"
+              size="large"
+              sx={{
+                backgroundColor: "#fff",
+                color: "#1976d2",
+                fontWeight: 600
+              }}
+            />
           </Box>
 
           {/* ----------------------------------------------------
@@ -146,7 +163,7 @@ export default function Home() {
                 flexDirection: "column",
                 overflow: "hidden",
               }}
-            > 
+            >
               {/* Mini Sparkline (global now) */}
               <MiniSparkline />
 

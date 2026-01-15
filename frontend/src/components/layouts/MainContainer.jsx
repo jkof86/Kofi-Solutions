@@ -1,4 +1,3 @@
-// layouts/MainContainer.jsx
 import { Box } from "@mui/material";
 
 const DEFAULT_HEADER_HEIGHT = {

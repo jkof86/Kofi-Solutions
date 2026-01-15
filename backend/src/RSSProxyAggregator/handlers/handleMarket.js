@@ -1,25 +1,18 @@
 // ------------------------------------------------------------
-// handleMarket.js — v1.196 (Full Payload + Stable Contract)
+// handleMarket.js — v1.302 (Final, Stable, Crypto-Safe)
 // ------------------------------------------------------------
 //
-// Standardized market response shape:
+// PURPOSE:
+//   Fetch market data for a single symbol (crypto, stock, ETF),
+//   normalize symbols, unwrap responses, and return a clean,
+//   consistent payload for frontend + health + ticker.
 //
-//   {
-//     status: "ok" | "error",
-//     type: "crypto" | "stock" | "etf" | null,
-//     symbol: "btc",
-//     price: 88345.53 | null,
-//     change_24h: -1.23 | null,
-//     history: [...],
-//     debug: {...} | null,
-//     timestamp: 1767126734208
-//   }
-//
-// Used by:
-//   • TickerBar
-//   • FeedHealthDashboard
-//   • FeedStatusContext
-//   • handleHealth.js (via JSON body parsing)
+// FIXES IN THIS VERSION:
+//   ✓ Universal unwrap() to avoid double-wrapped Lambda responses
+//   ✓ Built-in Yahoo crypto mapping (no extra file needed)
+//   ✓ Normalizes input symbols (BRK.B → brk-b)
+//   ✓ Clean, stable payloads for ticker + health
+//   ✓ Fully compatible with handleMarketAll v1.208
 //
 // ------------------------------------------------------------
 
@@ -28,11 +21,12 @@ const { CRYPTO_MAP } = require("../config/cryptoMap.js");
 const { STOCK_MAP } = require("../config/stockMap.js");
 const { ETF_MAP } = require("../config/etfMap.js");
 
-const { fetchCryptoPrice } = require("../market/fetchCryptoPrice.js");
-const { fetchYahooStock } = require("../market/stockYahoo.js");
-const { fetchYahooEtf } = require("../market/etfYahoo.js");
+const { fetchYahooStock } = require("../market/fetchYahooStock.js");
+const { fetchYahooEtf } = require("../market/fetchYahooEtf.js");
 
+// ------------------------------------------------------------
 // Normalize symbols (BRK.B → brk-b)
+// ------------------------------------------------------------
 function normalizeSymbol(sym) {
   return String(sym || "")
     .trim()
@@ -41,7 +35,43 @@ function normalizeSymbol(sym) {
 }
 
 // ------------------------------------------------------------
-// Helper: Build a consistent market payload
+// Universal unwrap() — ALWAYS returns the real payload
+// ------------------------------------------------------------
+function unwrap(raw) {
+  if (!raw) return raw;
+
+  // Case 1: Lambda wrapper with string body
+  if (typeof raw.body === "string") {
+    try {
+      return JSON.parse(raw.body);
+    } catch {
+      return raw;
+    }
+  }
+
+  // Case 2: Lambda wrapper with already-parsed body
+  if (raw.body && typeof raw.body === "object") {
+    return raw.body;
+  }
+
+  // Case 3: Already a clean object
+  return raw;
+}
+
+// ------------------------------------------------------------
+// Built-in Yahoo crypto symbol mapping
+// ------------------------------------------------------------
+const YAHOO_CRYPTO = {
+  "btc-usd": "BTC-USD",
+  "eth-usd": "ETH-USD",
+  "sol-usd": "SOL-USD",
+  "doge-usd": "DOGE-USD",
+  "xrp-usd": "XRP-USD",
+  "zec-usd": "ZEC-USD"
+};
+
+// ------------------------------------------------------------
+// Payload builders
 // ------------------------------------------------------------
 function buildMarketPayload(type, symbol, result) {
   return {
@@ -56,9 +86,6 @@ function buildMarketPayload(type, symbol, result) {
   };
 }
 
-// ------------------------------------------------------------
-// Helper: Build a consistent error payload
-// ------------------------------------------------------------
 function buildErrorPayload(type, symbol, errorMessage) {
   return {
     status: "error",
@@ -73,31 +100,45 @@ function buildErrorPayload(type, symbol, errorMessage) {
   };
 }
 
+// ------------------------------------------------------------
+// Main handler
+// ------------------------------------------------------------
 async function handleMarket(symbol, opts = {}) {
   console.log("[handleMarket] Incoming symbol:", symbol, opts);
 
   try {
     if (!symbol || typeof symbol !== "string") {
+      console.warn("[handleMarket] Missing or invalid symbol:", symbol);
       return jsonResponse(200, buildErrorPayload(null, null, "Missing symbol parameter"));
     }
 
+    const range = opts.range || "1W";
     const lower = normalizeSymbol(symbol);
-    console.log("[handleMarket] Normalized:", lower);
+
+    console.log("[handleMarket] Using range:", range);
+    console.log("[handleMarket] Normalized symbol:", lower);
+
+    // Yahoo crypto override
+    const yahooSymbol = YAHOO_CRYPTO[lower] || lower;
 
     const cryptoId = CRYPTO_MAP[lower];
     const stockId = STOCK_MAP[lower];
     const etfId = ETF_MAP[lower];
 
     // ------------------------------------------------------------
-    // 1. CRYPTO
+    // 1. CRYPTO (Yahoo-based)
     // ------------------------------------------------------------
-    if (cryptoId) {
+    if (YAHOO_CRYPTO[lower] || cryptoId || lower.endsWith("-usd")) {
       try {
-        const result = await fetchCryptoPrice(cryptoId, opts);
+        const raw = await fetchYahooStock(yahooSymbol, { range, debug: opts.debug || null });
+        const result = unwrap(raw);
         return jsonResponse(200, buildMarketPayload("crypto", lower, result));
       } catch (err) {
-        console.error("[handleMarket][CRYPTO_ERROR]", lower, err);
-        return jsonResponse(200, buildErrorPayload("crypto", lower, String(err.message || err)));
+        console.error("[handleMarket] Crypto fetch error:", err);
+        return jsonResponse(
+          200,
+          buildErrorPayload("crypto", lower, String(err.message || err))
+        );
       }
     }
 
@@ -106,11 +147,15 @@ async function handleMarket(symbol, opts = {}) {
     // ------------------------------------------------------------
     if (stockId) {
       try {
-        const result = await fetchYahooStock(stockId, opts);
+        const raw = await fetchYahooStock(lower, { range, debug: opts.debug || null });
+        const result = unwrap(raw);
         return jsonResponse(200, buildMarketPayload("stock", lower, result));
       } catch (err) {
-        console.error("[handleMarket][STOCK_ERROR]", lower, err);
-        return jsonResponse(200, buildErrorPayload("stock", lower, String(err.message || err)));
+        console.error("[handleMarket] Stock fetch error:", err);
+        return jsonResponse(
+          200,
+          buildErrorPayload("stock", lower, String(err.message || err))
+        );
       }
     }
 
@@ -119,16 +164,20 @@ async function handleMarket(symbol, opts = {}) {
     // ------------------------------------------------------------
     if (etfId) {
       try {
-        const result = await fetchYahooEtf(etfId, opts);
+        const raw = await fetchYahooEtf(lower, { range, debug: opts.debug || null });
+        const result = unwrap(raw);
         return jsonResponse(200, buildMarketPayload("etf", lower, result));
       } catch (err) {
-        console.error("[handleMarket][ETF_ERROR]", lower, err);
-        return jsonResponse(200, buildErrorPayload("etf", lower, String(err.message || err)));
+        console.error("[handleMarket] ETF fetch error:", err);
+        return jsonResponse(
+          200,
+          buildErrorPayload("etf", lower, String(err.message || err))
+        );
       }
     }
 
     // ------------------------------------------------------------
-    // 4. ALL FAILED / UNKNOWN SYMBOL
+    // 4. UNKNOWN SYMBOL
     // ------------------------------------------------------------
     console.warn("[handleMarket] No market data for symbol:", lower);
 
@@ -147,4 +196,7 @@ async function handleMarket(symbol, opts = {}) {
   }
 }
 
+// ------------------------------------------------------------
+// CommonJS export
+// ------------------------------------------------------------
 module.exports = { handleMarket };

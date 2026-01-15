@@ -7,6 +7,9 @@
 //
 // ------------------------------------------------------------
 
+console.log("[stockMap] LOADED VERSION v1.205");
+
+
 const STOCK_MAP = {
   aapl: "AAPL",
   amzn: "AMZN",

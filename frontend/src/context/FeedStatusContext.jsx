@@ -1,26 +1,13 @@
 // ------------------------------------------------------------
-// FeedStatusContext.jsx — v1.204 (Production‑Ready)
+// FeedStatusContext.jsx — v1.205 (Fully Normalized + Stable)
 // ------------------------------------------------------------
 //
-// Improvements in v1.204:
-//   ✓ Fully aligned with backend router v1.204
-//   ✓ Supports market_all payload (feeds + markets)
-//   ✓ Ensures health.feeds + health.markets ALWAYS exist
-//   ✓ Ignores stray debug params (backend-safe)
-//   ✓ Never wipes state on backend error
-//   ✓ Timestamp ALWAYS a Date object
-//   ✓ Normalizes feed statuses safely
-//
-// Architectural Notes:
-//   • This context is the SINGLE source of truth for:
-//       - feed health
-//       - market health
-//       - normalized feed status map
-//       - strict/soft mode
-//       - lastUpdated timestamp
-//
-//   • UI components MUST NOT fetch /health except manual refresh.
-//     They rely on this context for all state.
+// Key Fixes in v1.205:
+//   ✓ FEEDS is now the source of truth for all feed IDs
+//   ✓ Health normalization guarantees ALL feedIds exist in status
+//   ✓ Missing backend entries default to "unknown" (never undefined)
+//   ✓ strictMode can no longer wipe out feeds due to missing keys
+//   ✓ Markets preserved exactly as returned
 //
 // ------------------------------------------------------------
 
@@ -31,6 +18,8 @@ import React, {
   useMemo,
   useEffect
 } from "react";
+
+import { FEEDS } from "../data/feedsMap";   // ⭐ NEW: FEEDS imported
 
 const BACKEND_URL =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
@@ -53,11 +42,11 @@ export const FeedStatusContext = createContext({
   setLastUpdated: () => {}
 });
 
-console.log("FeedStatusContext v1.204 active");
+console.log("FeedStatusContext v1.205 active");
 
 export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
-  // Legacy per-feed status map (normalized from backend)
+  // Per-feed status map (normalized)
   // ------------------------------------------------------------
   const [status, setStatusMap] = useState({});
 
@@ -74,7 +63,7 @@ export function FeedStatusProvider({ children }) {
   }, []);
 
   // ------------------------------------------------------------
-  // Full backend health object (feeds + markets)
+  // Full backend health object
   // ------------------------------------------------------------
   const [health, setHealth] = useState(null);
 
@@ -84,7 +73,7 @@ export function FeedStatusProvider({ children }) {
   const [strictMode, setStrictMode] = useState(true);
 
   // ------------------------------------------------------------
-  // Timestamp (ALWAYS a Date object)
+  // Timestamp
   // ------------------------------------------------------------
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -93,28 +82,25 @@ export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
   const normalizeHealthToStatus = useCallback(
     (healthObj) => {
-      const feeds = healthObj?.feeds;
-      if (!feeds || typeof feeds !== "object") {
-        console.warn("[FeedStatusContext] Missing feeds object in health");
-        return;
-      }
+      const backendFeeds = healthObj?.feeds || {};
 
       const normalized = {};
 
-      for (const [feedId, entry] of Object.entries(feeds)) {
+      // ⭐ FEEDS is the source of truth
+      for (const feedId of Object.keys(FEEDS)) {
+        const entry = backendFeeds[feedId];
+
         if (!entry) {
           normalized[feedId] = "unknown";
           continue;
         }
 
-        // Backend marks ok feeds with ok: true
         if (entry.ok === true) {
           normalized[feedId] =
             entry.type === "json" ? "json" : "ok";
           continue;
         }
 
-        // Otherwise rely on backend status field
         switch (entry.status) {
           case "fallback":
             normalized[feedId] = "fallback";
@@ -148,39 +134,29 @@ export function FeedStatusProvider({ children }) {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        // FIX: No unsupported params
         const url = `${BACKEND_URL}?mode=health`;
 
         const res = await fetch(url);
         const json = await res.json();
 
-        // Validate backend response
         if (json?.status !== "ok") {
           console.warn("[FeedStatusContext] Health returned error:", json);
-          return; // Do NOT overwrite state
+          return;
         }
 
-        // Ensure feeds + markets always exist
         json.feeds = json.feeds || {};
         json.markets = json.markets || {};
 
-        // Store full health object
         setHealth(json);
-
-        // Always store a REAL Date object
         setLastUpdated(new Date());
 
-        // Normalize feed statuses
         normalizeHealthToStatus(json);
       } catch (err) {
         console.error("[FeedStatusContext] Health fetch error:", err);
       }
     };
 
-    // Initial fetch
     fetchHealth();
-
-    // Poll every 60s
     const interval = setInterval(fetchHealth, 60000);
     return () => clearInterval(interval);
   }, [normalizeHealthToStatus]);
@@ -201,7 +177,7 @@ export function FeedStatusProvider({ children }) {
       setStrictMode,
 
       lastUpdated,
-      setLastUpdated // used by manual refresh in dashboard
+      setLastUpdated
     }),
     [
       status,

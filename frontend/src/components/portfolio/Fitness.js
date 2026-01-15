@@ -1,9 +1,26 @@
-import NavBar from "../navigation/NavBar";
-import NavDrawerFitness from "../navigation/NavDrawerFitness";
+import { useState } from "react";
+import { Box, Container, Card, Typography } from "@mui/material";
+import { useAuth } from "../../context/AuthContext";
+
+import HeaderShell from "../layouts/HeaderShell";
+import { BannerThemes } from "../../data/bannerThemes";
+import ContactFitness from "./ContactFitness";
 
 export default function Fitness() {
-    return (<>
-        <NavDrawerFitness />
-        <NavBar />
-    </>)
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const { authType } = useAuth();
+  const theme = BannerThemes[authType] || BannerThemes.default;
+
+  return (
+    <>
+      {/* FIXED HEADER */}
+      <HeaderShell
+        onHeightChange={(h) => setHeaderHeight(h)}
+        activeCategory="professional"
+      />
+
+      {/* MAIN PAGE CONTENT */}
+      <ContactFitness />
+    </>
+  );
 }

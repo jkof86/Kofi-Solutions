@@ -1,12 +1,5 @@
 // ------------------------------------------------------------
-// TickerBar.jsx — v1.23 (Seamless Scroll, No Dividers)
-// ------------------------------------------------------------
-// Improvements:
-//   ✓ Seamless infinite scroll (duplicated content)
-//   ✓ Category-based sorting (crypto → tech → finance)
-//   ✓ No category dividers (per request)
-//   ✓ Fully compatible with v1.205 health + v1.206 alias-safe market
-//   ✓ Smooth scroll preserved, no early looping
+// TickerBar.jsx — v1.24 (Lowercase-Aligned, Crypto Restored)
 // ------------------------------------------------------------
 
 import React, { useEffect, useState, useContext } from "react";
@@ -20,7 +13,10 @@ import {
 
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 
-console.log("TickerBar v1.23 loaded");
+const API =
+  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
+
+console.log("TickerBar v1.24 loaded");
 
 // ------------------------------------------------------------
 // Symbol → Category mapping (normalized keys)
@@ -59,19 +55,36 @@ export default function TickerBar() {
   const [lastUpdated, setLastUpdated] = useState("");
 
   // ------------------------------------------------------------
-  // 1. Load all symbols (normalized)
+  // 1. Load all symbols (already lowercase)
   // ------------------------------------------------------------
   useEffect(() => {
-    const cleaned = ALL_MARKET_SYMBOLS.map((s) =>
-      String(s).trim().toLowerCase()
-    );
-
-    setSymbols(cleaned);
+    setSymbols(ALL_MARKET_SYMBOLS);
     setLastUpdated(new Date().toLocaleTimeString());
   }, []);
 
   // ------------------------------------------------------------
-  // 2. Reset scroll animation when symbols change
+  // 2. Fetch ticker data (1D range)
+  // ------------------------------------------------------------
+  const [tickerMarkets, setTickerMarkets] = useState({});
+
+  useEffect(() => {
+    const fetchTicker = async () => {
+      try {
+        const res = await fetch(`${API}?mode=market_all&range=1D`);
+        const json = await res.json();
+        setTickerMarkets(json.markets || {});
+      } catch (err) {
+        console.error("Ticker fetch error:", err);
+      }
+    };
+
+    fetchTicker();
+    const interval = setInterval(fetchTicker, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ------------------------------------------------------------
+  // 3. Reset scroll animation when symbols change
   // ------------------------------------------------------------
   useEffect(() => {
     const el = document.querySelector(".scroll");
@@ -83,11 +96,11 @@ export default function TickerBar() {
   }, [symbols]);
 
   // ------------------------------------------------------------
-  // 3. Render
+  // 4. Render
   // ------------------------------------------------------------
-  const markets = health?.markets || {};
+  const markets = tickerMarkets;
 
-  if (!health || !health.markets || Object.keys(markets).length === 0) {
+  if (!markets || Object.keys(markets).length === 0) {
     return (
       <Box sx={{ py: 1, px: 2 }}>
         <Typography variant="body2" sx={{ opacity: 0.6 }}>
@@ -109,7 +122,7 @@ export default function TickerBar() {
   });
 
   // ------------------------------------------------------------
-  // 4. Sort by category (crypto → tech → finance)
+  // 5. Sort by category (crypto → tech → finance)
   // ------------------------------------------------------------
   const sorted = [...visible].sort((a, b) => {
     const catA = SYMBOL_CATEGORY[a] || "finance";
@@ -118,7 +131,7 @@ export default function TickerBar() {
   });
 
   // ------------------------------------------------------------
-  // 5. Duplicate content for seamless infinite scroll
+  // 6. Duplicate content for seamless infinite scroll
   // ------------------------------------------------------------
   const doubled = [...sorted, ...sorted];
 
@@ -151,13 +164,12 @@ export default function TickerBar() {
       >
         {doubled.map((sym, idx) => {
           const m = markets[sym];
-          const upper = sym.toUpperCase();
-          const icon = SYMBOL_ICONS[upper] || "";
+          const icon = SYMBOL_ICONS[sym] || "";
           const cat = SYMBOL_CATEGORY[sym] || "finance";
 
           return (
             <Box
-              key={`${upper}-${idx}`}
+              key={`${sym}-${idx}`}
               sx={{ display: "flex", alignItems: "center", mx: 4 }}
             >
               {/* Category Chip */}
@@ -183,7 +195,7 @@ export default function TickerBar() {
                   fontWeight: 600
                 }}
               >
-                {icon} {upper}: ${m.price.toFixed(2)} (
+                {icon} {sym.toUpperCase()}: ${m.price.toFixed(2)} (
                 {typeof m.change_24h === "number"
                   ? `${m.change_24h >= 0 ? "+" : ""}${m.change_24h.toFixed(
                       2
