@@ -9,9 +9,12 @@
 //
 // ------------------------------------------------------------
 
+import { API_BASE } from "../data/api";
+
+
 export async function debugRequest(path) {
   try {
-    const url = `https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator${path}`;
+    const url = `${API_BASE}${path}`;
     const res = await fetch(url);
     const json = await res.json();
     alert(JSON.stringify(json, null, 2));

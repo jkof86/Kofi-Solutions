@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// TickerBar.jsx — v1.24 (Lowercase-Aligned, Crypto Restored)
+// TickerBar.jsx — v1.25 (Stage-Aware, Lowercase-Aligned)
 // ------------------------------------------------------------
 
 import React, { useEffect, useState, useContext } from "react";
@@ -12,11 +12,9 @@ import {
 } from "../../data/tickerConfig";
 
 import { FeedStatusContext } from "../../context/FeedStatusContext";
+import { API_BASE } from "../../data/api";
 
-const API =
-  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
-
-console.log("TickerBar v1.24 loaded");
+console.log("TickerBar v1.25 loaded");
 
 // ------------------------------------------------------------
 // Symbol → Category mapping (normalized keys)
@@ -70,7 +68,8 @@ export default function TickerBar() {
   useEffect(() => {
     const fetchTicker = async () => {
       try {
-        const res = await fetch(`${API}?mode=market_all&range=1D`);
+        const url = `${API_BASE}/RSSProxyAggregator?mode=market_all&range=1D`;
+        const res = await fetch(url);
         const json = await res.json();
         setTickerMarkets(json.markets || {});
       } catch (err) {

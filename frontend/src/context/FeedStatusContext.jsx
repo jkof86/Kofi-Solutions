@@ -10,6 +10,9 @@
 //   ✓ Markets preserved exactly as returned
 //
 // ------------------------------------------------------------
+// ------------------------------------------------------------
+// FeedStatusContext.jsx — v1.2.0.8 (Safe Init)
+// ------------------------------------------------------------
 
 import React, {
   createContext,
@@ -19,10 +22,17 @@ import React, {
   useEffect
 } from "react";
 
-import { FEEDS } from "../data/feedsMap";   // ⭐ NEW: FEEDS imported
+import { FEEDS } from "../data/feedsMap";
+import { API_BASE } from "../data/api";
 
-const BACKEND_URL =
-  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
+// SAFE: compute stage AFTER imports
+const API_STAGE =
+  typeof API_BASE === "string" && API_BASE.includes("/test")
+    ? "test"
+    : "prod";
+
+// SAFE: compute backend URL AFTER imports
+const BACKEND_URL = `${API_BASE}/RSSProxyAggregator`;
 
 // ------------------------------------------------------------
 // Default context shape
@@ -39,10 +49,13 @@ export const FeedStatusContext = createContext({
   setStrictMode: () => {},
 
   lastUpdated: null,
-  setLastUpdated: () => {}
+  setLastUpdated: () => {},
+
+  apiStage: API_STAGE
 });
 
-console.log("FeedStatusContext v1.205 active");
+
+console.log("FeedStatusContext v1.2.0.5 active");
 
 export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
@@ -86,7 +99,7 @@ export function FeedStatusProvider({ children }) {
 
       const normalized = {};
 
-      // ⭐ FEEDS is the source of truth
+      // FEEDS is the source of truth
       for (const feedId of Object.keys(FEEDS)) {
         const entry = backendFeeds[feedId];
 
@@ -177,7 +190,9 @@ export function FeedStatusProvider({ children }) {
       setStrictMode,
 
       lastUpdated,
-      setLastUpdated
+      setLastUpdated,
+
+      apiStage: API_STAGE
     }),
     [
       status,

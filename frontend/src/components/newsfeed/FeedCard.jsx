@@ -1,14 +1,10 @@
 // ------------------------------------------------------------
-// FeedCard.jsx — v1.400 (Stable + Fully Aligned)
+// FeedCard.jsx — v1.401 (Stage-Aware + Fully Aligned)
 // ------------------------------------------------------------
 //
-// Improvements in v1.400:
-//   ✓ Accepts feedStatus + symbol props (from RSSFeed v1.207)
-//   ✓ No redundant context lookups unless needed
-//   ✓ Stronger fallback chain for images
-//   ✓ Cleaner layout + spacing
-//   ✓ Unified health refresh logic
-//   ✓ Fully null-safe
+// Improvements in v1.401:
+//   ✓ Replaces hardcoded BACKEND_URL with API_BASE
+//   ✓ Health refresh now respects test/prod stage
 //   ✓ Zero ESLint warnings
 //
 // ------------------------------------------------------------
@@ -34,9 +30,7 @@ import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import FeedIcon from "./FeedIcon";
 import { FEED_IMAGE_OVERRIDES } from "../../data/feedImageOverrides";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
-
-const BACKEND_URL =
-  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
+import { API_BASE } from "../../data/api";
 
 const FALLBACK_IMAGE = require("../../images/bg/ksBanner04.jpeg");
 
@@ -99,10 +93,10 @@ export default function FeedCard({
   }
 
   // ------------------------------------------------------------
-  // Manual health refresh handler
+  // Manual health refresh handler (stage-aware)
   // ------------------------------------------------------------
   const refreshHealth = () => {
-    fetch(`${BACKEND_URL}?mode=health`)
+    fetch(`${API_BASE}/RSSProxyAggregator?mode=health`)
       .then((res) => res.json())
       .then((json) => {
         const entry = json?.feeds?.[feedId];

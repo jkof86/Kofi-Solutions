@@ -39,19 +39,23 @@ import {
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
+import { API_BASE } from "../../data/api";
 import HealthHistory from "./HealthHistory";
 
-const API =
-  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
-
 export default function FeedHealthDashboard() {
+
+  
+//------------------------------------------------------------ 
+// Fetch backend health (stage-aware) 
+//------------------------------------------------------------
   const {
     lastUpdated,
     setLastUpdated,
     health,
     setHealth,
     strictMode,
-    setStrictMode
+    setStrictMode,
+    apiStage
   } = useContext(FeedStatusContext);
 
   const [error, setError] = useState(null);
@@ -61,6 +65,27 @@ export default function FeedHealthDashboard() {
   const [customQuery, setCustomQuery] = useState("?debug=echo&msg=hello");
 
   const debugRef = useRef(null);
+
+  const API = `${API_BASE}/RSSProxyAggregator`;
+
+  const fetchHealth = useCallback(async () => { 
+    try { 
+      const url = `${API_BASE}/RSSProxyAggregator?mode=health`; 
+      const res = await fetch(url); 
+      const json = await res.json(); 
+      if (json?.status !== "ok") 
+        { 
+          console.warn("[FeedHealthDashboard] Health returned error:", json); 
+          return; 
+        } 
+        json.feeds = json.feeds || {}; 
+        json.markets = json.markets || {}; 
+        setHealth(json); 
+        setLastUpdated(new Date()); 
+      } catch (err) 
+      { console.error("[FeedHealthDashboard] Health fetch error:", err); 
+
+      }}, [setHealth, setLastUpdated]);
 
   // ------------------------------------------------------------
   // Manual health refresh
@@ -119,7 +144,7 @@ export default function FeedHealthDashboard() {
 
   const copyDebug = () => {
     if (!debugOutput) return;
-    navigator.clipboard.writeText(debugOutput).catch(() => {});
+    navigator.clipboard.writeText(debugOutput).catch(() => { });
   };
 
   const formatTime = (d) => {
@@ -166,13 +191,16 @@ export default function FeedHealthDashboard() {
         alignItems="center"
         sx={{ mb: 1 }}
       >
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          System Health
-        </Typography>
 
-        <IconButton onClick={load} size="small">
-          <RefreshIcon fontSize="small" />
-        </IconButton>
+        <div style={{ marginBottom: "10px", opacity: 0.7 }}>
+          Backend Stage: <strong>{apiStage === "test" ? "TEST ($LATEST)" : "PROD"}</strong>
+        </div>
+
+        <Tooltip title="Refresh System Health">
+          <IconButton onClick={load} size="small">
+            <RefreshIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Stack>
 
       <Typography variant="caption" sx={{ display: "block", mb: 1 }}>
