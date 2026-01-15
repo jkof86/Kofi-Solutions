@@ -58,7 +58,7 @@ export default function FeedHealthDashboard() {
   const [tab, setTab] = useState(0);
 
   const [debugOutput, setDebugOutput] = useState("");
-  const [customQuery, setCustomQuery] = useState("");
+  const [customQuery, setCustomQuery] = useState("?debug=echo&msg=hello");
 
   const debugRef = useRef(null);
 
@@ -314,8 +314,8 @@ export default function FeedHealthDashboard() {
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mb: 2 }}>
             <Chip label="Ping" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=ping"); }} clickable />
             <Chip label="Echo" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=echo"); }} clickable />
-            <Chip label="Env" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=debug_env"); }} clickable />
-            <Chip label="Feeds" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=debug_feeds"); }} clickable />
+            <Chip label="Env" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=env"); }} clickable />
+            <Chip label="Feeds" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=feeds"); }} clickable />
             <Chip label="Market" color="info" onClick={() => { setDebugOutput(""); runDebug("?mode=market_all"); }} clickable />
             <Chip label="Health" color="info" onClick={() => { setDebugOutput(""); runDebug("?mode=health"); }} clickable />
 
