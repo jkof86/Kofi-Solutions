@@ -86,7 +86,7 @@ export default function HealthSummaryCard() {
 
         <Grid item xs={6} md={3}>
           <Typography variant="body2" sx={{ color: "#c62828" }}>
-            Dead
+            Error
           </Typography>
           <Typography variant="h6" sx={{ color: "#c62828" }}>
             {summary.deadFeeds}
