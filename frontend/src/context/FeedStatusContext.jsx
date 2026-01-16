@@ -100,10 +100,10 @@ export function FeedStatusProvider({ children }) {
     (healthObj) => {
       const backendFeeds = healthObj?.feeds || {};
 
-      console.log("[CTX] Raw backend feed entries:");
-      for (const [feedId, entry] of Object.entries(backendFeeds)) {
-        console.log(`  ${feedId}:`, entry);
-      }
+      // console.log("[CTX] Raw backend feed entries:");
+      // for (const [feedId, entry] of Object.entries(backendFeeds)) {
+      //   console.log(`  ${feedId}:`, entry);
+      // }
 
       const normalized = {};
 
@@ -152,7 +152,8 @@ export function FeedStatusProvider({ children }) {
             normalized[feedId] = "unknown";
         }
       }
-      console.log("[CTX] Final normalized status:", normalized);
+
+      // console.log("[CTX] Final normalized status:", normalized);
 
 
       setBulkStatus(normalized);

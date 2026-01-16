@@ -32,6 +32,8 @@ import { FEED_IMAGE_OVERRIDES } from "../../data/feedImageOverrides";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 import { API_BASE } from "../../data/api";
 
+import FallbackCard from "./FallbackCard";
+
 const FALLBACK_IMAGE = require("../../images/bg/ksBanner04.jpeg");
 
 // ------------------------------------------------------------
@@ -174,86 +176,12 @@ export default function FeedCard({
   // ------------------------------------------------------------
   if (status === "empty" || status === "fallback") {
     return (
-      <Card
-        variant="outlined"
-        sx={{
-          borderColor: "#f9a825",
-          bgcolor: "#fff8e1",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        {/* Banner */}
-        <Box
-          sx={{
-            width: "100%",
-            bgcolor: "#f9a825",
-            color: "#000",
-            py: 0.5,
-            px: 2,
-            fontWeight: 700,
-            fontSize: "0.85rem",
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
-          <WarningAmberIcon fontSize="small" />
-          Feed Unavailable — Using Fallback Mode
-        </Box>
-        <CardContent>
-
-          {/* Header */}
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mb: 2 }}>
-            <Typography variant="h6" sx={{ ml: 1, fontWeight: 700 }}>
-              {feedMeta?.label || feedId}
-            </Typography>
-          </Box>
-
-          <Box
-            sx={{
-              flex: 1,
-              height: 140,
-              borderRadius: 1,
-              border: "1px solid black",
-              backgroundImage: `url(${require("../../images/bg/ksBanner06.jpeg")})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
-
-          {/* Message */}
-          <Typography variant="body2" sx={{ mb: 2, color: "#8d6e63" }}>
-            This feed returned no articles. You can retry fetching or visit the
-            source directly.
-          </Typography>
-
-          {/* Actions */}
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button
-              variant="contained"
-              color="warning"
-              onClick={onRefresh}
-              startIcon={<AutorenewIcon />}
-            >
-              Retry
-            </Button>
-
-            <Button
-              variant="outlined"
-              color="warning"
-              href={feedMeta?.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Visit Website →
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+      <FallbackCard
+        feedId={feedId}
+        onRefresh={onRefresh}
+      />
     );
   }
-
   // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
