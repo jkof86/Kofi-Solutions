@@ -36,10 +36,12 @@ import {
 } from "@mui/material";
 
 import RefreshIcon from "@mui/icons-material/Refresh";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 import { API_BASE } from "../../data/api";
 import HealthHistory from "./HealthHistory";
+import HealthStatusLegend from "./HealthStatusLegend";
+import DebugBanner from "./DebugBanner";
+import DebugTab from "../layouts/DebugTab";
 
 export default function HealthDashboard() {
 
@@ -161,11 +163,11 @@ export default function HealthDashboard() {
     try {
       const q = query.startsWith("?") ? query : `?${query}`;
 
-      const res = await fetch(`${API}${q}`);
+      const res = await fetch(`${API_BASE}${q}`);
       const json = await res.json();
 
       setDebugOutput(
-        `REQUEST: ${API}${q}\n\n` +
+        `REQUEST: ${API_BASE}${q}\n\n` +
         JSON.stringify(json, null, 2)
       );
       setTab(1);
@@ -223,7 +225,11 @@ export default function HealthDashboard() {
   // Render
   // ------------------------------------------------------------
   return (
+
+
     <Box sx={{ p: 1 }}>
+      <HealthStatusLegend />
+
       {/* Header */}
       <Stack
         direction="row"
@@ -231,7 +237,6 @@ export default function HealthDashboard() {
         alignItems="center"
         sx={{ mb: 1 }}
       >
-
         <div style={{ marginBottom: "10px", opacity: 0.7 }}>
           Backend Stage: <strong>{apiStage === "test" ? "TESTING ($LATEST)" : "PRODUCTION BUILD"}</strong>
         </div>
@@ -316,6 +321,7 @@ export default function HealthDashboard() {
       {/* DEBUG TAB */}
       {tab === 1 && (
         <Box sx={{ mt: 1 }}>
+
           {/* Strict Mode Toggle (Global) */}
           <Box sx={{ mb: 2 }}>
             <FormControlLabel
@@ -337,109 +343,16 @@ export default function HealthDashboard() {
             </Typography>
           </Box>
 
-          {/* Feed Status Legend */}
-          <Box
-            sx={{
-              mb: 2,
-              p: 1.5,
-              borderRadius: 1,
-              bgcolor: "#222",
-              color: "#eee",
-              fontSize: "0.85rem",
-              fontFamily: "monospace",
-            }}
-          >
-            <Typography variant="subtitle2" sx={{ mb: 1, color: "#fff" }}>
-              Feed Status Legend
-            </Typography>
-
-            <Box sx={{ lineHeight: 1.8 }}>
-              <span style={{ color: "#4caf50" }}>ok</span> — Feed parsed successfully
-              <br />
-              <span style={{ color: "#81c784" }}>json</span> — JSON feed parsed successfully
-              <br />
-              <span style={{ color: "#ffb300" }}>fallback</span> — Feed returned fallback content
-              <br />
-              <span style={{ color: "#e53935" }}>dead</span> — Feed unreachable or invalid
-              <br />
-              <span style={{ color: "#fb8c00" }}>blocked</span> — Feed blocked by server or CORS
-              <br />
-              <span style={{ color: "#ff7043" }}>html_error</span> — HTML feed parsing failed
-              <br />
-              <span style={{ color: "#9e9e9e" }}>unknown</span> — No status available
-            </Box>
+          {/* Stage Banner */}
+          <Box sx={{ mb: 2 }}>
+            <DebugBanner />
           </Box>
 
-          {/* Preset Debug Buttons */}
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            API Debug
-          </Typography>
-
-          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", mb: 2 }}>
-            <Chip label="Ping" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=ping"); }} clickable />
-            <Chip label="Echo" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=echo"); }} clickable />
-            <Chip label="Env" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=env"); }} clickable />
-            <Chip label="Feeds" color="info" onClick={() => { setDebugOutput(""); runDebug("?debug=feeds"); }} clickable />
-            <Chip label="Market" color="info" onClick={() => { setDebugOutput(""); runDebug("?mode=market_all"); }} clickable />
-            <Chip label="Health" color="info" onClick={() => { setDebugOutput(""); runDebug("?mode=health"); }} clickable />
-
-            <Chip label="Clear" color="warning" onClick={() => setDebugOutput("")} clickable />
-          </Stack>
-
-          {/* Custom Query Runner */}
-          <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
-            <TextField
-              fullWidth
-              label="Custom Query (e.g. ?mode=market&symbol=btc)"
-              value={customQuery}
-              onChange={(e) => setCustomQuery(e.target.value)}
-              size="small"
-            />
-            <Button
-              variant="contained"
-              onClick={() => { setDebugOutput(""); runDebug(customQuery); }}
-              disabled={!customQuery.trim()}
-            >
-              Run
-            </Button>
-          </Stack>
-
-          {/* Debug Output Panel */}
-          <Stack direction="row" alignItems="center" sx={{ mb: 1 }}>
-            <Typography variant="caption" sx={{ flex: 1 }}>
-              Debug Output
-            </Typography>
-            <Tooltip title="Copy to clipboard">
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={copyDebug}
-                  disabled={!debugOutput}
-                >
-                  <ContentCopyIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-          </Stack>
-
-          <Paper
-            elevation={3}
-            sx={{
-              p: 1.5,
-              bgcolor: "#111",
-              color: "#0f0",
-              borderRadius: 1,
-              height: "220px",
-              overflowY: "auto",
-              fontSize: "0.8rem",
-              fontFamily: "monospace",
-            }}
-            ref={debugRef}
-          >
-            {debugOutput || "Debug output will appear here…"}
-          </Paper>
+          {/* Debug Tools */}
+          <DebugTab />
         </Box>
       )}
+
 
       {/* HISTORY TAB */}
       {tab === 2 && (

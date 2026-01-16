@@ -10,14 +10,11 @@
 //   ✓ Guarantees a clean, correct backend base URL
 //
 // ------------------------------------------------------------
-
-console.log("api v1.205 active");
-
 // ------------------------------------------------------------
 // Environment variables
 // ------------------------------------------------------------
-const PROD_URL = process.env.REACT_APP_LAMBDA_URL;        // default stage
-const TEST_URL = process.env.REACT_APP_LAMBDA_TEST_URL;   // test stage
+export const PROD_URL = process.env.REACT_APP_LAMBDA_URL;        // default stage
+export const TEST_URL = process.env.REACT_APP_LAMBDA_TEST_URL;   // test stage
 
 // ------------------------------------------------------------
 // Determine which URL to use
@@ -34,5 +31,5 @@ export const API_BASE = isLocal ? TEST_URL : PROD_URL;
 // ------------------------------------------------------------
 // Debug logging (safe)
 // ------------------------------------------------------------
-// console.log("[api.js] API_BASE =", API_BASE);
-console.log("[api] Environment =", isLocal ? "LOCAL → test" : "PROD → default");
+// console.log("[api] Environment =", isLocal ? "LOCAL → test" : "PROD → default");
+// console.log("[url]: ", API_BASE);
