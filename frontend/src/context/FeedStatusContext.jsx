@@ -37,19 +37,23 @@ const BACKEND_URL = `${API_BASE}`;
 // ------------------------------------------------------------
 export const FeedStatusContext = createContext({
   status: {},
-  setStatus: () => {},
-  setBulkStatus: () => {},
+  setStatus: () => { },
+  setBulkStatus: () => { },
 
   health: null,
-  setHealth: () => {},
+  setHealth: () => { },
 
   strictMode: true,
-  setStrictMode: () => {},
+  setStrictMode: () => { },
 
   lastUpdated: null,
-  setLastUpdated: () => {},
+  setLastUpdated: () => { },
 
-  apiStage: API_STAGE
+  apiStage: API_STAGE,
+
+  normalizedFeeds: {},
+  setNormalizedFeeds: () => { }
+
 });
 
 console.log("FeedStatusContext v1.2.0.8 active");
@@ -90,9 +94,17 @@ export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
   // Normalize backend health → UI status map
   // ------------------------------------------------------------
+  const [normalizedFeeds, setNormalizedFeeds] = useState({});
+
   const normalizeHealthToStatus = useCallback(
     (healthObj) => {
       const backendFeeds = healthObj?.feeds || {};
+
+      console.log("[CTX] Raw backend feed entries:");
+      for (const [feedId, entry] of Object.entries(backendFeeds)) {
+        console.log(`  ${feedId}:`, entry);
+      }
+
       const normalized = {};
 
       for (const feedId of Object.keys(FEEDS)) {
@@ -104,11 +116,22 @@ export function FeedStatusProvider({ children }) {
         }
 
         if (entry.ok === true) {
-          normalized[feedId] =
-            entry.type === "json" ? "json" : "ok";
+          if (entry.count === 0) {
+            normalized[feedId] = "empty";
+          } else {
+            normalized[feedId] = entry.type === "json" ? "json" : "ok";
+          }
           continue;
         }
 
+          //NEW: detect error field
+        if (entry.error) {
+          normalized[feedId] = entry.error;
+          continue;
+        }
+
+
+        // Fallback to status field if error is missing
         switch (entry.status) {
           case "fallback":
             normalized[feedId] = "fallback";
@@ -123,17 +146,21 @@ export function FeedStatusProvider({ children }) {
             normalized[feedId] = "html_error";
             break;
           case "ok":
-            normalized[feedId] =
-              entry.type === "json" ? "json" : "ok";
+            normalized[feedId] = entry.type === "json" ? "json" : "ok";
             break;
           default:
             normalized[feedId] = "unknown";
         }
       }
+      console.log("[CTX] Final normalized status:", normalized);
+
 
       setBulkStatus(normalized);
+      setNormalizedFeeds(backendFeeds); // optional
     },
     [setBulkStatus]
+
+
   );
 
   // ------------------------------------------------------------

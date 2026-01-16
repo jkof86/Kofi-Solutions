@@ -57,6 +57,38 @@ export default function FeedCard({
   const { setStatus } = useContext(FeedStatusContext);
   const feedId = feedMeta?.id;
 
+  const MINI_HEALTH_COLOR = {
+    ok: "#2e7d32",
+    json: "#2e7d32",
+    fallback: "#f9a825",
+    empty: "#f9a825",
+    dead: "#c62828",
+    blocked: "#c62828",
+    html_error: "#c62828",
+    unknown: "#c62828",
+  };
+
+  function MiniHealthIndicator({ state }) {
+    const color = MINI_HEALTH_COLOR[state] || "#c62828";
+
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <Box
+          sx={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            bgcolor: color,
+          }}
+        />
+        <Typography variant="caption" sx={{ color }}>
+          {state}
+        </Typography>
+      </Box>
+    );
+  }
+
+
   // ------------------------------------------------------------
   // Status → Icon + Label mapping
   // ------------------------------------------------------------
@@ -138,6 +170,91 @@ export default function FeedCard({
   const overrideImage = FEED_IMAGE_OVERRIDES[item?.source] || null;
 
   // ------------------------------------------------------------
+  // Fallback Feed Card (empty or fallback)
+  // ------------------------------------------------------------
+  if (status === "empty" || status === "fallback") {
+    return (
+      <Card
+        variant="outlined"
+        sx={{
+          borderColor: "#f9a825",
+          bgcolor: "#fff8e1",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Banner */}
+        <Box
+          sx={{
+            width: "100%",
+            bgcolor: "#f9a825",
+            color: "#000",
+            py: 0.5,
+            px: 2,
+            fontWeight: 700,
+            fontSize: "0.85rem",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}
+        >
+          <WarningAmberIcon fontSize="small" />
+          Feed Unavailable — Using Fallback Mode
+        </Box>
+        <CardContent>
+
+          {/* Header */}
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", mb: 2 }}>
+            <Typography variant="h6" sx={{ ml: 1, fontWeight: 700 }}>
+              {feedMeta?.label || feedId}
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              flex: 1,
+              height: 140,
+              borderRadius: 1,
+              border: "1px solid black",
+              backgroundImage: `url(${require("../../images/bg/ksBanner06.jpeg")})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+
+          {/* Message */}
+          <Typography variant="body2" sx={{ mb: 2, color: "#8d6e63" }}>
+            This feed returned no articles. You can retry fetching or visit the
+            source directly.
+          </Typography>
+
+          {/* Actions */}
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button
+              variant="contained"
+              color="warning"
+              onClick={onRefresh}
+              startIcon={<AutorenewIcon />}
+            >
+              Retry
+            </Button>
+
+            <Button
+              variant="outlined"
+              color="warning"
+              href={feedMeta?.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Visit Website →
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
   return (
@@ -175,6 +292,8 @@ export default function FeedCard({
             >
               {safeTitle}
             </Typography>
+            {/* Mini Health Indicator */}
+            {/* <MiniHealthIndicator state={status} /> */}
           </Box>
 
           {/* Actions + Status */}

@@ -55,7 +55,7 @@ export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
   }
 
   function handleLogout() {
-    logoutToRegister();
+    logout();
   }
 
   const navItems2 = [

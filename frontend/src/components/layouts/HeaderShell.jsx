@@ -16,7 +16,7 @@ import { Menu as MenuIcon } from "@mui/icons-material";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import ContactSupportIcon from "@mui/icons-material/ContactSupport";
 
-import FeedHealthDashboard from "../newsfeed/FeedHealthDashboard";
+import HealthDashboard from "../newsfeed/HealthDashboard";
 import NavDrawerMain from "../navigation/NavDrawerMain";
 import TickerBar from "./TickerBar";
 
@@ -280,7 +280,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               System Health
             </Typography>
-            <FeedHealthDashboard />
+            <HealthDashboard />
           </Drawer>
         </Box>
 

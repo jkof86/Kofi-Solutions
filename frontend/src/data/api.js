@@ -11,7 +11,7 @@
 //
 // ------------------------------------------------------------
 
-console.log("api.js v1.205 active");
+console.log("api v1.205 active");
 
 // ------------------------------------------------------------
 // Environment variables
@@ -34,5 +34,5 @@ export const API_BASE = isLocal ? TEST_URL : PROD_URL;
 // ------------------------------------------------------------
 // Debug logging (safe)
 // ------------------------------------------------------------
-console.log("[api.js] API_BASE =", API_BASE);
-console.log("[api.js] Environment =", isLocal ? "LOCAL → test" : "PROD → default");
+// console.log("[api.js] API_BASE =", API_BASE);
+console.log("[api] Environment =", isLocal ? "LOCAL → test" : "PROD → default");

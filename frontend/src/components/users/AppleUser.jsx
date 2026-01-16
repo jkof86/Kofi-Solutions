@@ -96,7 +96,7 @@ export default function AppleUser() {
 
             <Box sx={{ flexGrow: 1 }} />
 
-            <Chip
+            {/* <Chip
               label="v1.2.0.4"
               sx={{
                 backgroundColor: "#fff",
@@ -104,7 +104,8 @@ export default function AppleUser() {
                 color: "#1976d2",
                 fontWeight: 600,
               }}
-            />
+            /> */}
+            
           </Box>
 
           {/* Two-column layout */}

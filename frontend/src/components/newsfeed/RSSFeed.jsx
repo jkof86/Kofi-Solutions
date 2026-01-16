@@ -161,6 +161,23 @@ export default function RSSFeed({
   }
 
   // ------------------------------------------------------------
+  // Render fallback FeedCard when no items exist
+  // ------------------------------------------------------------
+  if ((feedStatus === "empty" || feedStatus === "fallback") && items.length === 0) {
+    return (
+      <Box>
+        <FeedCard
+          item={{ title: "Feed unavailable", url: feedMeta.url }}
+          feedMeta={feedMeta}
+          feedStatus={feedStatus}
+          symbol={symbol}
+          onRefresh={() => fetchFeed(feedId)}
+        />
+      </Box>
+    );
+  }
+
+  // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
   return (
@@ -187,8 +204,8 @@ export default function RSSFeed({
                   feedStatus === "ok"
                     ? "#c8e6c9"
                     : feedStatus === "fallback"
-                    ? "#fff3cd"
-                    : "#ffcdd2"
+                      ? "#fff3cd"
+                      : "#ffcdd2"
               }}
             />
           )}

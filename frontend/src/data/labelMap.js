@@ -2,8 +2,8 @@
   // CATEGORY LABEL MAP
   // ------------------------------------------------------------
  export const categoryLabelMap = {
-    news: "News (Main)",
-    alternative_news: "News (Alt)",
+    news: "World News",
+    alternative_news: "US News",
   };
 
   // ------------------------------------------------------------

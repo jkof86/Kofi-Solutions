@@ -11,7 +11,6 @@
 //   ✓ Clear button resets console cleanly
 //
 // ------------------------------------------------------------
-
 import React, {
   useEffect,
   useContext,
@@ -42,54 +41,91 @@ import { FeedStatusContext } from "../../context/FeedStatusContext";
 import { API_BASE } from "../../data/api";
 import HealthHistory from "./HealthHistory";
 
-export default function FeedHealthDashboard() {
+export default function HealthDashboard() {
 
-  
-//------------------------------------------------------------ 
-// Fetch backend health (stage-aware) 
-//------------------------------------------------------------
+  //------------------------------------------------------------
+  // Context values
+  //------------------------------------------------------------
   const {
-    lastUpdated,
-    setLastUpdated,
+    status,
     health,
     setHealth,
+    lastUpdated,
+    setLastUpdated,
     strictMode,
     setStrictMode,
     apiStage
   } = useContext(FeedStatusContext);
 
+  //------------------------------------------------------------
+  // Debug: what dashboard receives
+  //------------------------------------------------------------
+  console.log("[DASH] Status received:", status);
+  console.log("[DASH] Raw health object:", health);
+
+  //------------------------------------------------------------
+  // Compute summary counts
+  //------------------------------------------------------------
+  const values = Object.values(status || {});
+
+  // Log the distinct states we actually see
+  const uniqueStates = Array.from(new Set(values));
+  console.log("[DASH] Unique status states:", uniqueStates);
+
+  const okCount = values.filter(s => s === "ok" || s === "json").length;
+
+  // Treat both "fallback" and "flaky" as fallback-ish
+  const fallbackCount = values.filter(s => s === "fallback" || s === "empty").length;
+
+  // Treat anything explicitly bad as error
+  const errorCount = values.filter(s =>
+    ["dead", "blocked", "html_error", "failed", "error"].includes(s)
+  ).length;
+
+  console.log("[DASH] Computed counts:", {
+    okCount,
+    fallbackCount,
+    errorCount
+  });
+
+  //------------------------------------------------------------
+  // Local UI state
+  //------------------------------------------------------------
   const [error, setError] = useState(null);
   const [tab, setTab] = useState(0);
-
   const [debugOutput, setDebugOutput] = useState("");
   const [customQuery, setCustomQuery] = useState("?debug=echo&msg=hello");
-
   const debugRef = useRef(null);
 
-  const API = `${API_BASE}/RSSProxyAggregator`;
+  const API = `${API_BASE}`;
 
-  const fetchHealth = useCallback(async () => { 
-    try { 
-      const url = `${API_BASE}/RSSProxyAggregator?mode=health`; 
-      const res = await fetch(url); 
-      const json = await res.json(); 
-      if (json?.status !== "ok") 
-        { 
-          console.warn("[FeedHealthDashboard] Health returned error:", json); 
-          return; 
-        } 
-        json.feeds = json.feeds || {}; 
-        json.markets = json.markets || {}; 
-        setHealth(json); 
-        setLastUpdated(new Date()); 
-      } catch (err) 
-      { console.error("[FeedHealthDashboard] Health fetch error:", err); 
+  //------------------------------------------------------------
+  // Fetch backend health (manual + auto)
+  //------------------------------------------------------------
+  const fetchHealth = useCallback(async () => {
+    try {
+      const url = `${API_BASE}?mode=health`;
+      const res = await fetch(url);
+      const json = await res.json();
 
-      }}, [setHealth, setLastUpdated]);
+      if (json?.status !== "ok") {
+        console.warn("[FeedHealthDashboard] Health returned error:", json);
+        return;
+      }
 
-  // ------------------------------------------------------------
-  // Manual health refresh
-  // ------------------------------------------------------------
+      json.feeds = json.feeds || {};
+      json.markets = json.markets || {};
+
+      console.log("[CTX] Raw backend feeds:", json.feeds);
+
+      setHealth(json);
+      setLastUpdated(new Date());
+
+    } catch (err) {
+      console.error("[FeedHealthDashboard] Health fetch error:", err);
+    }
+  }, [setHealth, setLastUpdated]);
+
   const load = useCallback(async () => {
     try {
       const res = await fetch(`${API}?mode=health`);
@@ -103,11 +139,15 @@ export default function FeedHealthDashboard() {
       setHealth(json);
       setError(null);
       setLastUpdated(new Date());
+
     } catch (err) {
       setError(err.message || "Health fetch failed");
     }
   }, [setHealth, setLastUpdated]);
 
+  //------------------------------------------------------------
+  // Initial load
+  //------------------------------------------------------------
   useEffect(() => {
     if (!health) {
       load();
@@ -193,7 +233,7 @@ export default function FeedHealthDashboard() {
       >
 
         <div style={{ marginBottom: "10px", opacity: 0.7 }}>
-          Backend Stage: <strong>{apiStage === "test" ? "TEST ($LATEST)" : "PROD"}</strong>
+          Backend Stage: <strong>{apiStage === "test" ? "TESTING ($LATEST)" : "PRODUCTION BUILD"}</strong>
         </div>
 
         <Tooltip title="Refresh System Health">
@@ -221,55 +261,51 @@ export default function FeedHealthDashboard() {
         <Tab label="History" />
       </Tabs>
 
-      {/* HEALTH TAB */}
+      {/* ------------------------------------------------------------
+    HEALTH TAB — v1.301 (Unified Classification + Proper Tab Switching)
+------------------------------------------------------------ */}
       {tab === 0 && (
-        <Box sx={{ mt: 1 }}>
-          {/* Feed Health */}
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Feed Health
-          </Typography>
-          <Stack spacing={1} sx={{ mb: 2 }}>
-            {Object.entries(feeds).map(([feedId, info]) => {
+        <Box sx={{ p: 2 }}>
+
+          {/* Summary counts */}
+          <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+            <Chip
+              label={`Healthy: ${Object.values(status).filter((s) => s === "ok" || s === "json").length
+                }`}
+              color="success"
+            />
+            <Chip
+              label={`Fallback: ${Object.values(status).filter((s) => s === "fallback" || s === "empty").length
+                }`}
+              color="warning"
+            />
+            <Chip
+              label={`Error: ${Object.values(status).filter((s) =>
+                ["dead", "blocked", "html_error", "unknown"].includes(s)
+              ).length
+                }`}
+              color="error"
+            />
+          </Stack>
+
+          {/* Feed list */}
+          <Stack spacing={1}>
+            {Object.entries(status).map(([feedId, state]) => {
               const color =
-                info.status === "ok" || info.status === "json"
+                state === "ok" || state === "json"
                   ? "success"
-                  : info.status === "fallback"
+                  : state === "fallback" || state === "empty"
                     ? "warning"
                     : "error";
+
+              const count = health?.feeds?.[feedId]?.count ?? 0;
 
               return (
                 <Chip
                   key={feedId}
-                  label={`${feedId}: ${info.status} (${info.count})`}
+                  label={`${feedId} — ${state.toUpperCase()} (${count})`}
                   color={color}
-                  size="small"
-                />
-              );
-            })}
-          </Stack>
-
-          {/* Market Health */}
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Market Health
-          </Typography>
-          <Stack spacing={1} sx={{ mb: 2 }}>
-            {Object.entries(markets).map(([symbol, m]) => {
-              const color =
-                m.status === "ok" || m.status === "json"
-                  ? "success"
-                  : m.status === "fallback"
-                    ? "warning"
-                    : "error";
-
-              const label = `${symbol.toUpperCase()} — ${m.type || "unknown"
-                }: ${m.price != null ? `$${m.price.toFixed(2)}` : "no data"}`;
-
-              return (
-                <Chip
-                  key={symbol}
-                  label={label}
-                  color={color}
-                  size="small"
+                  sx={{ fontWeight: 600 }}
                 />
               );
             })}
@@ -410,7 +446,12 @@ export default function FeedHealthDashboard() {
         <Box sx={{ mt: 1 }}>
           <HealthHistory />
         </Box>
-      )}
+      )};
     </Box>
-  );
+  )
 }
+
+
+
+
+
