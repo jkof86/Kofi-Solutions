@@ -68,7 +68,7 @@ export default function TickerBar() {
   useEffect(() => {
     const fetchTicker = async () => {
       try {
-        const url = `${API_BASE}/RSSProxyAggregator?mode=market_all&range=1D`;
+        const url = `${API_BASE}?mode=market_all&range=1D`;
         const res = await fetch(url);
         const json = await res.json();
         setTickerMarkets(json.markets || {});

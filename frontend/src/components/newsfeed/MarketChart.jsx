@@ -51,7 +51,7 @@ export default function MarketChart({ symbol }) {
     const fetchData = async () => {
       const normalized = normalize(symbol);
 
-      const url = `${API_BASE}/RSSProxyAggregator?mode=market&symbol=${normalized}&range=${range}`;
+      const url = `${API_BASE}?mode=market&symbol=${normalized}&range=${range}`;
 
       try {
         const res = await fetch(url);

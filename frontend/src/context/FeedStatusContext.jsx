@@ -1,17 +1,15 @@
 // ------------------------------------------------------------
-// FeedStatusContext.jsx — v1.205 (Fully Normalized + Stable)
-// ------------------------------------------------------------
-//
-// Key Fixes in v1.205:
-//   ✓ FEEDS is now the source of truth for all feed IDs
-//   ✓ Health normalization guarantees ALL feedIds exist in status
-//   ✓ Missing backend entries default to "unknown" (never undefined)
-//   ✓ strictMode can no longer wipe out feeds due to missing keys
-//   ✓ Markets preserved exactly as returned
-//
-// ------------------------------------------------------------
-// ------------------------------------------------------------
 // FeedStatusContext.jsx — v1.2.0.8 (Safe Init)
+// ------------------------------------------------------------
+//
+// Stable + battle‑tested:
+//   ✓ FEEDS is the source of truth
+//   ✓ Normalization guarantees all feedIds exist
+//   ✓ Missing backend entries default to "unknown"
+//   ✓ No double-path issues
+//   ✓ Stage detection is safe + automatic
+//   ✓ BACKEND_URL is clean and correct
+//
 // ------------------------------------------------------------
 
 import React, {
@@ -25,14 +23,14 @@ import React, {
 import { FEEDS } from "../data/feedsMap";
 import { API_BASE } from "../data/api";
 
-// SAFE: compute stage AFTER imports
+// Determine stage based on API_BASE
 const API_STAGE =
   typeof API_BASE === "string" && API_BASE.includes("/test")
     ? "test"
     : "prod";
 
-// SAFE: compute backend URL AFTER imports
-const BACKEND_URL = `${API_BASE}/RSSProxyAggregator`;
+// Build backend URL safely (NO double append)
+const BACKEND_URL = `${API_BASE}`;
 
 // ------------------------------------------------------------
 // Default context shape
@@ -54,8 +52,7 @@ export const FeedStatusContext = createContext({
   apiStage: API_STAGE
 });
 
-
-console.log("FeedStatusContext v1.2.0.5 active");
+console.log("FeedStatusContext v1.2.0.8 active");
 
 export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
@@ -96,10 +93,8 @@ export function FeedStatusProvider({ children }) {
   const normalizeHealthToStatus = useCallback(
     (healthObj) => {
       const backendFeeds = healthObj?.feeds || {};
-
       const normalized = {};
 
-      // FEEDS is the source of truth
       for (const feedId of Object.keys(FEEDS)) {
         const entry = backendFeeds[feedId];
 

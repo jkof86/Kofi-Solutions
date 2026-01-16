@@ -74,7 +74,7 @@ export default function RSSFeed({
     const debugFlag = debug || globalDebug;
 
     try {
-      const url = `${API_BASE}/RSSProxyAggregator?mode=feed&feed=${encodeURIComponent(
+      const url = `${API_BASE}?mode=feed&feed=${encodeURIComponent(
         feedMeta.id
       )}${debugFlag ? "&debug=feeds" : ""}`;
 

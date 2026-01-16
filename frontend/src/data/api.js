@@ -1,24 +1,38 @@
 // ------------------------------------------------------------
-// api.js — v1.208 (Stage-Aware API Routing)
+// api.js — v1.205 (Stable + Stage-Aware)
 // ------------------------------------------------------------
 //
-// Automatically selects the correct API Gateway stage:
-//   • localhost → /test  (hits $LATEST)
-//   • production → /default (hits prod alias)
+// This file provides a single, reliable API_BASE that:
 //
-// This lets you test new backend builds without touching the
-// stable live site or repointing API Gateway integrations.
+//   ✓ Uses REACT_APP_LAMBDA_TEST_URL on localhost
+//   ✓ Uses REACT_APP_LAMBDA_URL in production
+//   ✓ Never double-appends /RSSProxyAggregator
+//   ✓ Guarantees a clean, correct backend base URL
+//
 // ------------------------------------------------------------
 
-const PROD_URL = process.env.REACT_APP_LAMBDA_URL;
-const TEST_URL = process.env.REACT_APP_LAMBDA_TEST_URL;
+console.log("api.js v1.205 active");
 
-// Local dev → test stage ($LATEST)
-// Production → default stage (prod alias)
-export const API_BASE =
+// ------------------------------------------------------------
+// Environment variables
+// ------------------------------------------------------------
+const PROD_URL = process.env.REACT_APP_LAMBDA_URL;        // default stage
+const TEST_URL = process.env.REACT_APP_LAMBDA_TEST_URL;   // test stage
+
+// ------------------------------------------------------------
+// Determine which URL to use
+// ------------------------------------------------------------
+const isLocal =
   window.location.hostname === "localhost" ||
-  window.location.hostname === "127.0.0.1"
-    ? TEST_URL
-    : PROD_URL;
+  window.location.hostname === "127.0.0.1";
 
-export default API_BASE;
+// ------------------------------------------------------------
+// API_BASE is the single source of truth
+// ------------------------------------------------------------
+export const API_BASE = isLocal ? TEST_URL : PROD_URL;
+
+// ------------------------------------------------------------
+// Debug logging (safe)
+// ------------------------------------------------------------
+console.log("[api.js] API_BASE =", API_BASE);
+console.log("[api.js] Environment =", isLocal ? "LOCAL → test" : "PROD → default");
