@@ -58,11 +58,11 @@ export default function RegisterComponent() {
         {/* Banner */}
         <Box
           component="img"
-          src={require('../../images/bg/ksBanner08.jpeg')}
+          src={require('../../images/bg/ksBanner02.jpeg')}
           alt="Register Banner"
           sx={{
             width: "420px",
-            height: "auto",
+            height: "140px",
             borderRadius: "16px",
             boxShadow: 3,
             mb: 2,

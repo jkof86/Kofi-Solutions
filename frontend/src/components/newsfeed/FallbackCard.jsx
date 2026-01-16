@@ -73,9 +73,9 @@ export default function FallbackCard({ feedId, onRefresh }) {
           sx={{
             flex: 1,
             height: 140,
-            borderRadius: 1,
-            border: "1px solid black",
-            backgroundImage: `url(${require("../../images/bg/ksBanner06.jpeg")})`,
+            borderRadius: 5,
+            border: "2px solid black",
+            backgroundImage: `url(${require("../../images/bg/ksBanner04.jpeg")})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             mb: 2,
