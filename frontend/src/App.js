@@ -124,7 +124,7 @@ export default function App() {
 
         {/* FITNESS SECTION */}
         <Route path="/fitness" element={<Fitness />} />
-        {/* <Route path="/fitness/calculator" element={<Calculator />} /> */}
+        <Route path="/fitness/calculator" element={<Calculator />} />
         {/* <Route path="/fitness/contact" element={<ContactFitness />} /> */}
 
         {/* GAMING SECTION */}

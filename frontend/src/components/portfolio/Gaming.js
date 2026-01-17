@@ -17,7 +17,7 @@ export default function Gaming() {
 
     return (
         <>
-            {/* FIXED HEADER */}
+            {/* FIXED HEADER*/}
             <HeaderShell onHeightChange={(h) => setHeaderHeight(h)} />
 
             {/* MAIN PAGE CONTENT */}
@@ -30,7 +30,7 @@ export default function Gaming() {
                     width: "100%",
                 }}
             >
-
+            
                 <Container
                     maxWidth="lg"
                     sx={{
@@ -43,41 +43,42 @@ export default function Gaming() {
                         borderRadius: 5,
                     }}
                 >
-                    {/* GRID WRAPPER */}
-                    <Grid container justifyContent="center">
-                        <Grid item xs={12} md={6}>
-                            <Card
-                                sx={{
-                                    minWidth: "40vw",
-                                    borderRadius: "25px",
-                                    padding: "5px",
-                                    margin: "20px",
-                                    textAlign: "center",
-                                }}
-                            >
-                                <CardActionArea
-                                    component={Link}
-                                    to="https://www.youtube.com/@jkof86"
-                                    target="_blank"
-                                >
-                                    <CardContent />
+            {/* GRID WRAPPER */}
+            <Grid container justifyContent="left">
+                <Grid item xs={12} md={6}>
+                    <Card
+                        sx={{
+                            minWidth: "40vw",
+                            borderRadius: "25px",
+                            padding: "5px",
+                            margin: "20px",
+                            textAlign: "center",
+                            px: 4,
+                        }}
+                    >
+                        <CardActionArea
+                            component={Link}
+                            to="https://www.youtube.com/@jkof86"
+                            target="_blank"
+                        >
+                            <CardContent />
 
-                                    <CardMedia
-                                        component="img"
-                                        alt="Jkof Gaming"
-                                        image={require("../../images/bg/jkofGamingBanner01.png")}
-                                        sx={{ borderRadius: "25px" }}
-                                    />
-                                </CardActionArea>
+                            <CardMedia
+                                component="img"
+                                alt="Jkof Gaming"
+                                image={require("../../images/bg/jkofGamingBanner01.png")}
+                                sx={{ borderRadius: "25px" }}
+                            />
+                        </CardActionArea>
 
-                                <CardActions>
-                                    <Button size="small">Share</Button>
-                                    <Button size="small">Learn More</Button>
-                                </CardActions>
-                            </Card>
-                        </Grid>
-                    </Grid>
-                </Container>
+                        <CardActions>
+                            <Button size="small">Share</Button>
+                            <Button size="small">Learn More</Button>
+                        </CardActions>
+                    </Card>
+                </Grid>
+            </Grid>
+            </Container>
             </Box>
         </>
     );

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { Box, Stack, Button, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import pdfFile from "../../misc/jkof_portfolio.PDF";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -14,12 +14,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 export default function MyPortfolio() {
   const [numPages, setNumPages] = useState(null);
   const [width, setWidth] = useState(null);
-  const [pageHeight, setPageHeight] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-
   const pdfWrapper = useRef(null);
 
-  // Track container width for responsive PDF scaling
   useEffect(() => {
     const updateSize = () => {
       if (pdfWrapper.current) {
@@ -37,67 +33,17 @@ export default function MyPortfolio() {
     setNumPages(numPages);
   };
 
-  // Capture the height of the first rendered page
-  const onPageLoadSuccess = (page) => {
-    if (!pageHeight) {
-      setPageHeight(page.originalHeight);
-    }
-  };
-
   return (
-    <Box
-      sx={{
-        width: "100%",
-        height: pageHeight ? pageHeight - 50 : "100%",
-        maxHeight: "100%",
-        overflowY: "auto",
-        borderRadius: 2,
-        backgroundColor: "#fff",
-      }}
-    >
-      {/* 
-      // OPTIONAL PAGE NAVIGATION — KEEPING COMMENTED OUT AS REQUESTED
-
-      <Stack
-        direction="row"
-        spacing={2}
-        alignItems="center"
-        justifyContent="center"
-        sx={{ p: 1, borderBottom: "1px solid #ddd" }}
-      >
-        <Button
-          variant="outlined"
-          size="small"
-          disabled={currentPage <= 1}
-          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-        >
-          Previous
-        </Button>
-
-        <Typography sx={{ fontSize: 14 }}>
-          Page {currentPage} of {numPages || "?"}
-        </Typography>
-
-        <Button
-          variant="outlined"
-          size="small"
-          disabled={!numPages || currentPage >= numPages}
-          onClick={() =>
-            setCurrentPage((p) => (numPages ? Math.min(numPages, p + 1) : p))
-          }
-        >
-          Next
-        </Button>
-      </Stack>
-      */}
-
-      <div
+    
+      <Box
         ref={pdfWrapper}
-        style={{
-          width: "100%",
-          maxWidth: "550px",   // ← cap the actual render width
-          margin: "0 auto",    // ← center it
-          overflow: "hidden",
+        sx={{
+          flexGrow: 1,
+          height: "100%",
+          maxHeight: 790,
+          overflowY: "auto",
+          overflowX: "hidden",
+          px: 2,
         }}
       >
         <Document file={pdfFile} onLoadSuccess={onDocumentLoadSuccess}>
@@ -108,11 +54,9 @@ export default function MyPortfolio() {
               width={width}
               renderAnnotationLayer={false}
               renderTextLayer={false}
-              onLoadSuccess={index === 0 ? onPageLoadSuccess : undefined}
             />
           ))}
         </Document>
-      </div>
-    </Box>
+      </Box>
   );
 }

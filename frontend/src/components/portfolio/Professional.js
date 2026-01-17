@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Box, Container, Card, Typography } from "@mui/material";
+import {
+  Box,
+  Container,
+  Card,
+  Typography,
+  Grid
+} from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 
 import HeaderShell from "../layouts/HeaderShell";
@@ -26,152 +32,28 @@ export default function Professional() {
         sx={{
           pt: `${headerHeight}px`,
           display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
+          justifyContent: "center",
           width: "100%",
         }}
       >
         <Container
           maxWidth="lg"
           sx={{
-            pt: 4,
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
+            gap: 4,
             background: "white",
-            width: "100%",
-            borderRadius: 5
+            borderRadius: 5,
+            pb: 4,
+            px: 2,
           }}
         >
-
-          {/* ACTION BUTTONS */}
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-              mb: 4,
-              mt: 2,
-            }}
-          >
-            {/* PRINT ALL */}
-            {/* <Card
-              onClick={() => window.print()}
-              sx={{
-                cursor: "pointer",
-                px: 3,
-                py: 1,
-                borderRadius: 2,
-                backgroundColor: theme.gradient,
-                color: theme.textColor,
-                fontWeight: 600,
-                boxShadow: 3,
-                "&:hover": { opacity: 0.85 },
-              }}
-            >
-              Print All
-            </Card> */}
-
-            {/* DOWNLOAD RESUME */}
-            <Card
-              component="a"
-              href={require("../../misc/jkof_resume.pdf")}
-              download="Jason_Kofi_Resume.pdf"
-              sx={{
-                cursor: "pointer",
-                px: 3,
-                py: 1,
-                borderRadius: 2,
-                backgroundColor: theme.gradient,
-                color: theme.textColor,
-                fontWeight: 600,
-                boxShadow: 3,
-                textDecoration: "none",
-                "&:hover": { opacity: 0.85 },
-              }}
-            >
-              Download Resume
-            </Card>
-
-            {/* DOWNLOAD PORTFOLIO */}
-            <Card
-              component="a"
-              href={require("../../misc/jkof_portfolio.PDF")}
-              download="Jason_Kofi_Portfolio.pdf"
-              sx={{
-                cursor: "pointer",
-                px: 3,
-                py: 1,
-                borderRadius: 2,
-                backgroundColor: theme.gradient,
-                color: theme.textColor,
-                fontWeight: 600,
-                boxShadow: 3,
-                textDecoration: "none",
-                "&:hover": { opacity: 0.85 },
-              }}
-            >
-              Download Portfolio
-            </Card>
-          </Box>
-
-
-          {/* ============================
-              RESUME (STACKED)
-          ============================ */}
-          <Box sx={{ maxWidth: "550px", width: "100%", mx: "auto", mb: 4 }}>
-            <Box sx={{ background: theme.gradient }}>
-              <Typography variant="h6" textAlign="center">
-                Resume
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                borderRadius: 2,
-                backgroundColor: "#fff",
-                boxShadow: 3,
-                p: 2,
-              }}
-            >
-              <MyResume />
-            </Box>
-          </Box>
-
-          {/* ============================
-              PORTFOLIO (STACKED)
-          ============================ */}
-          <Box sx={{ maxWidth: "550px", width: "100%", mx: "auto", mb: 4 }}>
-            <Box sx={{ background: theme.gradient, color: theme.textColor }}>
-              <Typography variant="h6" textAlign="center">
-                Portfolio
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                borderRadius: 2,
-                backgroundColor: "#fff",
-                boxShadow: 3,
-                p: 2,
-              }}
-            >
-              <MyPortfolio />
-            </Box>
-          </Box>
-
           {/* IMAGE CARD */}
-          <Box
-            sx={{
-              display: "inline-flex",
-              p: "10px",
-              mt: 2,
-              borderRadius: "20px",
-            }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
             <Card
               sx={{
                 width: "100%",
-                maxWidth: "800px",
+                maxWidth: 200, 
                 borderRadius: "20px",
                 p: 2,
                 boxShadow: 3,
@@ -195,22 +77,111 @@ export default function Professional() {
             </Card>
           </Box>
 
+          {/* DOCUMENTS SECTION */}
+          <Grid container spacing={4}>
+            {/* LEFT COLUMN — Resume */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+                <Card
+                  component="a"
+                  href={require("../../misc/jkof_resume.pdf")}
+                  download="Jason_Kofi_Resume_2025.pdf"
+                  sx={{
+                    cursor: "pointer",
+                    px: 3,
+                    py: 1,
+                    borderRadius: 2,
+                    backgroundColor: theme.gradient,
+                    color: theme.textColor,
+                    fontWeight: 600,
+                    boxShadow: 3,
+                    textDecoration: "none",
+                    "&:hover": { opacity: 0.85 },
+                  }}
+                >
+                  Download Resume
+                </Card>
+              </Box>
+
+              <Box sx={{ background: theme.gradient, color: theme.textColor, borderRadius: 2 }}>
+                <Typography variant="h6" textAlign="center">
+                  Resume
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  borderRadius: 2,
+                  backgroundColor: "#fff",
+                  boxShadow: 3,
+                  p: 2,
+                  mt: 1,
+                }}
+              >
+                <MyResume />
+              </Box>
+            </Grid>
+
+            {/* RIGHT COLUMN — Portfolio */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+                <Card
+                  component="a"
+                  href={require("../../misc/jkof_portfolio.PDF")}
+                  download="Jason_Kofi_Portfolio_2025.pdf"
+                  sx={{
+                    cursor: "pointer",
+                    px: 3,
+                    py: 1,
+                    borderRadius: 2,
+                    backgroundColor: theme.gradient,
+                    color: theme.textColor,
+                    fontWeight: 600,
+                    boxShadow: 3,
+                    textDecoration: "none",
+                    "&:hover": { opacity: 0.85 },
+                  }}
+                >
+                  Download Portfolio
+                </Card>
+              </Box>
+
+              <Box sx={{ background: theme.gradient, color: theme.textColor, borderRadius: 2 }}>
+                <Typography variant="h6" textAlign="center">
+                  Portfolio
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  borderRadius: 2,
+                  backgroundColor: "#fff",
+                  boxShadow: 3,
+                  p: 2,
+                  mt: 1,
+                  minHeight: 790,
+                }}
+              >
+                <MyPortfolio />
+              </Box>
+            </Grid>
+          </Grid>
+
           {/* CONTACT SECTION */}
           <Box
             sx={{
-              mt: 6,
               width: "100%",
-              maxWidth: "800px",
+              maxWidth: 800,
               borderRadius: 2,
               backgroundColor: "#fff",
               boxShadow: 3,
               p: 3,
               textAlign: "center",
+              mx: "auto",
             }}
           >
             <ContactProfessional />
           </Box>
-
         </Container>
       </Box>
     </>

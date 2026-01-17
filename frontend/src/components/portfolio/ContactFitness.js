@@ -1,6 +1,8 @@
 import {
   Box,
-  Grid,
+  Button,
+  CardContent,
+  CardActions,
   Card,
   CardActionArea,
   CardMedia,
@@ -16,7 +18,7 @@ export default function ContactFitness() {
         width: "100%",
         display: "flex",
         justifyContent: "center",
-        mt: 30,
+        // mt: 30,
       }}
     >
       <Container
@@ -31,7 +33,7 @@ export default function ContactFitness() {
           pb: 4,
         }}
       >
-        {/* ROW 1 — Calculator */}
+        {/* ROW 1 — Calculator / Gaming Banner */}
         <Box
           sx={{
             width: "100%",
@@ -41,97 +43,111 @@ export default function ContactFitness() {
             overflow: "hidden",
           }}
         >
-          <Calculator />
+          <Card
+            sx={{
+              minWidth: "40vw",
+              borderRadius: "25px",
+              padding: "5px",
+              margin: "20px",
+              textAlign: "center",
+            }}
+          >
+            <CardActionArea
+              component={Link}
+              to="/fitness/calculator"
+              target="_blank"
+            >
+              <CardContent />
+
+              <CardMedia
+                component="img"
+                alt="Jkof Gaming"
+                image={require("../../images/macros.jpg")}
+                sx={{ borderRadius: "25px" }}
+              />
+            </CardActionArea>
+
+            <CardActions>
+              <Button size="small">Share</Button>
+              <Button size="small">Learn More</Button>
+            </CardActions>
+          </Card>
         </Box>
 
-        {/* ROW 2 — Social Icons (side-by-side inside ONE column) */}
+        {/* ROW 2 — Social Icons */}
         <Box
           sx={{
             width: "100%",
             display: "flex",
             justifyContent: "center",
-            gap: 4,              // spacing between icons
-            flexWrap: "wrap",    // keeps it responsive
+            gap: 4,
+            flexWrap: "wrap",
           }}
         >
           {/* Facebook */}
-          <Box
+          <Card
             sx={{
-              display: "inline-flex",
               borderRadius: "20px",
+              p: 1,
+              boxShadow: 3,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              width: "auto",
             }}
           >
-            <Card
-              sx={{
-                borderRadius: "20px",
-                p: 1,
-                boxShadow: 3,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                width: "auto",
-              }}
+            <CardActionArea
+              component={Link}
+              to="https://www.facebook.com/jason.kofi.1"
+              target="_blank"
             >
-              <CardActionArea
-                component={Link}
-                to="https://www.facebook.com/jason.kofi.1"
-                target="_blank"
-              >
-                <CardMedia
-                  component="img"
-                  alt="Facebook Icon"
-                  image={require("../../images/icons/Facebook_Icon_(Official_2).png")}
-                  sx={{
-                    borderRadius: "12px",
-                    maxHeight: 80,
-                    maxWidth: 80,
-                    objectFit: "contain",
-                  }}
-                />
-              </CardActionArea>
-            </Card>
-          </Box>
+              <CardMedia
+                component="img"
+                alt="Facebook Icon"
+                image={require("../../images/icons/Facebook_Icon_(Official_2).png")}
+                sx={{
+                  borderRadius: "12px",
+                  maxHeight: 80,
+                  maxWidth: 80,
+                  objectFit: "contain",
+                }}
+              />
+            </CardActionArea>
+          </Card>
 
           {/* Instagram */}
-          <Box
+          <Card
             sx={{
-              display: "inline-flex",
               borderRadius: "20px",
+              p: 1,
+              boxShadow: 3,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              width: "auto",
             }}
           >
-            <Card
-              sx={{
-                borderRadius: "20px",
-                p: 1,
-                boxShadow: 3,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                width: "auto",
-              }}
+            <CardActionArea
+              component={Link}
+              to="https://www.instagram.com/jkof86/"
+              target="_blank"
             >
-              <CardActionArea
-                component={Link}
-                to="https://www.instagram.com/jkof86/"
-                target="_blank"
-              >
-                <CardMedia
-                  component="img"
-                  alt="Instagram Icon"
-                  image={require("../../images/icons/Instagram_icon.png")}
-                  sx={{
-                    borderRadius: "12px",
-                    maxHeight: 80,
-                    maxWidth: 80,
-                    objectFit: "contain",
-                  }}
-                />
-              </CardActionArea>
-            </Card>
-          </Box>
+              <CardMedia
+                component="img"
+                alt="Instagram Icon"
+                image={require("../../images/icons/Instagram_icon.png")}
+                sx={{
+                  borderRadius: "12px",
+                  maxHeight: 80,
+                  maxWidth: 80,
+                  objectFit: "contain",
+                }}
+              />
+            </CardActionArea>
+          </Card>
         </Box>
 
-        {/* ROW 3 — (Optional future content) */}
+        {/* ROW 3 — Future content */}
       </Container>
     </Box>
   );
