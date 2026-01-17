@@ -5,7 +5,7 @@ import guestLogo from "../images/bg/ksLogo4T.png";
 
 export const BannerThemes = {
     google: {
-        gradient: "linear-gradient(to right,  #34a853bf, #fdd7d7)",
+        gradient: "linear-gradient(to right,  #34a853bf, #ffffff)",
         background: "#5c5c5c",
         image: googleLogo,
         textColor: "#204b29"
