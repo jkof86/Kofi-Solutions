@@ -16,7 +16,7 @@ import { FeedStatusContext } from "../../context/FeedStatusContext";
 import { API_BASE } from "../../data/api";
 
 export default function DebugTab() {
-  const { apiStage } = useContext(FeedStatusContext);
+  // const { apiStage } = useContext(FeedStatusContext);
 
   const [debugOutput, setDebugOutput] = useState("");
   const [customQuery, setCustomQuery] = useState("?debug=echo&msg=hello");
@@ -25,11 +25,21 @@ export default function DebugTab() {
   // ------------------------------------------------------------
   // Backend runner
   // ------------------------------------------------------------
+
+  const isLocal =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+
+  const apiStage = isLocal ? "test" : "prod";
+
   const runDebug = async (queryString) => {
     try {
-      const url = `${API_BASE}${queryString}`;
+      const clientEnv = apiStage; // "prod" or "test"
+
+      const url = `${API_BASE}${queryString}&client_env=${clientEnv}`;
       const res = await fetch(url);
       const json = await res.json();
+
       setDebugOutput(JSON.stringify(json, null, 2));
 
       // Auto-scroll to bottom
