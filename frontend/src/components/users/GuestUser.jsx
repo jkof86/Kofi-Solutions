@@ -94,7 +94,7 @@ export default function GuestUser() {
 
             <Box sx={{ flexGrow: 1 }} />
 
-            <Chip
+            {/* <Chip
               label="v1.2.0.4"
               sx={{
                 backgroundColor: "#fff",
@@ -102,7 +102,8 @@ export default function GuestUser() {
                 color: "#1976d2",
                 fontWeight: 600,
               }}
-            />
+            /> */}
+            
           </Box>
 
           {/* Two-column layout */}

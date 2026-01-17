@@ -1,14 +1,10 @@
 // ------------------------------------------------------------
-// FeedCard.jsx — v1.400 (Stable + Fully Aligned)
+// FeedCard.jsx — v1.401 (Stage-Aware + Fully Aligned)
 // ------------------------------------------------------------
 //
-// Improvements in v1.400:
-//   ✓ Accepts feedStatus + symbol props (from RSSFeed v1.207)
-//   ✓ No redundant context lookups unless needed
-//   ✓ Stronger fallback chain for images
-//   ✓ Cleaner layout + spacing
-//   ✓ Unified health refresh logic
-//   ✓ Fully null-safe
+// Improvements in v1.401:
+//   ✓ Replaces hardcoded BACKEND_URL with API_BASE
+//   ✓ Health refresh now respects test/prod stage
 //   ✓ Zero ESLint warnings
 //
 // ------------------------------------------------------------
@@ -34,9 +30,9 @@ import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import FeedIcon from "./FeedIcon";
 import { FEED_IMAGE_OVERRIDES } from "../../data/feedImageOverrides";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
+import { API_BASE } from "../../data/api";
 
-const BACKEND_URL =
-  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
+import FallbackCard from "./FallbackCard";
 
 const FALLBACK_IMAGE = require("../../images/bg/ksBanner04.jpeg");
 
@@ -62,6 +58,38 @@ export default function FeedCard({
 }) {
   const { setStatus } = useContext(FeedStatusContext);
   const feedId = feedMeta?.id;
+
+  const MINI_HEALTH_COLOR = {
+    ok: "#2e7d32",
+    json: "#2e7d32",
+    fallback: "#f9a825",
+    empty: "#f9a825",
+    dead: "#c62828",
+    blocked: "#c62828",
+    html_error: "#c62828",
+    unknown: "#c62828",
+  };
+
+  function MiniHealthIndicator({ state }) {
+    const color = MINI_HEALTH_COLOR[state] || "#c62828";
+
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <Box
+          sx={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            bgcolor: color,
+          }}
+        />
+        <Typography variant="caption" sx={{ color }}>
+          {state}
+        </Typography>
+      </Box>
+    );
+  }
+
 
   // ------------------------------------------------------------
   // Status → Icon + Label mapping
@@ -99,10 +127,10 @@ export default function FeedCard({
   }
 
   // ------------------------------------------------------------
-  // Manual health refresh handler
+  // Manual health refresh handler (stage-aware)
   // ------------------------------------------------------------
   const refreshHealth = () => {
-    fetch(`${BACKEND_URL}?mode=health`)
+    fetch(`${API_BASE}/RSSProxyAggregator?mode=health`)
       .then((res) => res.json())
       .then((json) => {
         const entry = json?.feeds?.[feedId];
@@ -144,6 +172,17 @@ export default function FeedCard({
   const overrideImage = FEED_IMAGE_OVERRIDES[item?.source] || null;
 
   // ------------------------------------------------------------
+  // Fallback Feed Card (empty or fallback)
+  // ------------------------------------------------------------
+  if (status === "empty" || status === "fallback") {
+    return (
+      <FallbackCard
+        feedId={feedId}
+        onRefresh={onRefresh}
+      />
+    );
+  }
+  // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
   return (
@@ -181,6 +220,8 @@ export default function FeedCard({
             >
               {safeTitle}
             </Typography>
+            {/* Mini Health Indicator */}
+            {/* <MiniHealthIndicator state={status} /> */}
           </Box>
 
           {/* Actions + Status */}

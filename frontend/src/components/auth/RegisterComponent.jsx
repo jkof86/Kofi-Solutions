@@ -58,15 +58,22 @@ export default function RegisterComponent() {
         {/* Banner */}
         <Box
           component="img"
-          src={require('../../images/bg/ksBanner08.jpeg')}
+          src={require('../../images/bg/ksBanner02.jpeg')}
           alt="Register Banner"
           sx={{
             width: "420px",
-            height: "auto",
+            height: "140px",
             borderRadius: "16px",
             boxShadow: 3,
             mb: 2,
             objectFit: "cover",
+            // Stylish double border
+                border: "3px solid #1e293b",
+                outline: "2px solid #3b82f6",
+                outlineOffset: "3px",
+
+                // Soft depth
+                boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
           }}
         />
 
@@ -84,6 +91,14 @@ export default function RegisterComponent() {
             borderRadius: 3,
             border: '2px solid black',
             boxShadow: 3,
+
+            // Stylish double border
+                border: "3px solid #1e293b",
+                outline: "2px solid #3b82f6",
+                outlineOffset: "3px",
+
+                // Soft depth
+                boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
           }}
         >
           <TextField

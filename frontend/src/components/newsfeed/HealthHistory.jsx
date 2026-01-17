@@ -1,52 +1,44 @@
 // ------------------------------------------------------------
-// HealthHistory.jsx — Rolling Health Snapshot History
+// HealthHistory.jsx — v1.203 (Unified Classification)
 // ------------------------------------------------------------
 
-import React, { useEffect, useState, useContext } from "react";
-import { Box, Typography, List, ListItem, ListItemText } from "@mui/material";
+import React, { useContext, useMemo } from "react";
+import { Box, Typography, Stack, Chip } from "@mui/material";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 
 export default function HealthHistory() {
-  const { health, lastUpdated } = useContext(FeedStatusContext);
-  const [history, setHistory] = useState([]);
+  const { status, lastUpdated } = useContext(FeedStatusContext);
 
-  useEffect(() => {
-    if (!health || !lastUpdated) return;
+  const summary = useMemo(() => {
+    const values = Object.values(status || {});
 
-    setHistory(prev => {
-      const entry = {
-        time: lastUpdated.toLocaleTimeString(),
-        okCount: Object.values(health.feeds || {}).filter(s => s === "ok").length,
-        fallbackCount: Object.values(health.feeds || {}).filter(
-          s => s === "fallback" || s === "json"
-        ).length,
-        errorCount: Object.values(health.feeds || {}).filter(
-          s => s !== "ok" && s !== "fallback" && s !== "json"
-        ).length
-      };
+    const isHealthy = (s) => s === "ok" || s === "json";
+    const isFallback = (s) => s === "fallback" || s === "empty";
+    const isError = (s) =>
+      ["dead", "blocked", "html_error", "unknown"].includes(s);
 
-      const next = [entry, ...prev];
-      return next.slice(0, 10); // keep last 10
-    });
-  }, [health, lastUpdated]);
-
-  if (!history.length) return null;
+    return {
+      ok: values.filter(isHealthy).length,
+      fallback: values.filter(isFallback).length,
+      error: values.filter(isError).length,
+    };
+  }, [status]);
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ mt: 2 }}>
       <Typography variant="subtitle2" sx={{ mb: 1 }}>
-        Health History (last {history.length} checks)
+        Health History (latest)
       </Typography>
-      <List dense>
-        {history.map((h, idx) => (
-          <ListItem key={idx} sx={{ py: 0.25 }}>
-            <ListItemText
-              primary={`${h.time} — OK: ${h.okCount}, Fallback: ${h.fallbackCount}, Error: ${h.errorCount}`}
-              primaryTypographyProps={{ variant: "caption" }}
-            />
-          </ListItem>
-        ))}
-      </List>
+
+      <Stack direction="row" spacing={2}>
+        <Chip label={`Healthy: ${summary.ok}`} color="success" />
+        <Chip label={`Fallback: ${summary.fallback}`} color="warning" />
+        <Chip label={`Dead: ${summary.error}`} color="error" />
+      </Stack>
+
+      <Typography variant="caption" sx={{ mt: 1, display: "block" }}>
+        Last updated: {lastUpdated?.toLocaleTimeString() || "—"}
+      </Typography>
     </Box>
   );
 }

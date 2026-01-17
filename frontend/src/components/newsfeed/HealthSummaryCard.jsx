@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// HealthSummaryCard.jsx — v1.200 (Health Summary)
+// HealthSummaryCard.jsx — v1.203 (Unified Classification)
 // ------------------------------------------------------------
 
 import React, { useContext, useMemo } from "react";
@@ -7,32 +7,26 @@ import { Box, Typography, Grid, Paper } from "@mui/material";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 
 export default function HealthSummaryCard() {
-  const { health, lastUpdated } = useContext(FeedStatusContext);
+  const { status, health, lastUpdated } = useContext(FeedStatusContext);
 
   const summary = useMemo(() => {
-    if (!health || !health.feeds) {
-      return {
-        totalFeeds: 0,
-        okFeeds: 0,
-        fallbackFeeds: 0,
-        deadFeeds: 0,
-        totalMarkets: health?.markets ? Object.keys(health.markets).length : 0,
-      };
-    }
+    const values = Object.values(status || {});
 
-    const feeds = Object.values(health.feeds);
+    const isHealthy = (s) => s === "ok" || s === "json";
+    const isFallback = (s) => s === "fallback" || s === "empty";
+    const isError = (s) =>
+      ["dead", "blocked", "html_error", "unknown"].includes(s);
 
-    const totalFeeds = feeds.length;
-    const okFeeds = feeds.filter((f) => f.status === "ok" || f.status === "json").length;
-    const fallbackFeeds = feeds.filter((f) => f.status === "fallback").length;
-    const deadFeeds = feeds.filter((f) => f.status === "dead").length;
-
-    const totalMarkets = health.markets
-      ? Object.keys(health.markets).length
-      : 0;
-
-    return { totalFeeds, okFeeds, fallbackFeeds, deadFeeds, totalMarkets };
-  }, [health]);
+    return {
+      totalFeeds: values.length,
+      okFeeds: values.filter(isHealthy).length,
+      fallbackFeeds: values.filter(isFallback).length,
+      deadFeeds: values.filter(isError).length,
+      totalMarkets: health?.markets
+        ? Object.keys(health.markets).length
+        : 0,
+    };
+  }, [status, health]);
 
   const formatTime = (d) => {
     if (!d) return "";
@@ -41,7 +35,7 @@ export default function HealthSummaryCard() {
     return date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit"
+      second: "2-digit",
     });
   };
 
@@ -71,6 +65,7 @@ export default function HealthSummaryCard() {
           </Typography>
           <Typography variant="h6">{summary.totalFeeds}</Typography>
         </Grid>
+
         <Grid item xs={6} md={3}>
           <Typography variant="body2" sx={{ color: "#2e7d32" }}>
             Healthy
@@ -79,6 +74,7 @@ export default function HealthSummaryCard() {
             {summary.okFeeds}
           </Typography>
         </Grid>
+
         <Grid item xs={6} md={3}>
           <Typography variant="body2" sx={{ color: "#f9a825" }}>
             Fallback
@@ -87,9 +83,10 @@ export default function HealthSummaryCard() {
             {summary.fallbackFeeds}
           </Typography>
         </Grid>
+
         <Grid item xs={6} md={3}>
           <Typography variant="body2" sx={{ color: "#c62828" }}>
-            Dead
+            Error
           </Typography>
           <Typography variant="h6" sx={{ color: "#c62828" }}>
             {summary.deadFeeds}

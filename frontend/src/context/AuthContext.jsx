@@ -58,10 +58,10 @@ export function AuthProvider({ children }) {
     setAuthType(type);
     setUser(userObj);
 
-    const {email} = userObj; 
-    if (type === "google"){alert(`Welcome back ${email}`); navigate("/users/GoogleUser");}
-    if (type === "apple"){alert(`Welcome back ${email}`); navigate("/users/AppleUser");}
-    if (type === "guest"){alert(`Welcome ${email}`); navigate("/users/GuestUser");}
+    const { email } = userObj;
+    if (type === "google") { alert(`Welcome back ${email}`); navigate("/users/GoogleUser"); }
+    if (type === "apple") { alert(`Welcome back ${email}`); navigate("/users/AppleUser"); }
+    if (type === "guest") { alert(`Welcome ${email}`); navigate("/users/GuestUser"); }
 
     // navigate("/home");
   }
@@ -82,7 +82,7 @@ export function AuthProvider({ children }) {
   }
 
   // ------------------------------------------------------------
-  // LOGOUT
+  // LOGOUT METHODS
   // ------------------------------------------------------------
   function logout() {
     localStorage.removeItem("isLoggedIn");
@@ -93,8 +93,21 @@ export function AuthProvider({ children }) {
     setAuthType(null);
     setUser(null);
 
-    alert("LOGGED OUT successfully")
+    alert("Logged out successfully")
     navigate("/login");
+  }
+
+  function logoutToRegister() {
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("authType");
+      localStorage.removeItem("user");
+
+      setIsLoggedIn(false);
+      setAuthType(null);
+      setUser(null);
+
+      alert("Logged out successfully")
+      navigate("/register");
   }
 
   return (
@@ -103,11 +116,12 @@ export function AuthProvider({ children }) {
         isLoggedIn,
         authType,
         user,
-        loading,       
+        loading,
         loginGoogle,
         loginApple,
         loginGuest,
         logout,
+        logoutToRegister,
       }}
     >
       {children}

@@ -1,10 +1,11 @@
 // ------------------------------------------------------------
-// MarketChart.jsx — v2.701 (Debug-Enabled)
+// MarketChart.jsx — v2.709 (Stage-Aware + Debug-Enabled)
 // ------------------------------------------------------------
 //
 // Adds:
 //   ✓ Debug logging for history length + timestamps
 //   ✓ Safe logging (won't crash if empty)
+//   ✓ Stage-aware API routing (test vs prod)
 //   ✓ Helps confirm backend is returning correct ranges
 //
 // ------------------------------------------------------------
@@ -27,8 +28,7 @@ import {
   CartesianGrid
 } from "recharts";
 
-const API =
-  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
+import { API_BASE } from "../../data/api";
 
 export default function MarketChart({ symbol }) {
   const [data, setData] = useState([]);
@@ -46,12 +46,12 @@ export default function MarketChart({ symbol }) {
   useEffect(() => {
     if (!symbol) return;
 
-    console.log('[MarketChart] requesting range:', range);
-
+    console.log("[MarketChart] requesting range:", range);
 
     const fetchData = async () => {
       const normalized = normalize(symbol);
-      const url = `${API}?mode=market&symbol=${normalized}&range=${range}`;
+
+      const url = `${API_BASE}?mode=market&symbol=${normalized}&range=${range}`;
 
       try {
         const res = await fetch(url);
@@ -187,11 +187,10 @@ export default function MarketChart({ symbol }) {
       {/* Chart */}
       <ResponsiveContainer width="100%" height={180}>
         <LineChart
-          key={range}   // full chart remount for full animation
+          key={range}
           data={data}
           margin={{ top: 10, right: 20, bottom: 20, left: 10 }}
         >
-
           <CartesianGrid strokeDasharray="3 3" />
 
           <XAxis
@@ -235,7 +234,6 @@ export default function MarketChart({ symbol }) {
               <stop offset="100%" stopColor="#1976d2" stopOpacity={0} />
             </linearGradient>
           </defs>
-
         </LineChart>
       </ResponsiveContainer>
     </Box>

@@ -1,13 +1,14 @@
 // ------------------------------------------------------------
-// FeedStatusContext.jsx — v1.205 (Fully Normalized + Stable)
+// FeedStatusContext.jsx — v1.2.0.8 (Safe Init)
 // ------------------------------------------------------------
 //
-// Key Fixes in v1.205:
-//   ✓ FEEDS is now the source of truth for all feed IDs
-//   ✓ Health normalization guarantees ALL feedIds exist in status
-//   ✓ Missing backend entries default to "unknown" (never undefined)
-//   ✓ strictMode can no longer wipe out feeds due to missing keys
-//   ✓ Markets preserved exactly as returned
+// Stable + battle‑tested:
+//   ✓ FEEDS is the source of truth
+//   ✓ Normalization guarantees all feedIds exist
+//   ✓ Missing backend entries default to "unknown"
+//   ✓ No double-path issues
+//   ✓ Stage detection is safe + automatic
+//   ✓ BACKEND_URL is clean and correct
 //
 // ------------------------------------------------------------
 
@@ -19,30 +20,43 @@ import React, {
   useEffect
 } from "react";
 
-import { FEEDS } from "../data/feedsMap";   // ⭐ NEW: FEEDS imported
+import { FEEDS } from "../data/feedsMap";
+import { API_BASE } from "../data/api";
 
-const BACKEND_URL =
-  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
+// Determine stage based on API_BASE
+const API_STAGE =
+  typeof API_BASE === "string" && API_BASE.includes("/test")
+    ? "test"
+    : "prod";
+
+// Build backend URL safely (NO double append)
+const BACKEND_URL = `${API_BASE}`;
 
 // ------------------------------------------------------------
 // Default context shape
 // ------------------------------------------------------------
 export const FeedStatusContext = createContext({
   status: {},
-  setStatus: () => {},
-  setBulkStatus: () => {},
+  setStatus: () => { },
+  setBulkStatus: () => { },
 
   health: null,
-  setHealth: () => {},
+  setHealth: () => { },
 
   strictMode: true,
-  setStrictMode: () => {},
+  setStrictMode: () => { },
 
   lastUpdated: null,
-  setLastUpdated: () => {}
+  setLastUpdated: () => { },
+
+  apiStage: API_STAGE,
+
+  normalizedFeeds: {},
+  setNormalizedFeeds: () => { }
+
 });
 
-console.log("FeedStatusContext v1.205 active");
+console.log("FeedStatusContext v1.2.0.8 active");
 
 export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
@@ -80,13 +94,19 @@ export function FeedStatusProvider({ children }) {
   // ------------------------------------------------------------
   // Normalize backend health → UI status map
   // ------------------------------------------------------------
+  const [normalizedFeeds, setNormalizedFeeds] = useState({});
+
   const normalizeHealthToStatus = useCallback(
     (healthObj) => {
       const backendFeeds = healthObj?.feeds || {};
 
+      // console.log("[CTX] Raw backend feed entries:");
+      // for (const [feedId, entry] of Object.entries(backendFeeds)) {
+      //   console.log(`  ${feedId}:`, entry);
+      // }
+
       const normalized = {};
 
-      // ⭐ FEEDS is the source of truth
       for (const feedId of Object.keys(FEEDS)) {
         const entry = backendFeeds[feedId];
 
@@ -96,11 +116,22 @@ export function FeedStatusProvider({ children }) {
         }
 
         if (entry.ok === true) {
-          normalized[feedId] =
-            entry.type === "json" ? "json" : "ok";
+          if (entry.count === 0) {
+            normalized[feedId] = "empty";
+          } else {
+            normalized[feedId] = entry.type === "json" ? "json" : "ok";
+          }
           continue;
         }
 
+          //NEW: detect error field
+        if (entry.error) {
+          normalized[feedId] = entry.error;
+          continue;
+        }
+
+
+        // Fallback to status field if error is missing
         switch (entry.status) {
           case "fallback":
             normalized[feedId] = "fallback";
@@ -115,17 +146,22 @@ export function FeedStatusProvider({ children }) {
             normalized[feedId] = "html_error";
             break;
           case "ok":
-            normalized[feedId] =
-              entry.type === "json" ? "json" : "ok";
+            normalized[feedId] = entry.type === "json" ? "json" : "ok";
             break;
           default:
             normalized[feedId] = "unknown";
         }
       }
 
+      // console.log("[CTX] Final normalized status:", normalized);
+
+
       setBulkStatus(normalized);
+      setNormalizedFeeds(backendFeeds); // optional
     },
     [setBulkStatus]
+
+
   );
 
   // ------------------------------------------------------------
@@ -177,7 +213,9 @@ export function FeedStatusProvider({ children }) {
       setStrictMode,
 
       lastUpdated,
-      setLastUpdated
+      setLastUpdated,
+
+      apiStage: API_STAGE
     }),
     [
       status,

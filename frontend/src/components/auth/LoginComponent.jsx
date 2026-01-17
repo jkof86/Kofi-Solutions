@@ -38,29 +38,20 @@ export default function LoginComponent() {
 
   return (
     <>
-      {/* FIX: UserHeader does NOT accept sx props */}
-      <UserHeader />
-
-        <Container
-          maxWidth="md"
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: "100vh",
-            borderRadius: 10,
-            background: "white",
-            pt: 10, pb: 10
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              width: "100%",
-            }}
-          >
+      {/* Fixed header */}
+            <UserHeader sx={{ m: 0, p: 0 }} />
+      
+            {/* Main wrapper */}
+            <Box
+              sx={{
+                pt: 10,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                width: "100%",
+              }}
+            >
+              
             {/* Banner */}
             <Box
               component="img"
@@ -135,7 +126,7 @@ export default function LoginComponent() {
               </Button>
             </Box>
           </Box>
-        </Container>
+        {/* </Container> */}
     </>
   );
 }

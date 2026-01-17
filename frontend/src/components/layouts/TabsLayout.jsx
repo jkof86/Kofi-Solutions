@@ -68,13 +68,16 @@ export default function TabsLayout({ activeCategory, setActiveCategory }) {
   // ------------------------------------------------------------
   // FILTER FEEDS BASED ON HEALTH
   // ------------------------------------------------------------
+
+  const isHealthy = (s) => s === "ok" || s === "json";
+  const isFallback = (s) => s === "fallback" || s === "empty";
+
   const filteredFeeds = useMemo(() => {
     if (!strictMode) return feedsInCategory;
 
     return feedsInCategory.filter((f) => {
       const s = status[f.feedId];
-      if (!s) return true;
-      return s === "ok" || s === "json" || s === "fallback";
+      return isHealthy(s) || isFallback(s);
     });
   }, [feedsInCategory, status, strictMode]);
 

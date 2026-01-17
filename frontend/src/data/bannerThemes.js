@@ -26,6 +26,6 @@ export const BannerThemes = {
         gradient: "linear-gradient(to right, #1e3c72, #3b78e2)",
         background: "#ffffff",
         image: guestLogo,
-        textColor: "#000000"
+        textColor: "#eceef1"
     }
 };

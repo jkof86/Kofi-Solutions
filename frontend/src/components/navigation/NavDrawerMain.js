@@ -17,14 +17,16 @@ import {
   AccountCircle as AccountCircleIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
+  Logout,
 } from "@mui/icons-material";
 
 import NewspaperIcon from "@mui/icons-material/Newspaper";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import WorkIcon from "@mui/icons-material/Work";
 
+import { useAuth } from "../../context/AuthContext";
+
 import { Link, useNavigate } from "react-router-dom";
-import { googleLogout } from "@react-oauth/google";
 import avatarImage from "../../images/icons/avatar_full.jpg";
 
 // ------------------------------
@@ -45,27 +47,15 @@ const navItems = [
 
 export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
   const navigate = useNavigate();
+  const { isLoggedIn, authType, user, logout, logoutToRegister } = useAuth();
+
 
   function goToLogin() {
     navigate("/login");
   }
 
   function handleLogout() {
-    const isLoggedIn = localStorage.getItem("isLoggedIn");
-    const tempUser = localStorage.getItem("tempUser");
-
-    if (!isLoggedIn && !tempUser) {
-      alert("You are currently LOGGED OUT");
-      return;
-    }
-
-    googleLogout();
-    alert("LOGGING OUT...");
-
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("tempUser");
-
-    goToLogin();
+    logout();
   }
 
   const navItems2 = [

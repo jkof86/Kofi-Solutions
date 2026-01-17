@@ -45,7 +45,7 @@ import TabsLayout from "./layouts/TabsLayout";
 import FeedStatusBar from "./newsfeed/FeedStatusBar";
 import MarketStatusBar from "./newsfeed/MarketStatusBar";
 import HealthSummaryCard from "./newsfeed/HealthSummaryCard";
-import FeedHealthDashboard from "./newsfeed/FeedHealthDashboard";
+import HealthDashboard from "./newsfeed/HealthDashboard";
 import MarketCarousel from "./newsfeed/MarketCarousel";
 import MiniSparkline from "./newsfeed/MiniSparkline";
 
@@ -116,7 +116,7 @@ export default function Home() {
             <Box sx={{ flexGrow: 1 }} />
 
             <Chip
-              label="v1.2.0.3"
+              label="v1.2.0.5"
               size="large"
               sx={{
                 backgroundColor: "#fff",
@@ -211,7 +211,7 @@ export default function Home() {
           System Health
         </Typography>
 
-        <FeedHealthDashboard />
+        <HealthDashboard />
       </Drawer>
     </>
   );

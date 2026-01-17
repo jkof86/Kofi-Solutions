@@ -12,11 +12,11 @@ import {
   Chip
 } from "@mui/material";
 
-import { ContactSupport, Menu as MenuIcon } from "@mui/icons-material";
+import { Menu as MenuIcon } from "@mui/icons-material";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import ContactSupportIcon from "@mui/icons-material/ContactSupport";
 
-import FeedHealthDashboard from "../newsfeed/FeedHealthDashboard";
+import HealthDashboard from "../newsfeed/HealthDashboard";
 import NavDrawerMain from "../navigation/NavDrawerMain";
 import TickerBar from "./TickerBar";
 
@@ -33,7 +33,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
   const navigate = useNavigate();
   const ref = useRef(null);
 
-  const { isLoggedIn, authType, user, logout } = useAuth();
+  const { isLoggedIn, authType, user, logout, logoutToRegister } = useAuth();
 
   // Measure header height
   useEffect(() => {
@@ -46,21 +46,34 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
   }, [onHeightChange]);
 
   // Navigation
-  const goToRegister = () => navigate("/register");
+  const goToRegister = () => { navigate("/register"); }
   const goToLogin = () => navigate("/login");
   const goToHome = () => navigate("/home");
 
+  const handleLogout = () => logout();
+
+  const showConfirm = () => {
+    if (window.confirm("Do you wish to logout?")) {
+      logoutToRegister();
+    }
+  };
+
+
   const handleRegister = () => {
-    if (isLoggedIn) return;
-    goToRegister();
+    if (!isLoggedIn) {
+      goToRegister();
+    } else {
+      showConfirm();
+    }
   };
 
   const handleLogin = () => {
-    if (isLoggedIn) return;
-    goToLogin();
+    if (!isLoggedIn) {
+      goToLogin();
+    } else {
+      alert("You are already logged in");
+    }
   };
-
-  const handleLogout = () => logout();
 
   const sendEmail = () => {
     const recipient = "admin@kofisolutions.com";
@@ -86,19 +99,16 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
   };
 
   // ------------------------------------------------------------
-  // RETURN JSX (this was missing!)
+  // RETURN JSX
   // ------------------------------------------------------------
   return (
     <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000 }}>
       <Box ref={ref} sx={{ p: 0, m: 0 }}>
-
-        {/* Drawer Component */}
         <NavDrawerMain
           isDrawerOpen={isDrawerOpen}
           setIsDrawerOpen={setIsDrawerOpen}
         />
 
-        {/* TOP APP BAR */}
         <AppBar position="static" color="default" elevation={1} sx={{ p: 0 }}>
           <Toolbar
             disableGutters
@@ -110,8 +120,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
               alignItems: "center",
             }}
           >
-
-            {/* LEFT SECTION — Logo */}
+            {/* Logo */}
             <Box
               sx={{
                 flex: "0 0 200px",
@@ -131,7 +140,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
               />
             </Box>
 
-            {/* CENTER SECTION — Navigation */}
+            {/* Navigation */}
             <Box
               sx={{
                 flex: 1,
@@ -172,7 +181,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
               ))}
             </Box>
 
-            {/* RIGHT SECTION — Contact Button */}
+            {/* Contact Button */}
             <Box
               sx={{
                 flex: "0 0 200px",
@@ -209,11 +218,10 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                 </Box>
               </Tooltip>
             </Box>
-
           </Toolbar>
         </AppBar>
 
-        {/* BANNER */}
+        {/* Banner */}
         <Box
           sx={{
             background: "linear-gradient(to right, #1e3c72, #3b78e2)",
@@ -256,7 +264,6 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
             />
           </Tooltip>
 
-          {/* HEALTH DRAWER */}
           <Drawer
             anchor="right"
             open={isHealthOpen}
@@ -273,14 +280,11 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
               System Health
             </Typography>
-
-            <FeedHealthDashboard />
+            <HealthDashboard />
           </Drawer>
         </Box>
 
-        {/* TICKER BAR */}
         <TickerBar activeCategory={activeCategory} />
-
       </Box>
     </Box>
   );

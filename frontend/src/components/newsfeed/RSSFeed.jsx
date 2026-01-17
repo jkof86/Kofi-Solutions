@@ -1,8 +1,8 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.207 (Hooks-Safe + Fully Aligned)
+// RSSFeed.jsx — v1.209 (Hooks-Safe + Stage-Aware)
 // ------------------------------------------------------------
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -11,14 +11,12 @@ import {
   Collapse,
   Chip
 } from "@mui/material";
-
+import { API_BASE } from "../../data/api";
 import FeedCard from "./FeedCard";
 
-console.log("RSSFeed v1.207 loaded");
+console.log("RSSFeed v1.209 loaded");
 
 const BATCH_SIZE = 4;
-const BACKEND_URL =
-  "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
 export default function RSSFeed({
   feedId,
@@ -76,9 +74,9 @@ export default function RSSFeed({
     const debugFlag = debug || globalDebug;
 
     try {
-      const url = `${BACKEND_URL}?mode=feed&feed=${encodeURIComponent(
+      const url = `${API_BASE}?mode=feed&feed=${encodeURIComponent(
         feedMeta.id
-      )}${debugFlag ? "&debug=debug_feeds" : ""}`;
+      )}${debugFlag ? "&debug=feeds" : ""}`;
 
       console.log("Fetching feed:", feedId, "URL:", url);
 
@@ -163,6 +161,23 @@ export default function RSSFeed({
   }
 
   // ------------------------------------------------------------
+  // Render fallback FeedCard when no items exist
+  // ------------------------------------------------------------
+  if ((feedStatus === "empty" || feedStatus === "fallback") && items.length === 0) {
+    return (
+      <Box>
+        <FeedCard
+          item={{ title: "Feed unavailable", url: feedMeta.url }}
+          feedMeta={feedMeta}
+          feedStatus={feedStatus}
+          symbol={symbol}
+          onRefresh={() => fetchFeed(feedId)}
+        />
+      </Box>
+    );
+  }
+
+  // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
   return (
@@ -189,8 +204,8 @@ export default function RSSFeed({
                   feedStatus === "ok"
                     ? "#c8e6c9"
                     : feedStatus === "fallback"
-                    ? "#fff3cd"
-                    : "#ffcdd2"
+                      ? "#fff3cd"
+                      : "#ffcdd2"
               }}
             />
           )}

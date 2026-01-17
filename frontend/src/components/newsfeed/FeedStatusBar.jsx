@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// FeedStatusBar.jsx — v1.201 (Feed Health Bar)
+// FeedStatusBar.jsx — v1.203 (Unified Classification)
 // ------------------------------------------------------------
 
 import React, { useContext } from "react";
@@ -8,8 +8,11 @@ import { FeedStatusContext } from "../../context/FeedStatusContext";
 
 const STATUS_COLOR = {
   ok: "success",
-  json: "warning",
+  json: "success",
+
+  empty: "warning",
   fallback: "warning",
+
   dead: "error",
   blocked: "error",
   html_error: "error",
@@ -17,11 +20,11 @@ const STATUS_COLOR = {
 };
 
 export default function FeedStatusBar() {
-  const { health } = useContext(FeedStatusContext);
+  const { status, health } = useContext(FeedStatusContext);
 
-  if (!health || !health.feeds) return null;
+  if (!status || !health?.feeds) return null;
 
-  const { feeds } = health;
+  const backendFeeds = health.feeds;
 
   return (
     <Box
@@ -44,13 +47,14 @@ export default function FeedStatusBar() {
       </Typography>
 
       <Stack direction="row" spacing={1} flexWrap="wrap">
-        {Object.entries(feeds).map(([feedId, info]) => {
-          if (!info || !info.status) return null;
+        {Object.entries(status).map(([feedId, state]) => {
+          const color = STATUS_COLOR[state] || "error";
+          const count = backendFeeds[feedId]?.count ?? 0;
 
-          const color = STATUS_COLOR[info.status] || "error";
-          const label = info.fallback
-            ? `${feedId} (fallback)`
-            : `${feedId} (${info.count})`;
+          const label =
+            state === "empty" || state === "fallback"
+              ? `${feedId} (fallback)`
+              : `${feedId} (${count})`;
 
           return (
             <Chip

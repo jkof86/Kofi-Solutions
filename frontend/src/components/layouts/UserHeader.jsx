@@ -13,7 +13,7 @@ export default function UserHeader({ onHeightChange = () => { } }) {
     const navigate = useNavigate();
     const ref = useRef(null);
 
-    const { isLoggedIn, authType, logout } = useAuth();
+    const { isLoggedIn, authType, logout, logoutToRegister } = useAuth();
 
     // Provides access to BannerThemes
     // theme.gradient
@@ -33,18 +33,25 @@ export default function UserHeader({ onHeightChange = () => { } }) {
     // Navigation
     const goTo = (path) => navigate(path);
 
+    const showConfirm = () => {
+        if (window.confirm("Do you wish to logout?")) {
+            logoutToRegister();
+        }
+    }
+
     const handleRegister = () => {
-        if (isLoggedIn) return alert("You are already LOGGED IN");
-        goTo("/register");
+        if (!isLoggedIn) {goTo("/register");}
+        else
+        showConfirm();
     };
 
     const handleLogin = () => {
-        if (isLoggedIn) return alert("You are already LOGGED IN");
+        if (isLoggedIn) return alert("You are already logged in");
         goTo("/login");
     };
 
     const handleLogout = () => {
-        if (!isLoggedIn) return alert("You are already LOGGED OUT");
+        if (!isLoggedIn) return alert("You are already logged out");
         logout();
     };
 
