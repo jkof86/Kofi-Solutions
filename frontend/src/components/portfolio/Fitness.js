@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Box, Container, Card, Typography } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 
-import HeaderShell from "../layouts/HeaderShell";
+import NewsHeader from "../layouts/NewsHeader";
 import { BannerThemes } from "../../data/bannerThemes";
 import ContactFitness from "./ContactFitness";
 
@@ -14,7 +14,7 @@ export default function Fitness() {
   return (
     <>
       {/* FIXED HEADER */}
-      <HeaderShell
+      <NewsHeader
         onHeightChange={(h) => setHeaderHeight(h)}
         activeCategory="professional"
       />

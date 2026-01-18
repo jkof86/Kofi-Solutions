@@ -16,11 +16,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
-// Core dashboard
-import Home from "./components/Home";
+// News Feed (RSS)
+import NewsFeed from "./components/newsfeed/NewsFeed";
 
 // Portfolio sections
-import About from "./components/portfolio/About";
 import Account from "./components/users/Account";
 import Settings from "./components/users/Settings";
 import Calculator from "./components/portfolio/Calculator";
@@ -28,21 +27,14 @@ import Fitness from "./components/portfolio/Fitness";
 import Professional from "./components/portfolio/Professional";
 import Gaming from "./components/portfolio/Gaming";
 
-// Contact pages
-import ContactFitness from "./components/portfolio/ContactFitness";
-import ContactProfessional from "./components/portfolio/ContactProfessional";
-
-// Auth
+// Landing Page / Auth
 import LoginComponent from "./components/auth/LoginComponent";
 import RegisterComponent from "./components/auth/RegisterComponent";
 
-// Users
+// User Type Dashboards
 import GoogleUser from "./components/users/GoogleUser";
 import AppleUser from "./components/users/AppleUser";
 import GuestUser from "./components/users/GuestUser";
-
-
-
 
 
 /* ---------------------------------------------------------
@@ -70,7 +62,7 @@ export default function App() {
       {/* -----------------------------------------------------
           ROUTE TABLE — v1.2.0.4
           "/" defaults to LoginComponent
-          "/home" is protected by <ProtectedRoute>
+          "/news" is protected by <ProtectedRoute>
       ------------------------------------------------------ */}
       <Routes>
 
@@ -107,25 +99,30 @@ export default function App() {
         <Route path="/users/account" element={<Account />} />
         <Route path="/users/settings" element={<Settings />} />
 
-        {/* MAIN DASHBOARD (PROTECTED) */}
+        {/* News Feed (PROTECTED) */}
+        <Route
+          path="/news"
+          element={
+            <ProtectedRoute>
+              <NewsFeed />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/home"
           element={
             <ProtectedRoute>
-              <Home />
+              <NewsFeed />
             </ProtectedRoute>
           }
         />
 
         {/* PROFESSIONAL SECTION */}
         <Route path="/professional" element={<Professional />} />
-        {/* <Route path="/professional/about" element={<About />} /> */}
-        {/* <Route path="/professional/contact" element={<ContactProfessional />} /> */}
 
         {/* FITNESS SECTION */}
         <Route path="/fitness" element={<Fitness />} />
         <Route path="/fitness/calculator" element={<Calculator />} />
-        {/* <Route path="/fitness/contact" element={<ContactFitness />} /> */}
 
         {/* GAMING SECTION */}
         <Route path="/gaming" element={<Gaming />} />

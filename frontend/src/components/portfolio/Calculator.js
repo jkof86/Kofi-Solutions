@@ -9,7 +9,7 @@ import {
 
 import { useState } from "react";
 import PieChart from "./PieChart";
-import HeaderShell from "../layouts/HeaderShell";
+import NewsHeader from "../layouts/NewsHeader";
 
 import macrosImage from "../../images/macros.jpg";
 
@@ -172,7 +172,7 @@ export default function Calculator() {
 
     return (
         <>
-            <HeaderShell onHeightChange={setHeaderHeight} />
+            <NewsHeader onHeightChange={setHeaderHeight} />
 
             <Box
                 sx={{

@@ -3,17 +3,20 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import UserHeader from "../layouts/UserHeader";
 import MainContainer from "../layouts/MainContainer";
-import Gaming from "../portfolio/Gaming";
-import MyResume from "../portfolio/MyResume";
-import MyPortfolio from "../portfolio/MyPortfolio";
-import Calculator from "../portfolio/Calculator";
+import ProfessionalCard from "../portfolio/ProfessionalCard";
 import { BannerThemes } from "../../data/bannerThemes";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import ContactFitness from "../portfolio/ContactFitness";
 
-const cardLabels = ["News Feed", "Resume", "Portfolio", "Gaming", "WordPress", "Fitness / Nutrition"];
+import GamingCard from "../portfolio/GamingCard";
+import DefaultCard from "./DefaultCard";
+import WordPressCard from "./WordPressCard";
+
+
+const cardLabels = ["Gaming", "News Feed", "WordPress", "Professional", "Fitness / Nutrition"];
 
 export default function GuestUser() {
-  const { authType, user } = useAuth();
+  const { authType } = useAuth();
   const [activeCard, setActiveCard] = useState(null);
   const nav = useNavigate();
 
@@ -25,38 +28,48 @@ export default function GuestUser() {
       case "News Feed":
         return nav("/home");
 
-      case "Resume":
-        return <MyResume />;
+      case "Professional":
+        return <ProfessionalCard />;
 
       case "Gaming":
-        return <Gaming />;
+        return <GamingCard />;
 
       case "Fitness / Nutrition":
-        return <Calculator />;
+        return <ContactFitness />;
 
-      case "Portfolio":
-        return <MyPortfolio />;
+      case "WordPress":
+        return (
+          <>
+            <WordPressCard />
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Button
+                variant="contained"
+                href="https://wp.kofisolutions.com"
+                target="_blank"
+              >
+                Visit WordPress Blog
+              </Button>
+            </Box>
+          </>
+        );
 
       default:
-        return (
-          <Typography variant="body1" sx={{ opacity: 0.8 }}>
-            Welcome {user?.email}
-          </Typography>
-        );
+        return <DefaultCard />;
     }
   }
 
   function panelButton() {
     switch (activeCard) {
-      case "Resume":
-        return null;
-
-      case "Portfolio":
-        return null;
 
       case "WordPress":
-        window.open("https://wp.kofisolutions.com", "_blank");
-        return null;
+        return (
+          <Button
+            component={Link}
+            to="www.google.com"
+            variant="outlined" sx={{ mt: 3 }}>
+            Action for {activeCard}
+          </Button>
+        );
 
       default:
         return null;
@@ -80,7 +93,7 @@ export default function GuestUser() {
               alignItems: "center",
               gap: 2,
               background: theme.gradient,
-              color: "#fff",
+              color: theme.textColor,
               px: 3,
               py: 2,
               borderRadius: 2,
@@ -88,8 +101,11 @@ export default function GuestUser() {
               mb: 3,
             }}
           >
-            <Typography variant="h4" sx={{ fontWeight: 600 }}>
-              Guest User Dashboard
+            <Typography variant="h4" sx={{
+              fontWeight: 600,
+
+            }}>
+              Guest Dashboard
             </Typography>
 
             <Box sx={{ flexGrow: 1 }} />
@@ -103,7 +119,7 @@ export default function GuestUser() {
                 fontWeight: 600,
               }}
             /> */}
-            
+
           </Box>
 
           {/* Two-column layout */}
@@ -134,26 +150,26 @@ export default function GuestUser() {
             <Box
               sx={{
                 flex: "1 1 auto",
-                maxWidth: "100%",           // ✅ prevents overflow beyond container
+                maxWidth: "100%",           // prevents overflow beyond container
                 minHeight: 240,
                 p: 3,
                 borderRadius: 2,
                 backgroundColor: "#f5f5f5",
                 border: "1px solid #ddd",
                 boxShadow: 2,
-                overflowWrap: "break-word", // ✅ wraps long text
-                wordBreak: "break-word",    // ✅ breaks long strings
-                overflow: "hidden",         // ✅ hides accidental overflow
+                overflowWrap: "break-word", // wraps long text
+                wordBreak: "break-word",    // breaks long strings
+                overflow: "hidden",         // hides accidental overflow
               }}
             >
 
               {/* Dynamic content rendered */}
               {renderContent()}
 
-              <Button variant="outlined" sx={{ mt: 3 }}
+              {/* <Button variant="outlined" sx={{ mt: 3 }}
                 onClick={panelButton}>
                 Action for {activeCard}
-              </Button>
+              </Button> */}
             </Box>
           </Box>
         </Container>

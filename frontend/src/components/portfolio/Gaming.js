@@ -6,7 +6,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 
-import HeaderShell from "../layouts/HeaderShell";
+import NewsHeader from "../layouts/NewsHeader";
 import { BannerThemes } from "../../data/bannerThemes";
 
 export default function Gaming() {
@@ -18,7 +18,7 @@ export default function Gaming() {
     return (
         <>
             {/* FIXED HEADER*/}
-            <HeaderShell onHeightChange={(h) => setHeaderHeight(h)} />
+            <NewsHeader onHeightChange={(h) => setHeaderHeight(h)} />
 
             {/* MAIN PAGE CONTENT */}
             <Box
@@ -44,7 +44,7 @@ export default function Gaming() {
                     }}
                 >
             {/* GRID WRAPPER */}
-            <Grid container justifyContent="left">
+            <Grid container justifyContent="center">
                 <Grid item xs={12} md={6}>
                     <Card
                         sx={{

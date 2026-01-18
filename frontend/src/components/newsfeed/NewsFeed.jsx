@@ -19,7 +19,7 @@
 //   - If !isLoggedIn → /login
 //
 // Layout Structure:
-//   <HeaderShell />
+//   <NewsHeader />
 //   <MainContainer>
 //       <Container>
 //           Banner
@@ -40,47 +40,48 @@ import {
   Chip
 } from "@mui/material";
 
+import { useAuth } from "../../context/AuthContext";
+
 import RssFeedIcon from "@mui/icons-material/RssFeed";
-import TabsLayout from "./layouts/TabsLayout";
-import FeedStatusBar from "./newsfeed/FeedStatusBar";
-import MarketStatusBar from "./newsfeed/MarketStatusBar";
-import HealthSummaryCard from "./newsfeed/HealthSummaryCard";
-import HealthDashboard from "./newsfeed/HealthDashboard";
-import MarketCarousel from "./newsfeed/MarketCarousel";
-import MiniSparkline from "./newsfeed/MiniSparkline";
+import TabsLayout from "../layouts/TabsLayout";
+import FeedStatusBar from "./FeedStatusBar";
+import MarketStatusBar from "./MarketStatusBar";
+import HealthSummaryCard from "./HealthSummaryCard";
+import HealthDashboard from "./HealthDashboard";
+import MarketCarousel from "./MarketCarousel";
+import MiniSparkline from "./MiniSparkline";
 
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-
-import MainContainer from "./layouts/MainContainer";
-import HeaderShell from "./layouts/HeaderShell";
+import MainContainer from "../layouts/MainContainer";
 import Drawer from "@mui/material/Drawer";
+import { BannerThemes } from "../../data/bannerThemes";
+import NewsHeader from "../layouts/NewsHeader";
 
-
-
-export default function Home() {
+export default function NewsFeed() {
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
+  const { authType } = useAuth();
+  const theme = BannerThemes[authType] || BannerThemes.default;
 
   // ------------------------------------------------------------
   // AUTH VALIDATION (v1.2.0.3)
   // Ensures only authenticated users can access the dashboard.
   // ------------------------------------------------------------
-  
+
   return (
     <>
+
       {/* --------------------------------------------------------
-         HeaderShell controls the top navigation + health drawer.
+         NewsHeader controls the top navigation + health drawer.
          It reports its height so MainContainer can offset content.
       ---------------------------------------------------------- */}
-      <HeaderShell
+      <NewsHeader
         onHeightChange={setHeaderHeight}
         isHealthOpen={isHealthOpen}
         setIsHealthOpen={setIsHealthOpen}
         activeCategory={activeCategory}
       />
- 
+
       {/* --------------------------------------------------------
          Main page container — applies header offset + full height.
          All page content MUST live inside this container.
@@ -96,8 +97,7 @@ export default function Home() {
               display: "flex",
               alignItems: "center",
               gap: 2,
-              backgroundColor: "#1976d2",
-              color: "#fff",
+              background: theme.gradient,
               px: 3,
               py: 2,
               borderRadius: 2,
@@ -105,10 +105,14 @@ export default function Home() {
               mb: 3,
             }}
           >
-            <RssFeedIcon fontSize="large" />
-            
+            <RssFeedIcon fontSize="large"
+              sx={{ color: theme.textColor }} />
 
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>
+
+            <Typography variant="h5" sx={{
+              color: theme.textColor,
+              fontWeight: 600
+            }}>
               News Feed (RSS)
             </Typography>
 
@@ -120,6 +124,7 @@ export default function Home() {
               size="large"
               sx={{
                 backgroundColor: "#fff",
+                border: "1px solid #1976d2",
                 color: "#1976d2",
                 fontWeight: 600
               }}

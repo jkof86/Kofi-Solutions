@@ -8,7 +8,7 @@ import {
 } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
 
-import HeaderShell from "../layouts/HeaderShell";
+import NewsHeader from "../layouts/NewsHeader";
 import MyResume from "./MyResume";
 import MyPortfolio from "./MyPortfolio";
 import ContactProfessional from "./ContactProfessional";
@@ -22,7 +22,7 @@ export default function Professional() {
   return (
     <>
       {/* FIXED HEADER */}
-      <HeaderShell
+      <NewsHeader
         onHeightChange={(h) => setHeaderHeight(h)}
         activeCategory="professional"
       />
@@ -91,8 +91,7 @@ export default function Professional() {
                     px: 3,
                     py: 1,
                     borderRadius: 2,
-                    backgroundColor: theme.gradient,
-                    color: theme.textColor,
+                    color: "#3b78e2",
                     fontWeight: 600,
                     boxShadow: 3,
                     textDecoration: "none",
@@ -134,8 +133,7 @@ export default function Professional() {
                     px: 3,
                     py: 1,
                     borderRadius: 2,
-                    backgroundColor: theme.gradient,
-                    color: theme.textColor,
+                    color: "#3b78e2",
                     fontWeight: 600,
                     boxShadow: 3,
                     textDecoration: "none",

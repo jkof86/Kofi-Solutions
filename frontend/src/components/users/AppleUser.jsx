@@ -16,7 +16,7 @@ import WordPressCard from "./WordPressCard";
 const cardLabels = ["Gaming", "News Feed", "WordPress", "Professional", "Fitness / Nutrition"];
 
 export default function AppleUser() {
-  const { authType, user } = useAuth();
+  const { authType } = useAuth();
   const [activeCard, setActiveCard] = useState(null);
   const nav = useNavigate();
 
