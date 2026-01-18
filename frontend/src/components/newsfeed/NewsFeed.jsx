@@ -120,7 +120,7 @@ export default function NewsFeed() {
             <Box sx={{ flexGrow: 1 }} />
 
             <Chip
-              label="v1.2.0.5"
+              label="v1.2.0.6"
               size="large"
               sx={{
                 backgroundColor: "#fff",
