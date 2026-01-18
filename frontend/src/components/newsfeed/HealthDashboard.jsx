@@ -62,8 +62,8 @@ export default function HealthDashboard() {
   //------------------------------------------------------------
   // Debug: what dashboard receives
   //------------------------------------------------------------
-  console.log("[DASH] Status received:", status);
-  console.log("[DASH] Raw health object:", health);
+  // console.log("[DASH] Status received:", status);
+  // console.log("[DASH] Raw health object:", health);
 
   //------------------------------------------------------------
   // Compute summary counts
@@ -72,7 +72,7 @@ export default function HealthDashboard() {
 
   // Log the distinct states we actually see
   const uniqueStates = Array.from(new Set(values));
-  console.log("[DASH] Unique status states:", uniqueStates);
+  // console.log("[DASH] Unique status states:", uniqueStates);
 
   const okCount = values.filter(s => s === "ok" || s === "json").length;
 
@@ -84,11 +84,11 @@ export default function HealthDashboard() {
     ["dead", "blocked", "html_error", "failed", "error"].includes(s)
   ).length;
 
-  console.log("[DASH] Computed counts:", {
-    okCount,
-    fallbackCount,
-    errorCount
-  });
+  // console.log("[DASH] Computed counts:", {
+  //   okCount,
+  //   fallbackCount,
+  //   errorCount
+  // });
 
   //------------------------------------------------------------
   // Local UI state
@@ -118,7 +118,7 @@ export default function HealthDashboard() {
       json.feeds = json.feeds || {};
       json.markets = json.markets || {};
 
-      console.log("[CTX] Raw backend feeds:", json.feeds);
+      // console.log("[CTX] Raw backend feeds:", json.feeds);
 
       setHealth(json);
       setLastUpdated(new Date());

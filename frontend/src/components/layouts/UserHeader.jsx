@@ -56,9 +56,27 @@ export default function UserHeader({ onHeightChange = () => { } }) {
     };
 
     const sendEmail = () => {
-        const recipient = "admin@kofisolutions.com";
-        window.location.href = `mailto:${recipient}?subject=Attention:&body=`;
-    };
+    const recipient = "admin@kofisolutions.com";
+    window.location.href = `mailto:${recipient}?subject=Attention: Webmaster&body=`;
+  };
+
+    const handleHomeClick = () => {
+    if (!isLoggedIn) return navigate("/login");
+
+    switch (authType) {
+      case "google":
+        navigate("/users/GoogleUser");
+        break;
+      case "apple":
+        navigate("/users/AppleUser");
+        break;
+      case "guest":
+        navigate("/users/GuestUser");
+        break;
+      default:
+        navigate("/home");
+    }
+  };
 
     const theme = BannerThemes[authType] || BannerThemes.default;
 
@@ -118,7 +136,7 @@ export default function UserHeader({ onHeightChange = () => { } }) {
                         <Box
                             key={label}
                             onClick={() => {
-                                if (label === "Home") goTo("/home");
+                                if (label === "Home") handleHomeClick();
                                 else if (label === "Register") handleRegister();
                                 else if (label === "Login") handleLogin();
                                 else if (label === "Logout") handleLogout();
@@ -153,17 +171,17 @@ export default function UserHeader({ onHeightChange = () => { } }) {
                         pr: 2,
                     }}
                 >
-                    <Tooltip title="Compose Email">
+                    <Tooltip title="admin@kofisolutions.com">
                         <Box
                             onClick={sendEmail}
                             sx={{
+                                border: "1px solid black",
                                 cursor: "pointer",
                                 backgroundColor: "white",
                                 color: "#1976d2",
                                 px: 2.5,
                                 py: 1,
                                 borderRadius: "20px",
-                                border: "1px solid #1976d2",
                                 fontWeight: 600,
                                 fontSize: "0.9rem",
                                 textTransform: "uppercase",
@@ -176,9 +194,6 @@ export default function UserHeader({ onHeightChange = () => { } }) {
                                 },
                             }}
                         >
-                            <Box sx={{ mr: 1 }}>
-                                <ContactSupportIcon />
-                            </Box>
                             Contact
                         </Box>
                     </Tooltip>

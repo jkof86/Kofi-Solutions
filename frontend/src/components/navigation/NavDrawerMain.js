@@ -33,7 +33,7 @@ import avatarImage from "../../images/icons/avatar_full.jpg";
 // NAV ITEMS
 // ------------------------------
 const navItems = [
-  { label: "Home", icon: <HomeIcon />, to: "/home" },
+  { label: "Home", icon: <HomeIcon /> },
   { label: "Gaming", icon: <SportsEsportsIcon />, to: "/gaming" },
   {
     label: "WordPress",
@@ -42,8 +42,9 @@ const navItems = [
     href: "https://wp.kofisolutions.com",
   },
   { label: "Professional", icon: <WorkIcon />, to: "/professional" },
-  { label: "Fitness & Nutrition", icon: <FitnessCenterIcon />, to: "/fitness" },
+  { label: "Fitness & Nutrition", icon: <FitnessCenterIcon />, to: "/fitness/calculator" },
 ];
+
 
 export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
   const navigate = useNavigate();
@@ -58,6 +59,11 @@ export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
     logout();
   }
 
+  const sendEmail = () => {
+    const recipient = "jason.kofi@kofisolutions.com";
+    window.location.href = `mailto:${recipient}?subject=Attention: Jason Kofi&body=`;
+  };
+
   const navItems2 = [
     { label: "Account", icon: <AccountCircleIcon />, to: "" },
     { label: "Settings", icon: <SettingsIcon />, to: "" },
@@ -68,6 +74,24 @@ export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
     },
   ];
 
+  const handleHomeClick = () => {
+    if (!isLoggedIn) return navigate("/login");
+
+    switch (authType) {
+      case "google":
+        navigate("/users/GoogleUser");
+        break;
+      case "apple":
+        navigate("/users/AppleUser");
+        break;
+      case "guest":
+        navigate("/users/GuestUser");
+        break;
+      default:
+        navigate("/home");
+    }
+  };
+
   return (
     <Drawer
       open={isDrawerOpen}
@@ -76,9 +100,10 @@ export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
     >
       {/* PROFILE BOX */}
       <Box
-        component={Link}
-        to="/professional"
-        onClick={() => setIsDrawerOpen(false)}
+        onClick={() => {
+          setIsDrawerOpen(false);
+          sendEmail();
+        }}
         sx={{
           cursor: "pointer",
           textDecoration: "none",
@@ -87,7 +112,7 @@ export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
         }}
       >
         <Stack direction="row" padding={1} spacing={1} justifyContent="center">
-          <Tooltip title="View Resume / Portfolio">
+          <Tooltip title="jason.kofi@kofisolutions.com">
             <Chip
               sx={{
                 height: 36,
@@ -109,17 +134,23 @@ export default function NavDrawerMain({ isDrawerOpen, setIsDrawerOpen }) {
         <ListItem key={label} disablePadding>
           <ListItemButton
             sx={{ textAlign: "left", borderTop: "1px solid black" }}
-            component={external ? "a" : Link}
-            to={!external ? to : undefined}
+            component={external ? "a" : to ? Link : "button"}
+            to={to}
             href={external ? href : undefined}
             target={external ? "_blank" : undefined}
-            onClick={() => setIsDrawerOpen(false)}
+            onClick={() => {
+              setIsDrawerOpen(false);
+              if (label === "Home") {
+                handleHomeClick();
+              }
+            }}
           >
             {icon}
             <ListItemText primary={label} sx={{ ml: 1 }} />
           </ListItemButton>
         </ListItem>
       ))}
+
 
       <Divider sx={{ borderColor: "black", borderBottomWidth: "5px", mt: 1 }} />
 

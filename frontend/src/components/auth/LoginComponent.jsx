@@ -9,7 +9,6 @@ import { BannerThemes } from "../../data/bannerThemes";
 
 import UserHeader from "../layouts/UserHeader";
 
-// FIX: Static import for image (require() breaks in Vite/Webpack 5)
 import loginBanner from "../../images/bg/ksBanner05.jpeg";
 
 export default function LoginComponent() {

@@ -24,9 +24,11 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 
 import { useAuth } from "../../context/AuthContext";
-import logo from "../../images/bg/ksBanner06.jpeg";
+import { BannerThemes } from "../../data/bannerThemes";
 
-export default function HeaderShell({ onHeightChange, activeCategory }) {
+import logo from "../../images/bg/ksBanner03.jpeg";
+
+export default function NewsHeader({ onHeightChange, activeCategory }) {
   const [isHealthOpen, setIsHealthOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -77,7 +79,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
 
   const sendEmail = () => {
     const recipient = "admin@kofisolutions.com";
-    window.location.href = `mailto:${recipient}?subject=Attention:&body=`;
+    window.location.href = `mailto:${recipient}?subject=Attention: Webmaster&body=`;
   };
 
   const handleUserChipClick = () => {
@@ -101,6 +103,8 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
   // ------------------------------------------------------------
   // RETURN JSX
   // ------------------------------------------------------------
+  const theme = BannerThemes[authType] || BannerThemes.default;
+
   return (
     <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000 }}>
       <Box ref={ref} sx={{ p: 0, m: 0 }}>
@@ -115,7 +119,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
             sx={{
               px: 0,
               minHeight: 72,
-              backgroundColor: "#f9f9f9",
+              backgroundColor: "#fff",
               display: "flex",
               alignItems: "center",
             }}
@@ -153,7 +157,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                 <Box
                   key={label}
                   onClick={() => {
-                    if (label === "Home") goToHome();
+                    if (label === "Home") handleUserChipClick();
                     else if (label === "Register") handleRegister();
                     else if (label === "Login") handleLogin();
                     else if (label === "Logout") handleLogout();
@@ -187,12 +191,14 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                 flex: "0 0 200px",
                 display: "flex",
                 justifyContent: "flex-end",
+                mr: 5,
               }}
             >
-              <Tooltip title="Compose Email">
+              <Tooltip title="admin@kofisolutions.com">
                 <Box
                   onClick={sendEmail}
                   sx={{
+                    border: "1px solid black",
                     cursor: "pointer",
                     backgroundColor: "#3b78e2",
                     color: "#fff",
@@ -211,9 +217,9 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
                     },
                   }}
                 >
-                  <Box sx={{ mr: 1 }}>
-                    <ContactSupportIcon />
-                  </Box>
+                  {/* <Box sx={{ mr: 1 }}> */}
+                    {/* <ContactSupportIcon /> */}
+                  {/* </Box> */}
                   Contact
                 </Box>
               </Tooltip>
@@ -224,7 +230,7 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
         {/* Banner */}
         <Box
           sx={{
-            background: "linear-gradient(to right, #1e3c72, #3b78e2)",
+            background: "linear-gradient(to right, #3b78e2, #3b78e2)",
             color: "#fff",
             px: 3,
             py: 2,
@@ -238,24 +244,26 @@ export default function HeaderShell({ onHeightChange, activeCategory }) {
             sx={{ cursor: "pointer" }}
             onClick={() => setIsDrawerOpen(true)}
           />
-
-          <Chip
-            label={user?.email || authType?.toUpperCase()}
-            onClick={handleUserChipClick}
-            sx={{
-              backgroundColor: "#e3f2fd",
-              color: "#0d47a1",
-              fontWeight: 600,
-              borderRadius: "16px",
-              px: 1.5,
-              py: 0.5,
-              fontSize: "0.8rem",
-              cursor: "pointer",
-              "&:hover": {
-                backgroundColor: "#bbdefb",
-              },
-            }}
-          />
+          <Tooltip title="Open Dashboard">
+            <Chip
+              label={user?.email || authType?.toUpperCase()}
+              onClick={handleUserChipClick}
+              sx={{
+                border: "1px solid black",
+                backgroundColor: "#e3f2fd",
+                color: "#0d47a1",
+                fontWeight: 600,
+                borderRadius: "16px",
+                px: 1.5,
+                py: 0.5,
+                fontSize: "0.8rem",
+                cursor: "pointer",
+                "&:hover": {
+                  backgroundColor: "#bbdefb",
+                },
+              }}
+            />
+          </Tooltip>
 
           <Tooltip title="Feed & Market Health">
             <HealthAndSafetyIcon
