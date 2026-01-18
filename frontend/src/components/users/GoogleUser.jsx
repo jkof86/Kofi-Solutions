@@ -6,7 +6,7 @@ import MainContainer from "../layouts/MainContainer";
 import ProfessionalCard from "../portfolio/ProfessionalCard";
 import { BannerThemes } from "../../data/bannerThemes";
 import { Link, useNavigate } from "react-router-dom";
-import ContactFitness from "../portfolio/ContactFitness";
+import FitnessCard from "../portfolio/FitnessCard";
 
 import GamingCard from "../portfolio/GamingCard";
 import DefaultCard from "./DefaultCard";
@@ -35,7 +35,7 @@ export default function GoogleUser() {
         return <GamingCard />;
 
       case "Fitness / Nutrition":
-        return <ContactFitness />;
+        return <FitnessCard />;
 
       case "WordPress":
         return (

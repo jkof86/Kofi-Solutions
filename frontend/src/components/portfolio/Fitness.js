@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 
 import NewsHeader from "../layouts/NewsHeader";
 import { BannerThemes } from "../../data/bannerThemes";
-import ContactFitness from "./ContactFitness";
+import FitnessCard from "./FitnessCard";
 
 export default function Fitness() {
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -20,7 +20,7 @@ export default function Fitness() {
       />
 
       {/* MAIN PAGE CONTENT */}
-      <ContactFitness />
+      <FitnessCard />
     </>
   );
 }

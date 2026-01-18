@@ -55,7 +55,6 @@ export default function ContactFitness() {
             <CardActionArea
               component={Link}
               to="/fitness/calculator"
-              target="_blank"
             >
               <CardContent />
 

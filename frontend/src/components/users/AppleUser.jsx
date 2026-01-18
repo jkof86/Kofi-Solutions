@@ -6,7 +6,7 @@ import MainContainer from "../layouts/MainContainer";
 import ProfessionalCard from "../portfolio/ProfessionalCard";
 import { BannerThemes } from "../../data/bannerThemes";
 import { Link, useNavigate } from "react-router-dom";
-import ContactFitness from "../portfolio/ContactFitness";
+import FitnessCard from "../portfolio/FitnessCard";
 
 import GamingCard from "../portfolio/GamingCard";
 import DefaultCard from "./DefaultCard";
@@ -35,7 +35,7 @@ export default function AppleUser() {
         return <GamingCard />;
 
       case "Fitness / Nutrition":
-        return <ContactFitness />;
+        return <FitnessCard />;
 
       case "WordPress":
         return (
@@ -58,23 +58,23 @@ export default function AppleUser() {
     }
   }
 
-  function panelButton() {
-    switch (activeCard) {
+  // function panelButton() {
+  //   switch (activeCard) {
 
-      case "WordPress":
-        return (
-          <Button
-            component={Link}
-            to="www.google.com"
-            variant="outlined" sx={{ mt: 3 }}>
-            Action for {activeCard}
-          </Button>
-        );
+  //     case "WordPress":
+  //       return (
+  //         <Button
+  //           component={Link}
+  //           to="www.google.com"
+  //           variant="outlined" sx={{ mt: 3 }}>
+  //           Action for {activeCard}
+  //         </Button>
+  //       );
 
-      default:
-        return null;
-    }
-  }
+  //     default:
+  //       return null;
+  //   }
+  // }
 
   const theme = BannerThemes[authType] || BannerThemes.default;
 
