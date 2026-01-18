@@ -1,10 +1,13 @@
 // ------------------------------------------------------------
-// FeedCard.jsx — v1.401 (Stage-Aware + Fully Aligned)
+// FeedCard.jsx — v1.500 (Unified + StrictMode + Context-Aware)
 // ------------------------------------------------------------
 //
-// Improvements in v1.401:
-//   ✓ Replaces hardcoded BACKEND_URL with API_BASE
-//   ✓ Health refresh now respects test/prod stage
+// Improvements in v1.500:
+//   ✓ Uses FeedStatusChip for consistent health UI
+//   ✓ StrictMode-aware (RSSFeed handles filtering; card stays clean)
+//   ✓ Unified fallback logic (matches RSSFeed + FeedStatusGrid)
+//   ✓ Stage-aware health refresh (API_BASE)
+//   ✓ Clean image override + fallback logic
 //   ✓ Zero ESLint warnings
 //
 // ------------------------------------------------------------
@@ -28,11 +31,12 @@ import AutorenewIcon from "@mui/icons-material/Autorenew";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 
 import FeedIcon from "./FeedIcon";
+import FeedStatusChip from "./FeedStatusChip";
+import FallbackCard from "./FallbackCard";
+
 import { FEED_IMAGE_OVERRIDES } from "../../data/feedImageOverrides";
 import { FeedStatusContext } from "../../context/FeedStatusContext";
 import { API_BASE } from "../../data/api";
-
-import FallbackCard from "./FallbackCard";
 
 const FALLBACK_IMAGE = require("../../images/bg/ksBanner04.jpeg");
 
@@ -58,38 +62,6 @@ export default function FeedCard({
 }) {
   const { setStatus } = useContext(FeedStatusContext);
   const feedId = feedMeta?.id;
-
-  const MINI_HEALTH_COLOR = {
-    ok: "#2e7d32",
-    json: "#2e7d32",
-    fallback: "#f9a825",
-    empty: "#f9a825",
-    dead: "#c62828",
-    blocked: "#c62828",
-    html_error: "#c62828",
-    unknown: "#c62828",
-  };
-
-  function MiniHealthIndicator({ state }) {
-    const color = MINI_HEALTH_COLOR[state] || "#c62828";
-
-    return (
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-        <Box
-          sx={{
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            bgcolor: color,
-          }}
-        />
-        <Typography variant="caption" sx={{ color }}>
-          {state}
-        </Typography>
-      </Box>
-    );
-  }
-
 
   // ------------------------------------------------------------
   // Status → Icon + Label mapping
@@ -182,6 +154,7 @@ export default function FeedCard({
       />
     );
   }
+
   // ------------------------------------------------------------
   // Render
   // ------------------------------------------------------------
@@ -220,8 +193,6 @@ export default function FeedCard({
             >
               {safeTitle}
             </Typography>
-            {/* Mini Health Indicator */}
-            {/* <MiniHealthIndicator state={status} /> */}
           </Box>
 
           {/* Actions + Status */}

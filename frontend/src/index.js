@@ -1,5 +1,5 @@
 /**
- * index.js — v1.198.2 (AuthContext FIXED)
+ * index.js — v1.199 (MarketStatus Integrated + AuthContext FIXED)
  */
 
 import React from "react";
@@ -19,6 +19,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import { FeedStatusProvider } from "./context/FeedStatusContext";
 import { GlobalRefreshProvider } from "./context/GlobalRefreshContext";
+import { MarketStatusProvider } from "./context/MarketStatusContext";   // NEW
 
 const clientId = process.env.REACT_APP_CLIENT_ID;
 
@@ -26,9 +27,13 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
   // <React.StrictMode>
-    <GoogleOAuthProvider clientId={clientId}>
-      <AppProvider>
-        <FeedStatusProvider>
+  <GoogleOAuthProvider clientId={clientId}>
+    <AppProvider>
+
+      {/* Feed + Market contexts must wrap the entire app */}
+      <FeedStatusProvider>
+        <MarketStatusProvider>   {/* NEW */}
+
           <GlobalRefreshProvider>
 
             {/* BrowserRouter MUST wrap AuthProvider */}
@@ -42,9 +47,12 @@ root.render(
             </BrowserRouter>
 
           </GlobalRefreshProvider>
-        </FeedStatusProvider>
-      </AppProvider>
-    </GoogleOAuthProvider>
+
+        </MarketStatusProvider>   {/* NEW */}
+      </FeedStatusProvider>
+
+    </AppProvider>
+  </GoogleOAuthProvider>
   // </React.StrictMode>
 );
 

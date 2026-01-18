@@ -1,64 +1,20 @@
 // ------------------------------------------------------------
-// tickerConfig.js — v1.301 (Fully Normalized, Lowercase Everywhere)
+// tickerConfig.js — v1.0 (Canonical Frontend Market List)
 // ------------------------------------------------------------
-// This version ensures 100% alignment with backend normalized keys.
-// All symbols are lowercase, Yahoo-style crypto included.
+// Mirrors backend marketSymbols.js exactly.
 // ------------------------------------------------------------
 
-// ------------------------------------------------------------
-// 1. Category → Symbols (all lowercase, normalized)
-// ------------------------------------------------------------
-export const CATEGORY_SYMBOLS = {
-  crypto: [
-    "btc-usd",
-    "eth-usd",
-    "sol-usd",
-    "doge-usd",
-    "xrp-usd",
-    "zec-usd"
-  ],
-
-  tech: [
-    "aapl",
-    "msft",
-    "amzn",
-    "goog",
-    "nvda",
-    "tsla",
-    "meta"
-  ],
-
-  finance: [
-    "spy",
-    "vti",
-    "voo",
-    "ibit",
-    "arkg",
-    "blok"
-  ]
-};
-
-// ------------------------------------------------------------
-// 2. Flatten + dedupe (all lowercase)
-// ------------------------------------------------------------
-export const ALL_MARKET_SYMBOLS = [
-  ...new Set(Object.values(CATEGORY_SYMBOLS).flat())
+export const MARKET_SYMBOLS = [
+  "btc-usd", "eth-usd", "sol-usd", "doge-usd", "xrp-usd", "zec-usd",
+  "aapl", "msft", "amzn", "goog", "nvda", "tsla", "meta",
+  "spy", "vti", "voo", "qqq",
+  "arkg", "arkk", "arkw",
+  "tlt", "bnd", "dia", "gdx", "slv",
+  "orcl", "ibm", "sap"
 ];
 
-// ------------------------------------------------------------
-// 3. Category Colors
-// ------------------------------------------------------------
-export const CATEGORY_COLORS = {
-  crypto: "#ff9800",
-  tech: "#4caf50",
-  finance: "#1976d2"
-};
-
-// ------------------------------------------------------------
-// 4. Symbol Icons (lowercase keys)
-// ------------------------------------------------------------
+// Optional icons (UI only)
 export const SYMBOL_ICONS = {
-  // Crypto
   "btc-usd": "₿",
   "eth-usd": "◆",
   "sol-usd": "◎",
@@ -66,7 +22,6 @@ export const SYMBOL_ICONS = {
   "xrp-usd": "✦",
   "zec-usd": "ⓩ",
 
-  // Tech
   aapl: "🍎",
   msft: "🪟",
   amzn: "🛒",
@@ -75,21 +30,20 @@ export const SYMBOL_ICONS = {
   tsla: "⚡",
   meta: "∞",
 
-  // Finance / ETFs
   spy: "📈",
   vti: "📊",
   voo: "📘",
-  ibit: "🟦",
+  qqq: "📗",
   arkg: "🧬",
-  blok: "🧱"
+  arkk: "🧬",
+  arkw: "🧬",
+  tlt: "📉",
+  bnd: "💵",
+  dia: "🏛️",
+  gdx: "⛏️",
+  slv: "🥈",
+
+  orcl: "🔮",
+  ibm: "💾",
+  sap: "📊"
 };
-
-// ------------------------------------------------------------
-// 5. Lowercase icon map (redundant now, but kept for compatibility)
-// ------------------------------------------------------------
-export const SYMBOL_ICONS_LOWER = SYMBOL_ICONS;
-
-// ------------------------------------------------------------
-// 6. Normalized symbol list (already normalized)
-// ------------------------------------------------------------
-export const NORMALIZED_SYMBOLS = ALL_MARKET_SYMBOLS;

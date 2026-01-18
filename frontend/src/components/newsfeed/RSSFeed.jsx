@@ -1,8 +1,13 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.209 (Hooks-Safe + Stage-Aware)
+// RSSFeed.jsx — v1.221 (Unified + StrictMode + Context-Aware)
 // ------------------------------------------------------------
 
-import { useEffect, useState } from "react";
+import React, {
+  useState,
+  useEffect,
+  useContext
+} from "react";
+
 import {
   Box,
   Typography,
@@ -11,22 +16,24 @@ import {
   Collapse,
   Chip
 } from "@mui/material";
-import { API_BASE } from "../../data/api";
-import FeedCard from "./FeedCard";
 
-console.log("RSSFeed v1.209 loaded");
+import { API_BASE } from "../../data/api";
+import { FeedStatusContext } from "../../context/FeedStatusContext";
+
+import FeedCard from "./FeedCard";
+import FeedStatusChip from "./FeedStatusChip";
 
 const BATCH_SIZE = 4;
 
-export default function RSSFeed({
-  feedId,
-  feedMeta,
-  feedStatus,
-  categoryLabel,
-  symbol
-}) {
+export default function RSSFeed({ feedId, feedMeta, categoryLabel, symbol }) {
   // ------------------------------------------------------------
-  // ALL HOOKS MUST BE AT THE TOP (no early returns above)
+  // Context
+  // ------------------------------------------------------------
+  const { status, strictMode } = useContext(FeedStatusContext);
+  const feedStatus = status?.[feedId] || "unknown";
+
+  // ------------------------------------------------------------
+  // ALL HOOKS MUST BE AT THE TOP
   // ------------------------------------------------------------
   const [items, setItems] = useState([]);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
@@ -57,7 +64,7 @@ export default function RSSFeed({
   }, []);
 
   // ------------------------------------------------------------
-  // Fetch feed items from backend
+  // Fetch feed items (MUST be defined before conditional returns)
   // ------------------------------------------------------------
   const fetchFeed = async (id = feedId, debug = false) => {
     if (!feedMeta?.url) {
@@ -78,12 +85,8 @@ export default function RSSFeed({
         feedMeta.id
       )}${debugFlag ? "&debug=feeds" : ""}`;
 
-      console.log("Fetching feed:", feedId, "URL:", url);
-
       const res = await fetch(url);
       const json = await res.json();
-
-      console.log("Feed response:", json);
 
       if (!json || typeof json !== "object") {
         setError("Malformed backend response");
@@ -111,7 +114,6 @@ export default function RSSFeed({
 
       if (json.debug) setDebugInfo(json.debug);
     } catch (err) {
-      console.error("Feed fetch error:", err);
       setError(err.message);
       setItems([]);
     } finally {
@@ -133,12 +135,23 @@ export default function RSSFeed({
     if (feedMeta?.id) fetchFeed(feedMeta.id);
   }, [feedId, globalDebug]);
 
+  // ------------------------------------------------------------
+  // Derived values (MUST be above conditional returns)
+  // ------------------------------------------------------------
   const visibleItems = items.slice(0, visibleCount);
   const feedLabel = feedMeta?.label || feedMeta?.name || feedId;
 
   // ------------------------------------------------------------
-  // CONDITIONAL RENDERING (AFTER HOOKS)
+  // CONDITIONAL RETURNS (SAFE — AFTER ALL HOOKS + HELPERS)
   // ------------------------------------------------------------
+
+  // StrictMode filtering
+  if (
+    strictMode &&
+    !["ok", "json", "fallback", "empty"].includes(feedStatus)
+  ) {
+    return null;
+  }
 
   if (!feedMeta) {
     return (
@@ -160,10 +173,10 @@ export default function RSSFeed({
     );
   }
 
-  // ------------------------------------------------------------
-  // Render fallback FeedCard when no items exist
-  // ------------------------------------------------------------
-  if ((feedStatus === "empty" || feedStatus === "fallback") && items.length === 0) {
+  if (
+    ["empty", "fallback"].includes(feedStatus) &&
+    items.length === 0
+  ) {
     return (
       <Box>
         <FeedCard
@@ -191,24 +204,11 @@ export default function RSSFeed({
           mb: 2
         }}
       >
-        <Typography variant="h6">
+        <Typography variant="h6" sx={{ display: "flex", alignItems: "center" }}>
           {feedLabel}
-          {feedStatus && (
-            <Chip
-              label={feedStatus}
-              size="small"
-              sx={{
-                ml: 1,
-                textTransform: "uppercase",
-                backgroundColor:
-                  feedStatus === "ok"
-                    ? "#c8e6c9"
-                    : feedStatus === "fallback"
-                      ? "#fff3cd"
-                      : "#ffcdd2"
-              }}
-            />
-          )}
+          <Box sx={{ ml: 1 }}>
+            <FeedStatusChip status={feedStatus} />
+          </Box>
         </Typography>
 
         <Box sx={{ display: "flex", gap: 1 }}>

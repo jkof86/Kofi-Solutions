@@ -1,25 +1,23 @@
 // ------------------------------------------------------------
-// MarketStatusBar.jsx — v1.200 (Market Health Bar)
+// MarketStatusBar.jsx — v2.0 (Context-Integrated Market Health)
 // ------------------------------------------------------------
 
-import React, { useContext } from "react";
+import React from "react";
 import { Box, Chip, Stack, Typography } from "@mui/material";
-import { FeedStatusContext } from "../../context/FeedStatusContext";
+
+import { useMarketStatus } from "../../hooks/useMarketStatus";
+import { MARKET_SYMBOLS } from "../../data/tickerConfig";
 
 const STATUS_COLOR = {
   ok: "success",
-  json: "warning",
-  fallback: "warning",
   error: "error",
-  unknown: "error",
+  unknown: "warning"
 };
 
 export default function MarketStatusBar() {
-  const { health } = useContext(FeedStatusContext);
+  const { market } = useMarketStatus();
 
-  if (!health || !health.markets) return null;
-
-  const { markets } = health;
+  if (!market || Object.keys(market).length === 0) return null;
 
   return (
     <Box
@@ -31,7 +29,7 @@ export default function MarketStatusBar() {
         py: 1.5,
         borderRadius: 2,
         bgcolor: "#f5f5f5",
-        boxShadow: 1,
+        boxShadow: 1
       }}
     >
       <Typography
@@ -42,13 +40,17 @@ export default function MarketStatusBar() {
       </Typography>
 
       <Stack direction="row" spacing={1} flexWrap="wrap">
-        {Object.entries(markets).map(([symbol, m]) => {
-          if (!m || !m.status) return null;
+        {MARKET_SYMBOLS.map((symbol) => {
+          const m = market[symbol];
 
-          const color = STATUS_COLOR[m.status] || "error";
+          if (!m) return null;
+
+          const status = m.ok ? "ok" : m.error ? "error" : "unknown";
+          const color = STATUS_COLOR[status] || "warning";
+
           const label = `${symbol.toUpperCase()} — ${
-            m.type || "unknown"
-          }: ${m.price != null ? `$${m.price.toFixed(2)}` : "no data"}`;
+            m.price != null ? `$${m.price.toFixed(2)}` : "no data"
+          }`;
 
           return (
             <Chip

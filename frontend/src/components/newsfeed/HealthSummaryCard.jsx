@@ -1,13 +1,16 @@
 // ------------------------------------------------------------
-// HealthSummaryCard.jsx — v1.203 (Unified Classification)
+// HealthSummaryCard.jsx — v2.0 (Feeds + Markets Unified)
 // ------------------------------------------------------------
 
 import React, { useContext, useMemo } from "react";
-import { Box, Typography, Grid, Paper } from "@mui/material";
+import { Typography, Grid, Paper } from "@mui/material";
+
 import { FeedStatusContext } from "../../context/FeedStatusContext";
+import { MarketStatusContext } from "../../context/MarketStatusContext";
 
 export default function HealthSummaryCard() {
-  const { status, health, lastUpdated } = useContext(FeedStatusContext);
+  const { status, lastUpdated } = useContext(FeedStatusContext);
+  const { market } = useContext(MarketStatusContext);
 
   const summary = useMemo(() => {
     const values = Object.values(status || {});
@@ -22,11 +25,11 @@ export default function HealthSummaryCard() {
       okFeeds: values.filter(isHealthy).length,
       fallbackFeeds: values.filter(isFallback).length,
       deadFeeds: values.filter(isError).length,
-      totalMarkets: health?.markets
-        ? Object.keys(health.markets).length
-        : 0,
+
+      // Market count now comes from MarketStatusContext
+      totalMarkets: market ? Object.keys(market).length : 0
     };
-  }, [status, health]);
+  }, [status, market]);
 
   const formatTime = (d) => {
     if (!d) return "";
@@ -35,7 +38,7 @@ export default function HealthSummaryCard() {
     return date.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit",
+      second: "2-digit"
     });
   };
 
@@ -47,7 +50,7 @@ export default function HealthSummaryCard() {
         px: 3,
         py: 2,
         borderRadius: 2,
-        bgcolor: "#fafafa",
+        bgcolor: "#fafafa"
       }}
     >
       <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>

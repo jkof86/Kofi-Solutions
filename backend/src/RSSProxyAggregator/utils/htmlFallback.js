@@ -1,146 +1,82 @@
-// ------------------------------------------------------------
-// htmlFallback.js — v2.2 (Normalized + Image Extraction + Safe HTML)
-// ------------------------------------------------------------
-//
-// Purpose:
-//   Provide a resilient HTML scraping fallback when RSS/JSON parsing fails.
-//   Extracts title, URL, description, and image from common article layouts.
-//
-// Standardized return shape:
-//   {
-//     status: "fallback",
-//     fallback: true,
-//     count: Number,
-//     items: [ normalizedItem, ... ],
-//     debug: { ... } | null
-//   }
-//
-// Improvements in v2.2:
-//   ✓ Normalizes ALL fallback items using normalizeItem()
-//   ✓ Extracts <img> tags from article blocks
-//   ✓ Hardened selectors for modern news layouts
-//   ✓ Safe URL resolution for relative links
-//   ✓ Debug passthrough for handleFeed debug mode
-//   ✓ Fully compatible with normalize.js v1.200
-//   ✓ Fully compatible with handleFeed v1.208
-//
-// ------------------------------------------------------------
+// utils/htmlFallback.js (CommonJS)
 
 const cheerio = require("cheerio");
-const axios = require("axios");
 const { normalizeItem } = require("./normalize.js");
 
-// ------------------------------------------------------------
-// Resolve relative URLs safely
-// ------------------------------------------------------------
-function resolveUrl(base, href) {
+function parseHtmlFallback(htmlText, baseUrl) {
+  if (!htmlText || typeof htmlText !== "string") return [];
+
+  let $;
   try {
-    return new URL(href, base).href;
+    $ = cheerio.load(htmlText);
   } catch {
-    return base;
+    return [];
   }
-}
 
-// ------------------------------------------------------------
-// Extract first <img> from an element
-// ------------------------------------------------------------
-function extractImageFromEl($, el) {
-  const img = $(el).find("img").first().attr("src");
-  if (!img) return null;
-  return img.startsWith("http") ? img : null;
-}
+  const items = [];
 
-// ------------------------------------------------------------
-// HTML Fallback Scraper
-// ------------------------------------------------------------
-async function htmlFallback(url, label = "", opts = {}) {
-  const debug = opts.debug ? {} : null;
+  $("article").each((_, el) => {
+    const node = $(el);
+    const title =
+      node.find("h1, h2, h3").first().text().trim() ||
+      node.find("a").first().text().trim();
 
-  try {
-    // --------------------------------------------------------
-    // Fetch HTML
-    // --------------------------------------------------------
-    const res = await axios.get(url, { timeout: 5000 });
-    const html = res.data;
+    const link = node.find("a").first().attr("href") || null;
+    const description = node.find("p").first().text().trim() || null;
 
-    if (debug) debug.rawLength = html?.length ?? 0;
-
-    const $ = cheerio.load(html);
-    const items = [];
-
-    // --------------------------------------------------------
-    // Target common article containers
-    // --------------------------------------------------------
-    const selectors = [
-      "article",
-      ".post",
-      ".entry",
-      ".story",
-      ".news-item",
-      ".article",
-      ".card",
-      "li"
-    ];
-
-    $(selectors.join(",")).each((i, el) => {
-      // Title
-      const title =
-        $(el).find("h1, h2, h3, a").first().text().trim() ||
-        $(el).find("header").text().trim();
-
-      // URL
-      const href = $(el).find("a").first().attr("href");
-
-      // Description
-      const description =
-        $(el).find("p").first().text().trim() ||
-        $(el).text().trim().slice(0, 200);
-
-      // Image
-      const image = extractImageFromEl($, el);
-
-      if (!title || !href) return;
-
-      // ------------------------------------------------------
-      // Normalize using normalizeItem() for consistent shape
-      // ------------------------------------------------------
-      const normalized = normalizeItem(
-        {
-          title,
-          link: resolveUrl(url, href),
-          description,
-          enclosure: image ? { url: image } : null
-        },
-        label
+    if (title && link) {
+      items.push(
+        normalizeItem(
+          { title, link: absolutize(link, baseUrl), description },
+          { sourceType: "html" }
+        )
       );
+    }
+  });
 
-      items.push(normalized);
-    });
+  if (items.length > 0) return items;
 
-    if (debug) debug.itemCount = items.length;
+  const headlineLinks = [];
+  $("a").each((_, el) => {
+    const text = $(el).text().trim();
+    const href = $(el).attr("href");
+    if (!href || !text) return;
+    if (text.length > 30 && /[A-Za-z]/.test(text)) {
+      headlineLinks.push({ text, href });
+    }
+  });
 
-    // --------------------------------------------------------
-    // Final normalized fallback response
-    // --------------------------------------------------------
-    return {
-      status: "fallback",
-      fallback: true,
-      count: items.length,
-      items: items.slice(0, 20),
-      debug
-    };
+  if (headlineLinks.length > 0) {
+    return headlineLinks.slice(0, 20).map(h =>
+      normalizeItem(
+        { title: h.text, link: absolutize(h.href, baseUrl), description: null },
+        { sourceType: "html_headline" }
+      )
+    );
+  }
 
-  } catch (err) {
-    console.error("[htmlFallback] ERROR:", err);
+  const ogTitle = $('meta[property="og:title"]').attr("content");
+  const ogUrl = $('meta[property="og:url"]').attr("content");
+  const ogDesc = $('meta[property="og:description"]').attr("content");
 
-    return {
-      status: "error",
-      fallback: false,
-      count: 0,
-      items: [],
-      debug: opts.debug ? { error: String(err) } : null
-    };
+  if (ogTitle && ogUrl) {
+    return [
+      normalizeItem(
+        { title: ogTitle, link: absolutize(ogUrl, baseUrl), description: ogDesc || null },
+        { sourceType: "html_og" }
+      )
+    ];
+  }
+
+  return [];
+}
+
+function absolutize(link, baseUrl) {
+  try {
+    return new URL(link, baseUrl).toString();
+  } catch {
+    return link;
   }
 }
 
-module.exports = { htmlFallback };
+module.exports = { parseHtmlFallback };

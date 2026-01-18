@@ -1,111 +1,96 @@
-/**
- * universalExtractor.js — v3.0 (Balanced Aggressive)
- *
- * Extracts:
- *   ✓ Hero images (<figure>, <picture>, <img>)
- *   ✓ Lazy-loaded images (data-src, data-original, data-lazy-src)
- *   ✓ Largest image heuristic
- *   ✓ Article-body paragraphs
- *   ✓ First meaningful <p> fallback
- */
+// extractors/universalExtractor.js (CommonJS)
 
 const cheerio = require("cheerio");
+const { normalizeItem } = require("../utils/normalize.js");
 
-module.exports = async function extractUniversal(html, url) {
-  const $ = cheerio.load(html);
+function universalExtract(htmlText, baseUrl) {
+  if (!htmlText || typeof htmlText !== "string") return [];
 
-  const normalizeUrl = (src) => {
-    if (!src) return null;
-    if (src.startsWith("//")) return `https:${src}`;
-    if (src.startsWith("/")) {
-      try {
-        return new URL(url).origin + src;
-      } catch {
-        return null;
-      }
-    }
-    return src;
-  };
-
-  // ------------------------------------------------------------
-  // IMAGE EXTRACTION (Balanced Aggressive)
-  // ------------------------------------------------------------
-  const imageCandidates = [];
-
-  const lazyAttrs = ["src", "data-src", "data-original", "data-lazy-src", "data-srcset"];
-
-  const getLazySrc = (el) => {
-    for (const attr of lazyAttrs) {
-      const val = el.attribs?.[attr];
-      if (val) return val.split(" ")[0];
-    }
-    return null;
-  };
-
-  // 1. <figure> hero images
-  $("figure img").each((i, el) => {
-    const src = getLazySrc(el);
-    if (src) imageCandidates.push(src);
-  });
-
-  // 2. <picture> sources
-  $("picture source").each((i, el) => {
-    const srcset = el.attribs?.srcset;
-    if (srcset) imageCandidates.push(srcset.split(" ")[0]);
-  });
-
-  // 3. All <img> tags (skip tiny icons)
-  $("img").each((i, el) => {
-    const src = getLazySrc(el);
-    if (!src) return;
-
-    const width = parseInt(el.attribs?.width || 0, 10);
-    const height = parseInt(el.attribs?.height || 0, 10);
-
-    if (width && height && (width < 120 || height < 120)) return;
-    if (src.endsWith(".svg")) return;
-
-    imageCandidates.push(src);
-  });
-
-  // Pick first meaningful candidate
-  let image = imageCandidates.length > 0 ? normalizeUrl(imageCandidates[0]) : null;
-
-  // ------------------------------------------------------------
-  // DESCRIPTION EXTRACTION
-  // ------------------------------------------------------------
-  const paragraphSelectors = [
-    ".article-body p",
-    ".post-content p",
-    ".entry-content p",
-    ".content p",
-    "article p",
-    "p"
-  ];
-
-  let description = null;
-
-  for (const selector of paragraphSelectors) {
-    $(selector).each((i, el) => {
-      if (description) return;
-
-      const text = $(el).text().trim();
-      if (!text || text.length < 40) return;
-
-      if (text.match(/(subscribe|cookie|privacy|advert|sign up)/i)) return;
-
-      const sentences = text.split(/(?<=[.!?])\s+/);
-      description = sentences.slice(0, 5).join(" ");
-    });
-
-    if (description) break;
+  let $;
+  try {
+    $ = cheerio.load(htmlText);
+  } catch {
+    return [];
   }
 
-  return {
-    image: image || null,
-    description: description || null,
-    author: null,
-    published: null,
-    tags: []
-  };
-};
+  const items = [];
+
+  const ogTitle = $('meta[property="og:title"]').attr("content");
+  const ogUrl = $('meta[property="og:url"]').attr("content");
+  const ogDesc = $('meta[property="og:description"]').attr("content");
+
+  if (ogTitle && ogUrl) {
+    items.push(
+      normalizeItem(
+        { title: ogTitle, link: absolutize(ogUrl, baseUrl), description: ogDesc || null },
+        { sourceType: "universal_og" }
+      )
+    );
+  }
+
+  const twTitle = $('meta[name="twitter:title"]').attr("content");
+  const twUrl = $('meta[name="twitter:url"]').attr("content");
+  const twDesc = $('meta[name="twitter:description"]').attr("content");
+
+  if (twTitle && twUrl) {
+    items.push(
+      normalizeItem(
+        { title: twTitle, link: absolutize(twUrl, baseUrl), description: twDesc || null },
+        { sourceType: "universal_twitter" }
+      )
+    );
+  }
+
+  const pageTitle = $("title").text().trim();
+  const metaDesc = $('meta[name="description"]').attr("content");
+
+  if (pageTitle) {
+    items.push(
+      normalizeItem(
+        { title: pageTitle, link: baseUrl, description: metaDesc || null },
+        { sourceType: "universal_title" }
+      )
+    );
+  }
+
+  const deepLinks = [];
+  $("a").each((_, el) => {
+    const text = $(el).text().trim();
+    const href = $(el).attr("href");
+    if (!href || !text) return;
+    if (text.length > 25 && /[A-Za-z]/.test(text)) {
+      deepLinks.push({ text, href });
+    }
+  });
+
+  deepLinks.slice(0, 20).forEach(linkObj => {
+    items.push(
+      normalizeItem(
+        { title: linkObj.text, link: absolutize(linkObj.href, baseUrl), description: null },
+        { sourceType: "universal_deepscan" }
+      )
+    );
+  });
+
+  const seen = new Set();
+  const unique = [];
+
+  for (const item of items) {
+    if (!item?.link) continue;
+    if (seen.has(item.link)) continue;
+    seen.add(item.link);
+    unique.push(item);
+  }
+
+  return unique;
+}
+
+function absolutize(link, baseUrl) {
+  try {
+    return new URL(link, baseUrl).toString();
+  } catch {
+    return link;
+  }
+}
+
+module.exports = { universalExtract };

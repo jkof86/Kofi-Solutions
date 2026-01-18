@@ -28,7 +28,7 @@ export default function HealthStatusLegend() {
       </Typography>
 
       <Box sx={{ lineHeight: 1.8 }}>
-        <span style={{ color: "#4caf50" }}>ok</span> — Feed parsed successfully
+        <span style={{ color: "#4caf50" }}>OK</span> — Feed parsed successfully
         <br />
         <span style={{ color: "#ffb300" }}>Fallback/Empty</span> — Inactive or Empty Feed
         <br />

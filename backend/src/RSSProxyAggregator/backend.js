@@ -1,16 +1,35 @@
 // ------------------------------------------------------------
-// backend.js — v1.207 (Feed Routing Fix + Hardened Modes)
+// backend.js — v1.208 (Debug + Alias Hardened)
 // ------------------------------------------------------------
 //
-// Goals of v1.207:
-//   ✓ Feed mode no longer inherits test/debug flags
-//   ✓ Extractors now run for real feed requests
-//   ✓ Health/debug modes remain isolated and safe
-//   ✓ Range-aware market routing preserved
-//   ✓ All handlers return standardized jsonResponse()
-//   ✓ Bundle debug preserved for AWS Lambda cold starts
-//
+// Goals of v1.208:
+//   ✓ Feed mode remains isolated from debug/test flags
+//   ✓ Debug routes hardened + alias/version reporting fixed
+//   ✓ No accidental env leakage
+//   ✓ Router stability + predictable behavior
+//   ✓ Clean Lambda export (no double-exports)
 // ------------------------------------------------------------
+
+
+// ------------------------------------------------------------
+// DEBUG
+// ------------------------------------------------------------
+try {
+  const resolved = require.resolve("./config/feedsMap.js");
+  console.log("[diag] resolved path:", resolved);
+
+  const raw = require("fs").readFileSync(resolved, "utf8");
+  console.log("[diag] raw file length:", raw.length);
+  console.log("[diag] raw file preview:", raw.slice(0, 200));
+
+  const FEEDS = require("./config/feedsMap.js");
+  console.log("[diag] FEEDS keys:", Object.keys(FEEDS));
+} catch (err) {
+  console.error("[diag] ERROR:", err);
+}
+
+// ------------------------------------------------------------
+
 
 const { jsonResponse } = require("./utils/jsonResponse.js");
 const { handleFeed } = require("./handlers/handleFeed.js");
@@ -18,9 +37,9 @@ const { handleMarket } = require("./handlers/handleMarket.js");
 const { handleHealth } = require("./handlers/handleHealth.js");
 const { handleMarketAll } = require("./handlers/handleMarketAll.js");
 const { handlePing } = require("./handlers/handlePing.js");
+const { handleEcho } = require("./handlers/handleEcho.js");
 
-const feedsModule = require("./config/feedsMap.js");
-const FEEDS = feedsModule?.FEEDS || {};
+const FEEDS = require("./config/feedsMap.js");
 
 // ------------------------------------------------------------
 // Bundle Debug (executed once per cold start)
@@ -41,37 +60,55 @@ try {
 const DEBUG_COMMANDS = new Set([
   "ping",
   "echo",
-  "debug_health",
-  "debug_feeds",
-  "debug_market",
-  "debug_env"
+  "health",
+  "feeds",
+  "market",
+  "env"
 ]);
+
+// ------------------------------------------------------------
+// Stage helpers (explicit + safe)
+// ------------------------------------------------------------
+function getStage() {
+
+}
 
 // ------------------------------------------------------------
 // Debug Router — isolated from main routing
 // ------------------------------------------------------------
-function handleDebug(debug) {
+
+function handleDebug(debug, query, event) {
   switch (debug) {
     case "ping":
       return handlePing();
 
     case "echo":
-      return jsonResponse(200, { status: "ok", echo: true });
+      return handleEcho(query);
 
-    case "debug_health":
+    case "health":
       return jsonResponse(200, { status: "ok", debug: "health" });
 
-    case "debug_feeds":
+    case "feeds":
       return jsonResponse(200, { status: "ok", debug: "feeds" });
 
-    case "debug_market":
+    case "market":
       return jsonResponse(200, { status: "ok", debug: "market" });
 
-    case "debug_env":
+    case "env": {
+      const clientEnv = (query?.client_env === "test") ? "Testing" : "Production";
+      const version = process.env.AWS_LAMBDA_FUNCTION_VERSION || "unknown";
+      const backendEnv = clientEnv === "Testing" ?
+        "Testing" : "Production";
+
       return jsonResponse(200, {
         status: "ok",
-        env: "AWS_LAMBDA_FUNCTION_VERSION: $LATEST, AWS_EXECUTION_ENV: AWS_Lambda_nodejs24.x"
+        lambda: {
+          clientEnv,
+          backendEnv,
+          version
+        }
       });
+    }
 
     default:
       return jsonResponse(200, {
@@ -96,8 +133,9 @@ exports.handler = async (event) => {
     const test = query.test || null;
     const force = query.force || null;
     const range = query.range || null;
+    const msg = query.msg || null;
 
-    const opts = { test, debug, force, range };
+    const opts = { test, debug, force, range, msg };
     console.log("[Router] opts:", opts);
 
     // ------------------------------------------------------------
@@ -119,7 +157,7 @@ exports.handler = async (event) => {
     // SAFE DEBUG ROUTES
     // ------------------------------------------------------------
     if (!mode && typeof debug === "string" && DEBUG_COMMANDS.has(debug)) {
-      return handleDebug(debug);
+      return handleDebug(debug, query);
     }
 
     // ------------------------------------------------------------
@@ -133,7 +171,7 @@ exports.handler = async (event) => {
     }
 
     // ------------------------------------------------------------
-    // FEED MODE (FIXED IN v1.207)
+    // FEED MODE
     // ------------------------------------------------------------
     if (mode === "feed") {
       const feedId = query.feed;
@@ -154,16 +192,7 @@ exports.handler = async (event) => {
         });
       }
 
-      // ------------------------------------------------------------
-      // CRITICAL FIX:
-      // Feed requests must NOT inherit test/debug flags.
-      // These flags are ONLY for health/debug routes.
-      //
-      // This ensures:
-      //   ✓ Extractors run normally
-      //   ✓ raw:true is never injected accidentally
-      //   ✓ Health checks remain isolated
-      // ------------------------------------------------------------
+      // Feed requests must NOT inherit test/debug flags
       return await handleFeed(feedConfig, {
         debug: null,
         test: null

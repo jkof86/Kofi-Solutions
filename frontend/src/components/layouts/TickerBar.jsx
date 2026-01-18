@@ -1,89 +1,29 @@
 // ------------------------------------------------------------
-// TickerBar.jsx — v1.25 (Stage-Aware, Lowercase-Aligned)
+// TickerBar.jsx — v2.0 (Integrated with MarketStatusContext)
 // ------------------------------------------------------------
 
-import React, { useEffect, useState, useContext } from "react";
-import { Box, Typography, Chip } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Box, Typography } from "@mui/material";
 
-import {
-  ALL_MARKET_SYMBOLS,
-  CATEGORY_COLORS,
-  SYMBOL_ICONS
-} from "../../data/tickerConfig";
+import { MARKET_SYMBOLS, SYMBOL_ICONS } from "../../data/tickerConfig";
+import { useMarketStatus } from "../../hooks/useMarketStatus";
 
-import { FeedStatusContext } from "../../context/FeedStatusContext";
-import { API_BASE } from "../../data/api";
-
-console.log("TickerBar v1.25 loaded");
-
-// ------------------------------------------------------------
-// Symbol → Category mapping (normalized keys)
-// ------------------------------------------------------------
-const SYMBOL_CATEGORY = {
-  // Crypto
-  "btc-usd": "crypto",
-  "eth-usd": "crypto",
-  "sol-usd": "crypto",
-  "doge-usd": "crypto",
-  "xrp-usd": "crypto",
-  "zec-usd": "crypto",
-
-  // Tech
-  aapl: "tech",
-  msft: "tech",
-  amzn: "tech",
-  goog: "tech",
-  nvda: "tech",
-  tsla: "tech",
-  meta: "tech",
-
-  // Finance / ETFs
-  spy: "finance",
-  vti: "finance",
-  voo: "finance",
-  ibit: "finance",
-  arkg: "finance",
-  blok: "finance"
-};
+console.log("TickerBar v2.0 loaded");
 
 export default function TickerBar() {
-  const { health } = useContext(FeedStatusContext);
+  const { market, lastUpdated } = useMarketStatus();
 
   const [symbols, setSymbols] = useState([]);
-  const [lastUpdated, setLastUpdated] = useState("");
 
   // ------------------------------------------------------------
-  // 1. Load all symbols (already lowercase)
+  // Load canonical symbol list
   // ------------------------------------------------------------
   useEffect(() => {
-    setSymbols(ALL_MARKET_SYMBOLS);
-    setLastUpdated(new Date().toLocaleTimeString());
+    setSymbols(MARKET_SYMBOLS);
   }, []);
 
   // ------------------------------------------------------------
-  // 2. Fetch ticker data (1D range)
-  // ------------------------------------------------------------
-  const [tickerMarkets, setTickerMarkets] = useState({});
-
-  useEffect(() => {
-    const fetchTicker = async () => {
-      try {
-        const url = `${API_BASE}?mode=market_all&range=1D`;
-        const res = await fetch(url);
-        const json = await res.json();
-        setTickerMarkets(json.markets || {});
-      } catch (err) {
-        console.error("Ticker fetch error:", err);
-      }
-    };
-
-    fetchTicker();
-    const interval = setInterval(fetchTicker, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // ------------------------------------------------------------
-  // 3. Reset scroll animation when symbols change
+  // Reset scroll animation when symbols change
   // ------------------------------------------------------------
   useEffect(() => {
     const el = document.querySelector(".scroll");
@@ -95,11 +35,9 @@ export default function TickerBar() {
   }, [symbols]);
 
   // ------------------------------------------------------------
-  // 4. Render
+  // Render
   // ------------------------------------------------------------
-  const markets = tickerMarkets;
-
-  if (!markets || Object.keys(markets).length === 0) {
+  if (!market || Object.keys(market).length === 0) {
     return (
       <Box sx={{ py: 1, px: 2 }}>
         <Typography variant="body2" sx={{ opacity: 0.6 }}>
@@ -109,30 +47,14 @@ export default function TickerBar() {
     );
   }
 
-  // Only show valid market entries
+  // Only show valid entries
   const visible = symbols.filter((sym) => {
-    const m = markets[sym];
-    return (
-      m &&
-      m.status === "ok" &&
-      typeof m.price === "number" &&
-      m.price > 0
-    );
+    const m = market[sym];
+    return m && m.ok && typeof m.price === "number" && m.price > 0;
   });
 
-  // ------------------------------------------------------------
-  // 5. Sort by category (crypto → tech → finance)
-  // ------------------------------------------------------------
-  const sorted = [...visible].sort((a, b) => {
-    const catA = SYMBOL_CATEGORY[a] || "finance";
-    const catB = SYMBOL_CATEGORY[b] || "finance";
-    return catA.localeCompare(catB);
-  });
-
-  // ------------------------------------------------------------
-  // 6. Duplicate content for seamless infinite scroll
-  // ------------------------------------------------------------
-  const doubled = [...sorted, ...sorted];
+  // Duplicate for seamless scroll
+  const doubled = [...visible, ...visible];
 
   return (
     <Box
@@ -146,7 +68,7 @@ export default function TickerBar() {
         "&:hover .scroll": { animationPlayState: "paused" }
       }}
     >
-      {sorted.length === 0 && (
+      {visible.length === 0 && (
         <Typography variant="body2" color="warning.main">
           No valid market data available
         </Typography>
@@ -162,28 +84,14 @@ export default function TickerBar() {
         }}
       >
         {doubled.map((sym, idx) => {
-          const m = markets[sym];
+          const m = market[sym];
           const icon = SYMBOL_ICONS[sym] || "";
-          const cat = SYMBOL_CATEGORY[sym] || "finance";
 
           return (
             <Box
               key={`${sym}-${idx}`}
               sx={{ display: "flex", alignItems: "center", mx: 4 }}
             >
-              {/* Category Chip */}
-              <Chip
-                label={cat.toUpperCase()}
-                size="small"
-                sx={{
-                  mr: 1,
-                  backgroundColor: CATEGORY_COLORS[cat] || "#666",
-                  color: "#fff",
-                  fontWeight: 600
-                }}
-              />
-
-              {/* Market Data */}
               <Typography
                 variant="body2"
                 sx={{
@@ -217,7 +125,7 @@ export default function TickerBar() {
           opacity: 0.6
         }}
       >
-        Updated: {lastUpdated}
+        Updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : "--"}
       </Typography>
 
       {/* Animation */}

@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// MarketCarousel.jsx — v1.0 (Arrow-Driven Chart Carousel)
+// MarketCarousel.jsx — v2.0 (Canonical Symbol List)
 // ------------------------------------------------------------
 
 import React, { useState } from "react";
@@ -7,19 +7,23 @@ import { Box, IconButton, Typography } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
-import { ALL_MARKET_SYMBOLS } from "../../data/tickerConfig";
+import { MARKET_SYMBOLS } from "../../data/tickerConfig";
 import MarketChart from "./MarketChart";
 
 export default function MarketCarousel() {
   const [index, setIndex] = useState(0);
-  const symbol = ALL_MARKET_SYMBOLS[index];
+  const symbol = MARKET_SYMBOLS[index];
 
   const handlePrev = () => {
-    setIndex((prev) => (prev === 0 ? ALL_MARKET_SYMBOLS.length - 1 : prev - 1));
+    setIndex((prev) =>
+      prev === 0 ? MARKET_SYMBOLS.length - 1 : prev - 1
+    );
   };
 
   const handleNext = () => {
-    setIndex((prev) => (prev === ALL_MARKET_SYMBOLS.length - 1 ? 0 : prev + 1));
+    setIndex((prev) =>
+      prev === MARKET_SYMBOLS.length - 1 ? 0 : prev + 1
+    );
   };
 
   return (
@@ -35,7 +39,7 @@ export default function MarketCarousel() {
         maxWidth: 400,
         display: "flex",
         flexDirection: "column",
-        gap: 1,
+        gap: 1
       }}
     >
       {/* Header with arrows */}
@@ -43,7 +47,7 @@ export default function MarketCarousel() {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "space-between"
         }}
       >
         <IconButton onClick={handlePrev} size="small">

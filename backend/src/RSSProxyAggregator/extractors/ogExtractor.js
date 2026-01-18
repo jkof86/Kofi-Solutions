@@ -1,85 +1,97 @@
-/**
- * ogExtractor.js — v3.0 (Balanced Aggressive)
- *
- * Extracts:
- *   ✓ og:image, og:image:url, og:image:secure_url
- *   ✓ twitter:image, twitter:image:src
- *   ✓ meta[name="image"], meta[itemprop="image"]
- *   ✓ link[rel="image_src"]
- *   ✓ JSON-LD (Article, NewsArticle, BlogPosting)
- *
- *   ✓ og:description, twitter:description
- *   ✓ meta[name="description"], meta[itemprop="description"]
- *   ✓ meta[property="article:summary"]
- */
+// ------------------------------------------------------------
+// universalExtractor.js — v3.0
+// Hero image + first paragraph extractor (fast + safe)
+// ------------------------------------------------------------
+//
+// Goals:
+//   ✓ Fast (regex + heuristics only)
+//   ✓ Zero async, zero network
+//   ✓ Extract hero images (<figure>, <picture>, <img>)
+//   ✓ Support lazy-loaded images (data-src, data-original)
+//   ✓ Extract first meaningful paragraph
+//   ✓ Safe for malformed HTML
+//
+// ------------------------------------------------------------
 
-const cheerio = require("cheerio");
-
-module.exports = async function extractOG(html, url) {
-  const $ = cheerio.load(html);
-
-  const imageCandidates = [];
-  const descriptionCandidates = [];
-
-  // ------------------------------------------------------------
-  // IMAGE META TAGS
-  // ------------------------------------------------------------
-  const imageMetaSelectors = [
-    'meta[property="og:image"]',
-    'meta[property="og:image:url"]',
-    'meta[property="og:image:secure_url"]',
-    'meta[name="twitter:image"]',
-    'meta[name="twitter:image:src"]',
-    'meta[name="image"]',
-    'meta[itemprop="image"]',
-    'link[rel="image_src"]'
-  ];
-
-  for (const sel of imageMetaSelectors) {
-    const val = $(sel).attr("content") || $(sel).attr("href");
-    if (val) imageCandidates.push(val);
+module.exports = async function universalExtractor(html, url) {
+  if (!html || typeof html !== "string") {
+    return { image: null, description: null };
   }
 
-  // ------------------------------------------------------------
-  // DESCRIPTION META TAGS
-  // ------------------------------------------------------------
-  const descMetaSelectors = [
-    'meta[property="og:description"]',
-    'meta[name="twitter:description"]',
-    'meta[name="description"]',
-    'meta[itemprop="description"]',
-    'meta[property="article:summary"]'
-  ];
-
-  for (const sel of descMetaSelectors) {
-    const val = $(sel).attr("content");
-    if (val) descriptionCandidates.push(val);
-  }
+  let image = null;
+  let description = null;
 
   // ------------------------------------------------------------
-  // JSON-LD (Article Schema)
+  // 1. HERO IMAGE: <figure> → <img>
   // ------------------------------------------------------------
-  $('script[type="application/ld+json"]').each((i, el) => {
+  try {
+    const figureMatch = html.match(
+      /<figure[\s\S]*?<img[^>]+src=["']([^"']+)["'][\s\S]*?<\/figure>/i
+    );
+    if (figureMatch && figureMatch[1]) {
+      image = figureMatch[1];
+    }
+  } catch {}
+
+  // ------------------------------------------------------------
+  // 2. HERO IMAGE: <picture> → <img>
+  // ------------------------------------------------------------
+  if (!image) {
     try {
-      const json = JSON.parse($(el).contents().text());
-      const data = Array.isArray(json) ? json[0] : json;
-
-      if (data?.image) {
-        if (typeof data.image === "string") imageCandidates.push(data.image);
-        if (Array.isArray(data.image)) imageCandidates.push(data.image[0]);
-      }
-
-      if (data?.description) {
-        descriptionCandidates.push(data.description);
+      const pictureMatch = html.match(
+        /<picture[\s\S]*?<img[^>]+src=["']([^"']+)["'][^>]*>/i
+      );
+      if (pictureMatch && pictureMatch[1]) {
+        image = pictureMatch[1];
       }
     } catch {}
-  });
+  }
 
-  return {
-    image: imageCandidates[0] || null,
-    description: descriptionCandidates[0] || null,
-    author: null,
-    published: null,
-    tags: []
-  };
+  // ------------------------------------------------------------
+  // 3. FALLBACK IMAGE: first <img> with real src
+  // ------------------------------------------------------------
+  if (!image) {
+    try {
+      const imgMatch = html.match(
+        /<img[^>]+(?:src|data-src|data-original|data-lazy|data-image)=["']([^"']+)["']/i
+      );
+      if (imgMatch && imgMatch[1]) {
+        image = imgMatch[1];
+      }
+    } catch {}
+  }
+
+  // ------------------------------------------------------------
+  // 4. DESCRIPTION: first <p> with meaningful text
+  // ------------------------------------------------------------
+  try {
+    const paragraphs = html.match(/<p[^>]*>([\s\S]*?)<\/p>/gi);
+
+    if (paragraphs && paragraphs.length > 0) {
+      for (const p of paragraphs) {
+        const text = p
+          .replace(/<[^>]+>/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+
+        if (text && text.length > 40) {
+          description = text;
+          break;
+        }
+      }
+    }
+  } catch {}
+
+  // ------------------------------------------------------------
+  // 5. FINAL FALLBACKS
+  // ------------------------------------------------------------
+  if (!description) {
+    description = null;
+  }
+
+  if (!image) {
+    image = null;
+  }
+
+  return { image, description };
 };

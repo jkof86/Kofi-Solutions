@@ -1,13 +1,5 @@
 // ------------------------------------------------------------
-// MarketChart.jsx — v2.709 (Stage-Aware + Debug-Enabled)
-// ------------------------------------------------------------
-//
-// Adds:
-//   ✓ Debug logging for history length + timestamps
-//   ✓ Safe logging (won't crash if empty)
-//   ✓ Stage-aware API routing (test vs prod)
-//   ✓ Helps confirm backend is returning correct ranges
-//
+// MarketChart.jsx — v3.0 (Context-Integrated + Range-Aware)
 // ------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
@@ -29,49 +21,45 @@ import {
 } from "recharts";
 
 import { API_BASE } from "../../data/api";
+import { useMarketStatus } from "../../hooks/useMarketStatus";
 
 export default function MarketChart({ symbol }) {
+  const { market } = useMarketStatus();
+
   const [data, setData] = useState([]);
-  const [price, setPrice] = useState(null);
-  const [change24h, setChange24h] = useState(null);
   const [range, setRange] = useState("1D");
 
   const normalize = (s) =>
     String(s || "").toLowerCase().replace(/\./g, "-");
 
+  const normalized = normalize(symbol);
+
   const handleRange = (_, val) => {
     if (val) setRange(val);
   };
 
+  // ------------------------------------------------------------
+  // Fetch history (price + change come from context)
+  // ------------------------------------------------------------
   useEffect(() => {
-    if (!symbol) return;
+    if (!normalized) return;
 
-    console.log("[MarketChart] requesting range:", range);
-
-    const fetchData = async () => {
-      const normalized = normalize(symbol);
-
+    const fetchHistory = async () => {
       const url = `${API_BASE}?mode=market&symbol=${normalized}&range=${range}`;
 
       try {
         const res = await fetch(url);
         const json = await res.json();
 
-        // ------------------------------------------------------------
-        // DEBUG BLOCK (safe, no crashes)
-        // ------------------------------------------------------------
         const hist = json.history || [];
+
         console.log("MARKET DEBUG", {
           symbol: normalized,
           range,
           count: hist.length,
-          first: hist.length > 0 ? hist[0].time : null,
-          last: hist.length > 0 ? hist[hist.length - 1].time : null
+          first: hist[0]?.time || null,
+          last: hist[hist.length - 1]?.time || null
         });
-        // ------------------------------------------------------------
-
-        setPrice(json.price ?? null);
-        setChange24h(json.change_24h ?? null);
 
         const cleaned = hist
           .map((p) => ({
@@ -86,11 +74,18 @@ export default function MarketChart({ symbol }) {
       }
     };
 
-    fetchData();
-  }, [symbol, range]);
+    fetchHistory();
+  }, [normalized, range]);
 
   // ------------------------------------------------------------
-  // Range-aware tick formatter
+  // Pull live price + change from context
+  // ------------------------------------------------------------
+  const entry = market?.[normalized] || {};
+  const price = entry.price ?? null;
+  const change24h = entry.change_24h ?? null;
+
+  // ------------------------------------------------------------
+  // Tick formatting
   // ------------------------------------------------------------
   const formatTick = (t) => {
     const d = new Date(t);
@@ -120,9 +115,6 @@ export default function MarketChart({ symbol }) {
     return t;
   };
 
-  // ------------------------------------------------------------
-  // Smart tick count
-  // ------------------------------------------------------------
   const TICK_COUNT = {
     "1D": 6,
     "1W": 7,
@@ -132,9 +124,6 @@ export default function MarketChart({ symbol }) {
 
   const tickCount = TICK_COUNT[range] || 6;
 
-  // ------------------------------------------------------------
-  // Y-axis padding
-  // ------------------------------------------------------------
   const yDomain = [
     (min) => (min ? min * 0.99 : 0),
     (max) => (max ? max * 1.01 : 1)

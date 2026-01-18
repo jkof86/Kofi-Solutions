@@ -1,16 +1,3 @@
-// ------------------------------------------------------------
-// feedsMap.js — Frontend FEEDS v1.196 (Chart-Safe Symbols)
-// ------------------------------------------------------------
-//
-// Additions in v1.196:
-//   ✓ Added Yahoo Finance symbols for MarketChart
-//   ✓ Crypto RSS feeds default to BTC-USD
-//   ✓ Finance RSS feeds default to SPY
-//   ✓ JSON crypto handlers default to BTC-USD
-//   ✓ No removals — all original FEEDS preserved
-//
-// ------------------------------------------------------------
-
 export const FEEDS = {
   // ------------------------------------------------------------
   // CRYPTO (RSS)
@@ -80,7 +67,7 @@ export const FEEDS = {
   },
 
   // ------------------------------------------------------------
-  // FINANCE
+  // FINANCE (RSS)
   // ------------------------------------------------------------
   cnbc_markets: {
     id: "cnbc_markets",
@@ -108,232 +95,387 @@ export const FEEDS = {
   },
 
   // ------------------------------------------------------------
-  // NEWS (no symbols needed)
+  // US NEWS
   // ------------------------------------------------------------
-  aljazeera_world: {
-    id: "aljazeera_world",
-    name: "Al Jazeera World",
-    url: "https://www.aljazeera.com/xml/rss/all.xml",
+  ap_news: {
+    id: "ap_news",
+    name: "AP News",
+    url: "https://apnews.com/hub/apf-topnews?format=xml",
     type: "rss",
     category: "news",
   },
+  npr_news: {
+    id: "npr_news",
+    name: "NPR News",
+    url: "https://feeds.npr.org/1001/rss.xml",
+    type: "rss",
+    category: "news",
+  },
+  fox_news: {
+    id: "fox_news",
+    name: "Fox News",
+    url: "https://moxie.foxnews.com/google-publisher/latest.xml",
+    type: "rss",
+    category: "news",
+  },
+  abc_news: {
+    id: "abc_news",
+    name: "ABC News",
+    url: "https://abcnews.go.com/abcnews/topstories",
+    type: "rss",
+    category: "news",
+  },
+
+  // ------------------------------------------------------------
+  // WORLD NEWS
+  // ------------------------------------------------------------
   bbc_world: {
     id: "bbc_world",
     name: "BBC World",
     url: "http://feeds.bbci.co.uk/news/world/rss.xml",
     type: "rss",
-    category: "news",
+    category: "world",
   },
-  fox_latest: {
-    id: "fox_latest",
-    name: "Fox News Latest",
-    url: "https://feeds.foxnews.com/foxnews/latest",
+  reuters_world: {
+    id: "reuters_world",
+    name: "Reuters World",
+    url: "https://www.reuters.com/world/rss",
     type: "rss",
-    category: "news",
+    category: "world",
   },
-  npr_world: {
-    id: "npr_world",
-    name: "NPR World",
-    url: "https://feeds.npr.org/1004/rss.xml",
+  aljazeera_world: {
+    id: "aljazeera_world",
+    name: "Al Jazeera World",
+    url: "https://www.aljazeera.com/xml/rss/all.xml",
     type: "rss",
-    category: "news",
+    category: "world",
   },
-  nyt_home: {
-    id: "nyt_home",
-    name: "NYT Home",
-    url: "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+  dw_world: {
+    id: "dw_world",
+    name: "DW World",
+    url: "https://rss.dw.com/rdf/rss-en-world",
     type: "rss",
-    category: "news",
+    category: "world",
   },
-
   // ------------------------------------------------------------
-  // ALTERNATIVE NEWS
+  // TECHNOLOGY
   // ------------------------------------------------------------
-  intercept: {
-    id: "intercept",
-    category: "alternative_news",
-    label: "The Intercept",
-    url: "https://theintercept.com/feed/?rss",
+  ars_technica: {
+    id: "ars_technica",
+    name: "Ars Technica",
+    url: "https://feeds.arstechnica.com/arstechnica/index",
+    type: "rss",
+    category: "technology",
   },
-  propublica: {
-    id: "propublica",
-    category: "alternative_news",
-    label: "ProPublica",
-    url: "https://www.propublica.org/feeds/propublica/main",
-  },
-  reason: {
-    id: "reason",
-    category: "alternative_news",
-    label: "Reason Magazine",
-    url: "https://reason.com/feed/",
-  },
-  atlantic: {
-    id: "atlantic",
-    category: "alternative_news",
-    label: "The Atlantic",
-    url: "https://www.theatlantic.com/feed/all/",
-  },
-  the_hill: {
-    id: "the_hill",
-    category: "alternative_news",
-    label: "The Hill",
-    url: "https://thehill.com/feed/",
-  },
-  axios: {
-    id: "axios",
-    category: "alternative_news",
-    label: "Axios",
-    url: "https://www.axios.com/rss",
-  },
-  vice_world: {
-    id: "vice_world",
-    category: "alternative_news",
-    label: "VICE World News",
-    url: "https://www.vice.com/en/rss",
-  },
-
-  // ------------------------------------------------------------
-  // AWS
-  // ------------------------------------------------------------
   aws_news: {
     id: "aws_news",
-    name: "AWS News Blog",
-    url: "https://aws.amazon.com/blogs/aws/feed/",
+    name: "AWS News",
+    url: "https://aws.amazon.com/about-aws/whats-new/recent/feed/",
     type: "rss",
-    category: "aws",
+    category: "technology",
   },
-  aws_official_blog: {
-    id: "aws_official_blog",
-    name: "AWS Official Blog",
-    url: "https://aws.amazon.com/blogs/security/feed/",
+  github_blog: {
+    id: "github_blog",
+    name: "GitHub Blog",
+    url: "https://github.blog/feed/",
     type: "rss",
-    category: "aws",
+    category: "technology",
   },
-
-  // ------------------------------------------------------------
-  // SPRING
-  // ------------------------------------------------------------
-  spring_blog: {
-    id: "spring_blog",
-    name: "Spring Blog",
-    url: "https://spring.io/blog.atom",
+  google_cloud: {
+    id: "google_cloud",
+    name: "Google Cloud",
+    url: "https://cloud.google.com/feeds/all.atom.xml",
     type: "rss",
-    category: "spring",
+    category: "technology",
   },
-  spring_cloud_blog: {
-    id: "spring_cloud_blog",
-    name: "Spring Cloud Blog",
-    url: "https://spring.io/blog/category/cloud.atom",
+  hacker_news: {
+    id: "hacker_news",
+    name: "Hacker News",
+    url: "https://hnrss.org/frontpage",
     type: "rss",
-    category: "spring",
+    category: "technology",
   },
-  spring_releases: {
-    id: "spring_releases",
-    name: "Spring Releases",
-    url: "https://spring.io/blog/category/releases.atom",
+  microsoft_dev: {
+    id: "microsoft_dev",
+    name: "Microsoft Developer Blog",
+    url: "https://devblogs.microsoft.com/feed/",
     type: "rss",
-    category: "spring",
+    category: "technology",
   },
-  spring_security_blog: {
-    id: "spring_security_blog",
-    name: "Spring Security Blog",
-    url: "https://spring.io/blog/category/security.atom",
+  techcrunch: {
+    id: "techcrunch",
+    name: "TechCrunch",
+    url: "https://techcrunch.com/feed/",
     type: "rss",
-    category: "spring",
+    category: "technology",
   },
-
-  // ------------------------------------------------------------
-  // JAVA
-  // ------------------------------------------------------------
-  baeldung: {
-    id: "baeldung",
-    name: "Baeldung",
-    url: "https://feeds.feedburner.com/Baeldung",
+  the_verge: {
+    id: "the_verge",
+    name: "The Verge",
+    url: "https://www.theverge.com/rss/index.xml",
     type: "rss",
-    category: "java",
+    category: "technology",
   },
-  dzone_java: {
-    id: "dzone_java",
-    name: "DZone Java",
-    url: "https://feeds.dzone.com/java",
+  wired: {
+    id: "wired",
+    name: "Wired",
+    url: "https://www.wired.com/feed/rss",
     type: "rss",
-    category: "java",
-  },
-  infoq_java: {
-    id: "infoq_java",
-    name: "InfoQ Java",
-    url: "https://feed.infoq.com/java",
-    type: "rss",
-    category: "java",
-  },
-  jetbrains_java: {
-    id: "jetbrains_java",
-    name: "JetBrains Java",
-    url: "https://blog.jetbrains.com/java/feed/",
-    type: "rss",
-    category: "java",
+    category: "technology",
   },
 
   // ------------------------------------------------------------
-  // REACT
+  // BUSINESS
   // ------------------------------------------------------------
-  devto_react: {
-    id: "devto_react",
-    name: "Dev.to React",
-    url: "https://dev.to/feed/tag/react",
+  bloomberg_markets: {
+    id: "bloomberg_markets",
+    name: "Bloomberg Markets",
+    url: "https://www.bloomberg.com/feeds/bbiz/rss",
     type: "rss",
-    category: "react",
+    category: "business",
   },
-  javascript_weekly: {
-    id: "javascript_weekly",
-    name: "JavaScript Weekly",
-    url: "https://javascriptweekly.com/rss/",
+  business_insider: {
+    id: "business_insider",
+    name: "Business Insider",
+    url: "https://www.businessinsider.com/rss",
     type: "rss",
-    category: "react",
+    category: "business",
   },
-  logrocket_react: {
-    id: "logrocket_react",
-    name: "LogRocket React",
-    url: "https://blog.logrocket.com/tag/react/feed/",
+  cnbc_business: {
+    id: "cnbc_business",
+    name: "CNBC Business",
+    url: "https://www.cnbc.com/id/10001147/device/rss/rss.html",
     type: "rss",
-    category: "react",
+    category: "business",
   },
-  overreacted: {
-    id: "overreacted",
-    name: "Overreacted",
-    url: "https://overreacted.io/rss.xml",
+  entrepreneur: {
+    id: "entrepreneur",
+    name: "Entrepreneur",
+    url: "https://www.entrepreneur.com/latest.rss",
     type: "rss",
-    category: "react",
+    category: "business",
   },
-  react_blog: {
-    id: "react_blog",
-    name: "React Blog",
-    url: "https://reactjs.org/feed.xml",
+  energy_voice: {
+    id: "energy_voice",
+    name: "Energy Voice",
+    url: "https://www.energyvoice.com/feed/",
     type: "rss",
-    category: "react",
+    category: "business",
+  },
+  fast_company: {
+    id: "fast_company",
+    name: "Fast Company",
+    url: "https://www.fastcompany.com/rss",
+    type: "rss",
+    category: "business",
+  },
+  fortune: {
+    id: "fortune",
+    name: "Fortune",
+    url: "https://fortune.com/feed/",
+    type: "rss",
+    category: "business",
+  },
+  inc_magazine: {
+    id: "inc_magazine",
+    name: "Inc. Magazine",
+    url: "https://www.inc.com/rss",
+    type: "rss",
+    category: "business",
+  },
+  investopedia_markets: {
+    id: "investopedia_markets",
+    name: "Investopedia Markets",
+    url: "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_markets",
+    type: "rss",
+    category: "business",
+  },
+  real_estate_news: {
+    id: "real_estate_news",
+    name: "The Real Deal",
+    url: "https://therealdeal.com/feed/",
+    type: "rss",
+    category: "business",
+  },
+  retail_dive: {
+    id: "retail_dive",
+    name: "Retail Dive",
+    url: "https://www.retaildive.com/rss/",
+    type: "rss",
+    category: "business",
+  },
+  reuters_business: {
+    id: "reuters_business",
+    name: "Reuters Business",
+    url: "https://www.reuters.com/business/rss",
+    type: "rss",
+    category: "business",
+  },
+  supply_chain_dive: {
+    id: "supply_chain_dive",
+    name: "Supply Chain Dive",
+    url: "https://www.supplychaindive.com/rss/",
+    type: "rss",
+    category: "business",
+  },
+  techcrunch_startups: {
+    id: "techcrunch_startups",
+    name: "TechCrunch Startups",
+    url: "https://techcrunch.com/startups/feed/",
+    type: "rss",
+    category: "business",
+  },
+  thestreet: {
+    id: "thestreet",
+    name: "TheStreet",
+    url: "https://www.thestreet.com/.rss/full/",
+    type: "rss",
+    category: "business",
+  },
+  yahoo_finance_news: {
+    id: "yahoo_finance_news",
+    name: "Yahoo Finance News",
+    url: "https://finance.yahoo.com/news/rssindex",
+    type: "rss",
+    category: "business",
   },
 
+  // ------------------------------------------------------------
+  // FITNESS / NUTRITION
+  // ------------------------------------------------------------
+  breakingmuscle: {
+    id: "breakingmuscle",
+    name: "Breaking Muscle",
+    url: "https://breakingmuscle.com/feed/",
+    type: "rss",
+    category: "fitness",
+  },
+  cyclingnews_training: {
+    id: "cyclingnews_training",
+    name: "CyclingNews",
+    url: "https://www.cyclingnews.com/rss",
+    type: "rss",
+    category: "fitness",
+  },
+  eatright: {
+    id: "eatright",
+    name: "EatRight",
+    url: "https://www.eatright.org/rss",
+    type: "rss",
+    category: "fitness",
+  },
+  greatist: {
+    id: "greatist",
+    name: "Greatist",
+    url: "https://greatist.com/feed",
+    type: "rss",
+    category: "fitness",
+  },
+  healthline_nutrition: {
+    id: "healthline_nutrition",
+    name: "Healthline Nutrition",
+    url: "https://www.healthline.com/nutrition/feed",
+    type: "rss",
+    category: "fitness",
+  },
+  menshealth_fitness: {
+    id: "menshealth_fitness",
+    name: "Men's Health Fitness",
+    url: "https://www.menshealth.com/fitness/rss",
+    type: "rss",
+    category: "fitness",
+  },
+  mindbodygreen: {
+    id: "mindbodygreen",
+    name: "MindBodyGreen",
+    url: "https://www.mindbodygreen.com/rss",
+    type: "rss",
+    category: "fitness",
+  },
+  muscle_fitness: {
+    id: "muscle_fitness",
+    name: "Muscle & Fitness",
+    url: "https://muscleandfitness.com/feed/",
+    type: "rss",
+    category: "fitness",
+  },
+  nutrition_org: {
+    id: "nutrition_org",
+    name: "Nutrition.org",
+    url: "https://nutrition.org/feed/",
+    type: "rss",
+    category: "fitness",
+  },
+  outside_training: {
+    id: "outside_training",
+    name: "Outside Training",
+    url: "https://www.outsideonline.com/feed/fitness/",
+    type: "rss",
+    category: "fitness",
+  },
+  precision_nutrition: {
+    id: "precision_nutrition",
+    name: "Precision Nutrition",
+    url: "https://www.precisionnutrition.com/feed",
+    type: "rss",
+    category: "fitness",
+  },
+  runnersworld: {
+    id: "runnersworld",
+    name: "Runner's World",
+    url: "https://www.runnersworld.com/rss/all.xml",
+    type: "rss",
+    category: "fitness",
+  },
+  science_daily_fitness: {
+    id: "science_daily_fitness",
+    name: "ScienceDaily Fitness",
+    url: "https://www.sciencedaily.com/rss/health_medicine/fitness.xml",
+    type: "rss",
+    category: "fitness",
+  },
+  verywell_health: {
+    id: "verywell_health",
+    name: "Verywell Health",
+    url: "https://www.verywellhealth.com/rss",
+    type: "rss",
+    category: "fitness",
+  },
+  wellnessmama: {
+    id: "wellnessmama",
+    name: "Wellness Mama",
+    url: "https://wellnessmama.com/feed/",
+    type: "rss",
+    category: "fitness",
+  },
+  womenshealth_fitness: {
+    id: "womenshealth_fitness",
+    name: "Women's Health Fitness",
+    url: "https://www.womenshealthmag.com/fitness/rss",
+    type: "rss",
+    category: "fitness",
+  },
   // ------------------------------------------------------------
   // SPORTS
   // ------------------------------------------------------------
-  bbc_sport: {
-    id: "bbc_sport",
-    name: "BBC Sport",
-    url: "http://feeds.bbci.co.uk/sport/rss.xml",
+  cbs_sports: {
+    id: "cbs_sports",
+    name: "CBS Sports",
+    url: "https://www.cbssports.com/xml/rss",
     type: "rss",
     category: "sports",
   },
-  bleacher_report: {
-    id: "bleacher_report",
-    name: "Bleacher Report",
-    url: "https://bleacherreport.com/articles/feed",
-    type: "rss",
-    category: "sports",
-  },
-  espn: {
-    id: "espn",
-    name: "ESPN",
+  espn_top: {
+    id: "espn_top",
+    name: "ESPN Top News",
     url: "https://www.espn.com/espn/rss/news",
+    type: "rss",
+    category: "sports",
+  },
+  fox_sports: {
+    id: "fox_sports",
+    name: "Fox Sports",
+    url: "https://www.foxsports.com/rss-feeds",
     type: "rss",
     category: "sports",
   },
@@ -344,11 +486,422 @@ export const FEEDS = {
     type: "rss",
     category: "sports",
   },
-  yahoo_sports: {
-    id: "yahoo_sports",
-    name: "Yahoo Sports",
-    url: "https://sports.yahoo.com/rss/",
+  nfl_news: {
+    id: "nfl_news",
+    name: "NFL News",
+    url: "https://www.espn.com/espn/rss/nfl/news",
     type: "rss",
     category: "sports",
   },
+  nba_news: {
+    id: "nba_news",
+    name: "NBA News",
+    url: "https://www.espn.com/espn/rss/nba/news",
+    type: "rss",
+    category: "sports",
+  },
+  mlb_news: {
+    id: "mlb_news",
+    name: "MLB News",
+    url: "https://www.espn.com/espn/rss/mlb/news",
+    type: "rss",
+    category: "sports",
+  },
+  nhl_news: {
+    id: "nhl_news",
+    name: "NHL News",
+    url: "https://www.espn.com/espn/rss/nhl/news",
+    type: "rss",
+    category: "sports",
+  },
+  yahoo_soccer: {
+    id: "yahoo_soccer",
+    name: "Yahoo Soccer",
+    url: "https://sports.yahoo.com/soccer/rss",
+    type: "rss",
+    category: "sports",
+  },
+  ufc_news: {
+    id: "ufc_news",
+    name: "UFC News",
+    url: "https://www.foxsports.com/rss-feeds",
+    type: "rss",
+    category: "sports",
+  },
+  nascar_news: {
+    id: "nascar_news",
+    name: "NASCAR News",
+    url: "https://www.foxsports.com/rss-feeds",
+    type: "rss",
+    category: "sports",
+  },
+  tennis_news: {
+    id: "tennis_news",
+    name: "Tennis News",
+    url: "https://www.foxsports.com/rss-feeds",
+    type: "rss",
+    category: "sports",
+  },
+  golf_news: {
+    id: "golf_news",
+    name: "Golf News",
+    url: "https://www.foxsports.com/rss-feeds",
+    type: "rss",
+    category: "sports",
+  },
+  fifa_world_cup: {
+    id: "fifa_world_cup",
+    name: "FIFA World Cup",
+    url: "https://www.foxsports.com/rss-feeds",
+    type: "rss",
+    category: "sports",
+  },
+  olympics_news: {
+    id: "olympics_news",
+    name: "Olympics News",
+    url: "https://www.foxsports.com/rss-feeds",
+    type: "rss",
+    category: "sports",
+  },
+  world_soccer: {
+    id: "world_soccer",
+    name: "World Soccer",
+    url: "https://www.skysports.com/rss/12040",
+    type: "rss",
+    category: "sports",
+  },
+
+  // ------------------------------------------------------------
+  // GAMING
+  // ------------------------------------------------------------
+  attack_of_the_fanboy: {
+    id: "attack_of_the_fanboy",
+    name: "Attack of the Fanboy",
+    url: "https://attackofthefanboy.com/feed/",
+    type: "rss",
+    category: "gaming",
+  },
+  dexerto_esports: {
+    id: "dexerto_esports",
+    name: "Dexerto Esports",
+    url: "https://www.dexerto.com/esports/feed/",
+    type: "rss",
+    category: "gaming",
+  },
+  gameinformer: {
+    id: "gameinformer",
+    name: "Game Informer",
+    url: "https://www.gameinformer.com/rss",
+    type: "rss",
+    category: "gaming",
+  },
+  gamespot: {
+    id: "gamespot",
+    name: "GameSpot",
+    url: "https://www.gamespot.com/feeds/mashup/",
+    type: "rss",
+    category: "gaming",
+  },
+  gamesradar: {
+    id: "gamesradar",
+    name: "GamesRadar",
+    url: "https://www.gamesradar.com/rss/",
+    type: "rss",
+    category: "gaming",
+  },
+  gosunoob: {
+    id: "gosunoob",
+    name: "GosuNoob",
+    url: "https://www.gosunoob.com/feed/",
+    type: "rss",
+    category: "gaming",
+  },
+  ign_all: {
+    id: "ign_all",
+    name: "IGN",
+    url: "https://feeds.ign.com/ign/all",
+    type: "rss",
+    category: "gaming",
+  },
+  kotaku: {
+    id: "kotaku",
+    name: "Kotaku",
+    url: "https://kotaku.com/rss",
+    type: "rss",
+    category: "gaming",
+  },
+  nintendo_life: {
+    id: "nintendo_life",
+    name: "Nintendo Life",
+    url: "https://www.nintendolife.com/feeds/latest",
+    type: "rss",
+    category: "gaming",
+  },
+  pcgamesn: {
+    id: "pcgamesn",
+    name: "PCGamesN",
+    url: "https://www.pcgamesn.com/mainrss.xml",
+    type: "rss",
+    category: "gaming",
+  },
+  playstation_blog: {
+    id: "playstation_blog",
+    name: "PlayStation Blog",
+    url: "https://blog.playstation.com/feed/",
+    type: "rss",
+    category: "gaming",
+  },
+  polygon: {
+    id: "polygon",
+    name: "Polygon",
+    url: "https://www.polygon.com/rss/index.xml",
+    type: "rss",
+    category: "gaming",
+  },
+  thegamer: {
+    id: "thegamer",
+    name: "TheGamer",
+    url: "https://www.thegamer.com/feed/",
+    type: "rss",
+    category: "gaming",
+  },
+  twinfinite: {
+    id: "twinfinite",
+    name: "Twinfinite",
+    url: "https://twinfinite.net/feed/",
+    type: "rss",
+    category: "gaming",
+  },
+  vg247: {
+    id: "vg247",
+    name: "VG247",
+    url: "https://www.vg247.com/rss",
+    type: "rss",
+    category: "gaming",
+  },
+
+  // ------------------------------------------------------------
+  // ENTERTAINMENT
+  // ------------------------------------------------------------
+  abc_entertainment: {
+    id: "abc_entertainment",
+    name: "ABC Entertainment",
+    url: "https://abcnews.go.com/abcnews/entertainmentheadlines",
+    type: "rss",
+    category: "entertainment",
+  },
+  boingboing: {
+    id: "boingboing",
+    name: "Boing Boing",
+    url: "https://boingboing.net/feed",
+    type: "rss",
+    category: "entertainment",
+  },
+  bored_panda: {
+    id: "bored_panda",
+    name: "Bored Panda",
+    url: "https://www.boredpanda.com/feed/",
+    type: "rss",
+    category: "entertainment",
+  },
+  buzzfeed_entertainment: {
+    id: "buzzfeed_entertainment",
+    name: "BuzzFeed Entertainment",
+    url: "https://www.buzzfeed.com/entertainment.xml",
+    type: "rss",
+    category: "entertainment",
+  },
+  daily_dot: {
+    id: "daily_dot",
+    name: "Daily Dot",
+    url: "https://www.dailydot.com/feed/",
+    type: "rss",
+    category: "entertainment",
+  },
+  et_online: {
+    id: "et_online",
+    name: "ET Online",
+    url: "https://www.etonline.com/rss",
+    type: "rss",
+    category: "entertainment",
+  },
+  hollywood_reporter: {
+    id: "hollywood_reporter",
+    name: "Hollywood Reporter",
+    url: "https://www.hollywoodreporter.com/t/feed/",
+    type: "rss",
+    category: "entertainment",
+  },
+  know_your_meme: {
+    id: "know_your_meme",
+    name: "Know Your Meme",
+    url: "https://knowyourmeme.com/news.rss",
+    type: "rss",
+    category: "entertainment",
+  },
+  nylon: {
+    id: "nylon",
+    name: "Nylon",
+    url: "https://www.nylon.com/rss",
+    type: "rss",
+    category: "entertainment",
+  },
+  pitchfork: {
+    id: "pitchfork",
+    name: "Pitchfork",
+    url: "https://pitchfork.com/feed/feed-news/rss",
+    type: "rss",
+    category: "entertainment",
+  },
+  rolling_stone: {
+    id: "rolling_stone",
+    name: "Rolling Stone",
+    url: "https://www.rollingstone.com/music/music-news/feed/",
+    type: "rss",
+    category: "entertainment",
+  },
+  rottentomatoes: {
+    id: "rottentomatoes",
+    name: "Rotten Tomatoes",
+    url: "https://editorial.rottentomatoes.com/feed/",
+    type: "rss",
+    category: "entertainment",
+  },
+  screenrant: {
+    id: "screenrant",
+    name: "ScreenRant",
+    url: "https://screenrant.com/feed/",
+    type: "rss",
+    category: "entertainment",
+  },
+  the_chive: {
+    id: "the_chive",
+    name: "The Chive",
+    url: "https://thechive.com/feed/",
+    type: "rss",
+    category: "entertainment",
+  },
+  tmz: {
+    id: "tmz",
+    name: "TMZ",
+    url: "https://www.tmz.com/rss.xml",
+    type: "rss",
+    category: "entertainment",
+  },
+  us_weekly: {
+    id: "us_weekly",
+    name: "Us Weekly",
+    url: "https://www.usmagazine.com/feed/",
+    type: "rss",
+    category: "entertainment",
+  },
+  variety: {
+    id: "variety",
+    name: "Variety",
+    url: "https://variety.com/feed/",
+    type: "rss",
+    category: "entertainment",
+  },
+
+  // ------------------------------------------------------------
+  // FOOD / COOKING
+  // ------------------------------------------------------------
+  days_clean: {
+    id: "days_clean",
+    name: "100 Days of Real Food",
+    url: "https://www.100daysofrealfood.com/feed/",
+    type: "rss",
+    category: "food",
+  },
+  cookbooks: {
+    id: "cookbooks",
+    name: "101 Cookbooks",
+    url: "https://www.101cookbooks.com/feed",
+    type: "rss",
+    category: "food",
+  },
+  baking_mad: {
+    id: "baking_mad",
+    name: "Baking Mad",
+    url: "https://www.bakingmad.com/rss",
+    type: "rss",
+    category: "food",
+  },
+  eatright_recipes: {
+    id: "eatright_recipes",
+    name: "EatRight Recipes",
+    url: "https://www.eatright.org/rss",
+    type: "rss",
+    category: "food",
+  },
+  epicurious_recipes: {
+    id: "epicurious_recipes",
+    name: "Epicurious Recipes",
+    url: "https://epicurious.com/feed/recipes/rss",
+    type: "rss",
+    category: "food",
+  },
+  just_a_pinch_blue_ribbon: {
+    id: "just_a_pinch_blue_ribbon",
+    name: "Just A Pinch – Blue Ribbon",
+    url: "https://www.justapinch.com/services/rss?rss_id=blue-ribbon",
+    type: "rss",
+    category: "food",
+  },
+  just_a_pinch_featured: {
+    id: "just_a_pinch_featured",
+    name: "Just A Pinch – Featured",
+    url: "https://www.justapinch.com/services/rss?rss_id=featured",
+    type: "rss",
+    category: "food",
+  },
+  just_a_pinch_latest: {
+    id: "just_a_pinch_latest",
+    name: "Just A Pinch – Latest",
+    url: "https://www.justapinch.com/services/rss?rss_id=latest",
+    type: "rss",
+    category: "food",
+  },
+  king_arthur_baking: {
+    id: "king_arthur_baking",
+    name: "King Arthur Baking",
+    url: "https://www.kingarthurbaking.com/blog/feed",
+    type: "rss",
+    category: "food",
+  },
+  nutrition_org_recipes: {
+    id: "nutrition_org_recipes",
+    name: "Nutrition.org Recipes",
+    url: "https://nutrition.org/feed/",
+    type: "rss",
+    category: "food",
+  },
+  sallys_baking_addiction: {
+    id: "sallys_baking_addiction",
+    name: "Sally's Baking Addiction",
+    url: "https://sallysbakingaddiction.com/feed/",
+    type: "rss",
+    category: "food",
+  },
+  serious_eats: {
+    id: "serious_eats",
+    name: "Serious Eats",
+    url: "https://www.seriouseats.com/rss",
+    type: "rss",
+    category: "food",
+  },
+  spend_with_pennies: {
+    id: "spend_with_pennies",
+    name: "Spend With Pennies",
+    url: "https://www.spendwithpennies.com/feed/",
+    type: "rss",
+    category: "food",
+  },
+  tasty: {
+    id: "tasty",
+    name: "Tasty",
+    url: "https://www.buzzfeed.com/tasty.xml",
+    type: "rss",
+    category: "food",
+  }
 };

@@ -1,232 +1,102 @@
 // ------------------------------------------------------------
-// FeedStatusContext.jsx — v1.2.0.8 (Safe Init)
-// ------------------------------------------------------------
-//
-// Stable + battle‑tested:
-//   ✓ FEEDS is the source of truth
-//   ✓ Normalization guarantees all feedIds exist
-//   ✓ Missing backend entries default to "unknown"
-//   ✓ No double-path issues
-//   ✓ Stage detection is safe + automatic
-//   ✓ BACKEND_URL is clean and correct
-//
+// FeedStatusContext.jsx — v2.0
+// Stable health loader for feeds + markets
 // ------------------------------------------------------------
 
-import React, {
-  createContext,
-  useState,
-  useCallback,
-  useMemo,
-  useEffect
-} from "react";
-
-import { FEEDS } from "../data/feedsMap";
+import React, { createContext, useState, useEffect, useCallback } from "react";
 import { API_BASE } from "../data/api";
 
-// Determine stage based on API_BASE
-const API_STAGE =
-  typeof API_BASE === "string" && API_BASE.includes("/test")
-    ? "test"
-    : "prod";
-
-// Build backend URL safely (NO double append)
-const BACKEND_URL = `${API_BASE}`;
-
-// ------------------------------------------------------------
-// Default context shape
-// ------------------------------------------------------------
 export const FeedStatusContext = createContext({
   status: {},
-  setStatus: () => { },
-  setBulkStatus: () => { },
-
+  markets: {},
   health: null,
-  setHealth: () => { },
-
-  strictMode: true,
-  setStrictMode: () => { },
-
   lastUpdated: null,
-  setLastUpdated: () => { },
-
-  apiStage: API_STAGE,
-
-  normalizedFeeds: {},
-  setNormalizedFeeds: () => { }
-
+  apiStage: null,
+  strictMode: false,
+  setStrictMode: () => {},
+  refreshHealth: () => {}
 });
 
-console.log("FeedStatusContext v1.2.0.8 active");
-
 export function FeedStatusProvider({ children }) {
-  // ------------------------------------------------------------
-  // Per-feed status map (normalized)
-  // ------------------------------------------------------------
-  const [status, setStatusMap] = useState({});
-
-  const setStatus = useCallback((feedId, value) => {
-    setStatusMap((prev) => {
-      if (prev[feedId] === value) return prev;
-      return { ...prev, [feedId]: value };
-    });
-  }, []);
-
-  const setBulkStatus = useCallback((statusObj) => {
-    if (!statusObj || typeof statusObj !== "object") return;
-    setStatusMap(statusObj);
-  }, []);
-
-  // ------------------------------------------------------------
-  // Full backend health object
-  // ------------------------------------------------------------
+  const [status, setStatus] = useState({});
+  const [markets, setMarkets] = useState({});
   const [health, setHealth] = useState(null);
-
-  // ------------------------------------------------------------
-  // Strict mode toggle
-  // ------------------------------------------------------------
-  const [strictMode, setStrictMode] = useState(true);
-
-  // ------------------------------------------------------------
-  // Timestamp
-  // ------------------------------------------------------------
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [apiStage, setApiStage] = useState(null);
+  const [strictMode, setStrictMode] = useState(false);
 
   // ------------------------------------------------------------
-  // Normalize backend health → UI status map
+  // Fetch health from backend (feeds + markets)
   // ------------------------------------------------------------
-  const [normalizedFeeds, setNormalizedFeeds] = useState({});
+  const loadHealth = useCallback(async () => {
+    try {
+      const url = `${API_BASE}?mode=health`;
+      const res = await fetch(url, { cache: "no-store" });
 
-  const normalizeHealthToStatus = useCallback(
-    (healthObj) => {
-      const backendFeeds = healthObj?.feeds || {};
+      if (!res.ok) {
+        console.warn("[FeedStatusContext] Health fetch failed:", res.status);
+        return;
+      }
 
-      // console.log("[CTX] Raw backend feed entries:");
-      // for (const [feedId, entry] of Object.entries(backendFeeds)) {
-      //   console.log(`  ${feedId}:`, entry);
+      const json = await res.json();
+
+      // Expected payload:
+      // {
+      //   stage: "test",
+      //   timestamp: 1705580000000,
+      //   feeds: { cnn_top: { status, count, ... }, ... },
+      //   markets: { BTC: { status, last, change, ... }, ... }
       // }
 
-      const normalized = {};
-
-      for (const feedId of Object.keys(FEEDS)) {
-        const entry = backendFeeds[feedId];
-
-        if (!entry) {
-          normalized[feedId] = "unknown";
-          continue;
-        }
-
-        if (entry.ok === true) {
-          if (entry.count === 0) {
-            normalized[feedId] = "empty";
-          } else {
-            normalized[feedId] = entry.type === "json" ? "json" : "ok";
-          }
-          continue;
-        }
-
-          //NEW: detect error field
-        if (entry.error) {
-          normalized[feedId] = entry.error;
-          continue;
-        }
-
-
-        // Fallback to status field if error is missing
-        switch (entry.status) {
-          case "fallback":
-            normalized[feedId] = "fallback";
-            break;
-          case "dead":
-            normalized[feedId] = "dead";
-            break;
-          case "blocked":
-            normalized[feedId] = "blocked";
-            break;
-          case "html_error":
-            normalized[feedId] = "html_error";
-            break;
-          case "ok":
-            normalized[feedId] = entry.type === "json" ? "json" : "ok";
-            break;
-          default:
-            normalized[feedId] = "unknown";
-        }
+      const feedStatuses = {};
+      for (const [feedId, entry] of Object.entries(json.feeds || {})) {
+        feedStatuses[feedId] = entry.status || "unknown";
       }
 
-      // console.log("[CTX] Final normalized status:", normalized);
-
-
-      setBulkStatus(normalized);
-      setNormalizedFeeds(backendFeeds); // optional
-    },
-    [setBulkStatus]
-
-
-  );
+      setStatus(feedStatuses);
+      setMarkets(json.markets || {});
+      setHealth(json);
+      setLastUpdated(json.timestamp ? new Date(json.timestamp) : new Date());
+      setApiStage(json.stage || "unknown");
+    } catch (err) {
+      console.error("[FeedStatusContext] Error loading health:", err);
+    }
+  }, []);
 
   // ------------------------------------------------------------
-  // Poll backend health every 60 seconds
+  // Manual refresh (used by FeedDashboard + HealthDrawer)
+  // ------------------------------------------------------------
+  const refreshHealth = useCallback(() => {
+    loadHealth();
+  }, [loadHealth]);
+
+  // ------------------------------------------------------------
+  // Initial load + periodic refresh
   // ------------------------------------------------------------
   useEffect(() => {
-    const fetchHealth = async () => {
-      try {
-        const url = `${BACKEND_URL}?mode=health`;
+    loadHealth();
 
-        const res = await fetch(url);
-        const json = await res.json();
+    // Refresh every 60 seconds
+    const interval = setInterval(() => {
+      loadHealth();
+    }, 60000);
 
-        if (json?.status !== "ok") {
-          console.warn("[FeedStatusContext] Health returned error:", json);
-          return;
-        }
-
-        json.feeds = json.feeds || {};
-        json.markets = json.markets || {};
-
-        setHealth(json);
-        setLastUpdated(new Date());
-
-        normalizeHealthToStatus(json);
-      } catch (err) {
-        console.error("[FeedStatusContext] Health fetch error:", err);
-      }
-    };
-
-    fetchHealth();
-    const interval = setInterval(fetchHealth, 60000);
     return () => clearInterval(interval);
-  }, [normalizeHealthToStatus]);
+  }, [loadHealth]);
 
   // ------------------------------------------------------------
-  // Memoized context value
+  // Context value
   // ------------------------------------------------------------
-  const value = useMemo(
-    () => ({
-      status,
-      setStatus,
-      setBulkStatus,
-
-      health,
-      setHealth,
-
-      strictMode,
-      setStrictMode,
-
-      lastUpdated,
-      setLastUpdated,
-
-      apiStage: API_STAGE
-    }),
-    [
-      status,
-      setStatus,
-      setBulkStatus,
-      health,
-      setHealth,
-      strictMode,
-      lastUpdated
-    ]
-  );
+  const value = {
+    status,
+    markets,
+    health,
+    lastUpdated,
+    apiStage,
+    strictMode,
+    setStrictMode,
+    refreshHealth
+  };
 
   return (
     <FeedStatusContext.Provider value={value}>

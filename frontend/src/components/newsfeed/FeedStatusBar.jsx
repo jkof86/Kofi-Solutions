@@ -1,5 +1,5 @@
 // ------------------------------------------------------------
-// FeedStatusBar.jsx — v1.203 (Unified Classification)
+// FeedStatusBar.jsx — v2.0 (Backend-Aligned + Correct Counts)
 // ------------------------------------------------------------
 
 import React, { useContext } from "react";
@@ -16,15 +16,15 @@ const STATUS_COLOR = {
   dead: "error",
   blocked: "error",
   html_error: "error",
-  unknown: "error",
+  unknown: "error"
 };
 
 export default function FeedStatusBar() {
   const { status, health } = useContext(FeedStatusContext);
 
-  if (!status || !health?.feeds) return null;
+  if (!status || !health?.feeds?.results) return null;
 
-  const backendFeeds = health.feeds;
+  const backendFeeds = health.feeds.results;
 
   return (
     <Box
@@ -36,7 +36,7 @@ export default function FeedStatusBar() {
         py: 1.5,
         borderRadius: 2,
         bgcolor: "#f5f5f5",
-        boxShadow: 1,
+        boxShadow: 1
       }}
     >
       <Typography
@@ -51,10 +51,13 @@ export default function FeedStatusBar() {
           const color = STATUS_COLOR[state] || "error";
           const count = backendFeeds[feedId]?.count ?? 0;
 
-          const label =
-            state === "empty" || state === "fallback"
-              ? `${feedId} (fallback)`
-              : `${feedId} (${count})`;
+          let label = `${feedId} (${count})`;
+
+          if (state === "fallback") {
+            label = `${feedId} (fallback)`;
+          } else if (state === "empty") {
+            label = `${feedId} (empty)`;
+          }
 
           return (
             <Chip
