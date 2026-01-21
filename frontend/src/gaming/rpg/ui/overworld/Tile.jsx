@@ -1,0 +1,1 @@
+// Individual tile component

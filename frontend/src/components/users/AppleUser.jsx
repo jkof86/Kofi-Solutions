@@ -10,7 +10,8 @@ import FitnessCard from "../portfolio/FitnessCard";
 
 import GamingCard from "../portfolio/GamingCard";
 import DefaultCard from "./DefaultCard";
-import WordPressCard from "./WordPressCard";
+import WordPressCard from "../portfolio/WordPressCard";
+import CharacterCreator from "../../gaming/rpg/ui/characterCreator/CharacterCreator";
 
 
 const cardLabels = ["Gaming", "News Feed", "WordPress", "Professional", "Fitness / Nutrition"];
@@ -32,7 +33,19 @@ export default function AppleUser() {
         return <ProfessionalCard />;
 
       case "Gaming":
-        return <GamingCard />;
+        return (
+          <>
+            <GamingCard />
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+              <Button
+                variant="contained"
+                onClick={<CharacterCreator />}
+              >
+                Visit WordPress Blog
+              </Button>
+            </Box>
+          </>
+        );
 
       case "Fitness / Nutrition":
         return <FitnessCard />;

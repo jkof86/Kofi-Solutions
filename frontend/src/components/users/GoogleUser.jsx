@@ -10,7 +10,7 @@ import FitnessCard from "../portfolio/FitnessCard";
 
 import GamingCard from "../portfolio/GamingCard";
 import DefaultCard from "./DefaultCard";
-import WordPressCard from "./WordPressCard";
+import WordPressCard from "../portfolio/WordPressCard";
 
 
 const cardLabels = ["Gaming", "News Feed", "WordPress", "Professional", "Fitness / Nutrition"];

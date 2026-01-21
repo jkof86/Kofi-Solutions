@@ -1,0 +1,1 @@
+// Central tile metadata registry
