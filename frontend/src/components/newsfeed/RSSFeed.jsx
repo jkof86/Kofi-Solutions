@@ -1,5 +1,15 @@
 // ------------------------------------------------------------
-// RSSFeed.jsx — v1.221 (Unified + StrictMode + Context-Aware)
+// RSSFeed.jsx — v1.222 (Unified + Health-Aware + StrictMode-Safe)
+// ------------------------------------------------------------
+//
+// Fixes in v1.222:
+//   ✓ Correctly reads backend health: json.health.status
+//   ✓ Correct fallback detection (html_error, minimal → fallback)
+//   ✓ Correct error detection (dead, blocked)
+//   ✓ Items always read from json.items
+//   ✓ Debug panel stable + safe
+//   ✓ StrictMode now behaves correctly
+//
 // ------------------------------------------------------------
 
 import React, {
@@ -33,7 +43,7 @@ export default function RSSFeed({ feedId, feedMeta, categoryLabel, symbol }) {
   const feedStatus = status?.[feedId] || "unknown";
 
   // ------------------------------------------------------------
-  // ALL HOOKS MUST BE AT THE TOP
+  // Local state
   // ------------------------------------------------------------
   const [items, setItems] = useState([]);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
@@ -64,7 +74,7 @@ export default function RSSFeed({ feedId, feedMeta, categoryLabel, symbol }) {
   }, []);
 
   // ------------------------------------------------------------
-  // Fetch feed items (MUST be defined before conditional returns)
+  // Fetch feed items (backend-aligned)
   // ------------------------------------------------------------
   const fetchFeed = async (id = feedId, debug = false) => {
     if (!feedMeta?.url) {
@@ -94,21 +104,38 @@ export default function RSSFeed({ feedId, feedMeta, categoryLabel, symbol }) {
         return;
       }
 
-      if (json.status === "dead") {
-        setError("Feed unavailable");
+      // ------------------------------------------------------------
+      // Correct backend structure:
+      //   json.items
+      //   json.health.status
+      //   json.health.error
+      // ------------------------------------------------------------
+      const health = json.health || {};
+      const status = health.status || "unknown";
+      const itemsArray = Array.isArray(json.items) ? json.items : [];
+
+      // Normalize fallback types
+      const isFallbackStatus =
+        status === "fallback" ||
+        status === "html_error" ||
+        status === "minimal";
+
+      // DEAD / BLOCKED
+      if (status === "dead" || status === "blocked") {
+        setError(health.error || "Feed unavailable");
         setItems([]);
         return;
       }
 
-      const itemsArray = Array.isArray(json.items) ? json.items : [];
-
-      if (json.status !== "ok") {
-        setIsFallback(json.status === "fallback");
+      // FALLBACK
+      if (isFallbackStatus) {
+        setIsFallback(true);
         setItems(itemsArray);
         if (itemsArray.length === 0) {
-          setError(json.error || "Feed error");
+          setError(health.error || "Feed error");
         }
       } else {
+        // OK / JSON / EMPTY
         setItems(itemsArray);
       }
 
@@ -136,13 +163,13 @@ export default function RSSFeed({ feedId, feedMeta, categoryLabel, symbol }) {
   }, [feedId, globalDebug]);
 
   // ------------------------------------------------------------
-  // Derived values (MUST be above conditional returns)
+  // Derived values
   // ------------------------------------------------------------
   const visibleItems = items.slice(0, visibleCount);
   const feedLabel = feedMeta?.label || feedMeta?.name || feedId;
 
   // ------------------------------------------------------------
-  // CONDITIONAL RETURNS (SAFE — AFTER ALL HOOKS + HELPERS)
+  // CONDITIONAL RETURNS
   // ------------------------------------------------------------
 
   // StrictMode filtering

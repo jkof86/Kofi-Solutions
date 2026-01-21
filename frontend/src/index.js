@@ -12,7 +12,7 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
 import { BrowserRouter } from "react-router-dom";
-import AppProvider from "./components/providers/AppContext";
+// import { AppProvider } from "./components/providers/AppContext";
 
 import { AuthProvider } from "./context/AuthContext";
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -28,7 +28,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   // <React.StrictMode>
   <GoogleOAuthProvider clientId={clientId}>
-    <AppProvider>
+    {/* <AppProvider> */}
 
       {/* Feed + Market contexts must wrap the entire app */}
       <FeedStatusProvider>
@@ -51,7 +51,7 @@ root.render(
         </MarketStatusProvider>   {/* NEW */}
       </FeedStatusProvider>
 
-    </AppProvider>
+    {/* </AppProvider> */}
   </GoogleOAuthProvider>
   // </React.StrictMode>
 );

@@ -101,18 +101,18 @@ export default function App() {
 
         {/* News Feed (PROTECTED) */}
         <Route
-          path="" // temporarily disable route to news feed "/news"
+          path="/news" 
           element={
             <ProtectedRoute>
-              <NewsFeed />
+              <Professional /> {/*temporary re-route */}
             </ProtectedRoute>
           }
         />
         <Route
-          path="" // temporarily disable route to home feed "/home"
+          path="/home" // temporarily disable route to home feed "/home"
           element={
             <ProtectedRoute>
-              <NewsFeed />
+              <NewsFeed /> {/*temporary re-route */}
             </ProtectedRoute>
           }
         />

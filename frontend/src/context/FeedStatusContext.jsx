@@ -1,6 +1,15 @@
 // ------------------------------------------------------------
-// FeedStatusContext.jsx — v2.0
-// Stable health loader for feeds + markets
+// FeedStatusContext.jsx — v2.1
+// Normalized health loader for feeds + markets
+// ------------------------------------------------------------
+//
+// Improvements in v2.1:
+//   ✓ Normalizes backend statuses for consistent UI
+//   ✓ Treats minimal/html_error as fallback
+//   ✓ Treats unknown+count>0 as fallback
+//   ✓ Keeps dead/blocked as true errors
+//   ✓ Fully compatible with RSSFeed v1.222 + FeedDashboard v1.207
+//
 // ------------------------------------------------------------
 
 import React, { createContext, useState, useEffect, useCallback } from "react";
@@ -26,11 +35,32 @@ export function FeedStatusProvider({ children }) {
   const [strictMode, setStrictMode] = useState(false);
 
   // ------------------------------------------------------------
+  // Status normalization
+  // ------------------------------------------------------------
+  function normalizeStatus(rawStatus, feedData) {
+    if (!rawStatus) return "unknown";
+
+    // True errors
+    if (rawStatus === "dead" || rawStatus === "blocked") return "dead";
+
+    // HTML errors → fallback
+    if (rawStatus === "html_error") return "fallback";
+
+    // Minimal fallback → fallback
+    if (rawStatus === "minimal") return "fallback";
+
+    // Unknown but items exist → fallback
+    if (rawStatus === "unknown" && feedData?.count > 0) return "fallback";
+
+    return rawStatus;
+  }
+
+  // ------------------------------------------------------------
   // Fetch health from backend (feeds + markets)
   // ------------------------------------------------------------
   const loadHealth = useCallback(async () => {
     try {
-      const url = `${API_BASE}?mode=health`;
+      const url = `${API_BASE}?mode=health_feeds`;
       const res = await fetch(url, { cache: "no-store" });
 
       if (!res.ok) {
@@ -40,20 +70,17 @@ export function FeedStatusProvider({ children }) {
 
       const json = await res.json();
 
-      // Expected payload:
-      // {
-      //   stage: "test",
-      //   timestamp: 1705580000000,
-      //   feeds: { cnn_top: { status, count, ... }, ... },
-      //   markets: { BTC: { status, last, change, ... }, ... }
-      // }
+      const rawFeeds = json.feeds || {};
+      const normalizedFeeds = {};
 
-      const feedStatuses = {};
-      for (const [feedId, entry] of Object.entries(json.feeds || {})) {
-        feedStatuses[feedId] = entry.status || "unknown";
+      // Normalize each feed status
+      for (const feedId of Object.keys(rawFeeds)) {
+        const feedData = rawFeeds[feedId];
+        const rawStatus = feedData?.status || "unknown";
+        normalizedFeeds[feedId] = normalizeStatus(rawStatus, feedData);
       }
 
-      setStatus(feedStatuses);
+      setStatus(normalizedFeeds);
       setMarkets(json.markets || {});
       setHealth(json);
       setLastUpdated(json.timestamp ? new Date(json.timestamp) : new Date());
@@ -76,7 +103,6 @@ export function FeedStatusProvider({ children }) {
   useEffect(() => {
     loadHealth();
 
-    // Refresh every 60 seconds
     const interval = setInterval(() => {
       loadHealth();
     }, 60000);

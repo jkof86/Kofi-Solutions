@@ -1,8 +1,9 @@
 // ------------------------------------------------------------
-// GlobalRefreshContext.jsx — v1.205 (Stable + Backend v1.204)
+// GlobalRefreshContext.jsx — v1.205‑SAFE (No FEEDS import)
+// Stable + Backend v1.204
 // ------------------------------------------------------------
 //
-// Improvements in v1.205:
+// Improvements preserved from v1.205:
 //   ✓ Uses new backend contract (v1.204)
 //   ✓ Uses ?mode=feed&feedId= for per‑feed refresh
 //   ✓ Uses ?mode=health with NO unsupported params
@@ -11,6 +12,8 @@
 //   ✓ Ensures lastUpdated is ALWAYS a Date object
 //   ✓ Ensures refreshAll never breaks health state
 //   ✓ Supports new alternative_news category
+//   ✓ Removes FEEDS import to avoid circular dependencies
+//   ✓ feedIds are passed in from parent for full modularity
 //
 // ------------------------------------------------------------
 
@@ -22,7 +25,6 @@ import React, {
 } from "react";
 
 import { FeedStatusContext } from "./FeedStatusContext";
-import { FEEDS } from "../data/feedsMap";
 
 export const GlobalRefreshContext = createContext({
   refreshVersion: 0,
@@ -36,9 +38,7 @@ export const GlobalRefreshContext = createContext({
 const API =
   "https://jy4i499sj1.execute-api.us-east-1.amazonaws.com/default/RSSProxyAggregator";
 
-const allFeedNames = Object.keys(FEEDS);
-
-export function GlobalRefreshProvider({ children }) {
+export function GlobalRefreshProvider({ children, feedIds = [] }) {
   const [refreshVersion, setRefreshVersion] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -50,6 +50,8 @@ export function GlobalRefreshProvider({ children }) {
   // ------------------------------------------------------------
   const loadFeed = useCallback(
     async (feedId) => {
+      if (!feedId) return;
+
       // Mark only this feed as loading
       setStatus(feedId, "loading");
 
@@ -86,7 +88,7 @@ export function GlobalRefreshProvider({ children }) {
 
     try {
       // Mark all feeds as loading
-      allFeedNames.forEach((f) => setStatus(f, "loading"));
+      feedIds.forEach((f) => setStatus(f, "loading"));
 
       // Backend v1.204: NO strict, NO sampleSize
       const url = `${API}?mode=health`;
@@ -97,7 +99,7 @@ export function GlobalRefreshProvider({ children }) {
         const normalized = {};
 
         for (const [feedId, entry] of Object.entries(json.feeds)) {
-          const s = entry.status;
+          const s = entry?.status;
 
           if (s === "ok") normalized[feedId] = "ok";
           else if (s === "fallback") normalized[feedId] = "fallback";
@@ -111,7 +113,7 @@ export function GlobalRefreshProvider({ children }) {
         console.warn("Global refresh returned error:", json);
 
         const errMap = {};
-        allFeedNames.forEach((f) => (errMap[f] = "dead"));
+        feedIds.forEach((f) => (errMap[f] = "dead"));
         setBulkStatus(errMap);
       }
 
@@ -122,12 +124,12 @@ export function GlobalRefreshProvider({ children }) {
       console.error("Global refresh error:", err);
 
       const errMap = {};
-      allFeedNames.forEach((f) => (errMap[f] = "dead"));
+      feedIds.forEach((f) => (errMap[f] = "dead"));
       setBulkStatus(errMap);
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, setStatus, setBulkStatus]);
+  }, [isRefreshing, setStatus, setBulkStatus, feedIds]);
 
   // ------------------------------------------------------------
   // Manual refresh bump

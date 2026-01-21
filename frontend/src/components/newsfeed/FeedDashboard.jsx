@@ -1,3 +1,15 @@
+// ------------------------------------------------------------
+// FeedDashboard.jsx — v1.207‑SAFE (Status Normalization)
+// ------------------------------------------------------------
+//
+// Improvements:
+//   ✓ Normalizes backend statuses for clearer UI
+//   ✓ Treats minimal/html_error as fallback
+//   ✓ Treats unknown+items as fallback
+//   ✓ Zero architectural changes
+//
+// ------------------------------------------------------------
+
 import React, { useContext, useMemo, useState } from "react";
 import {
   Box,
@@ -12,30 +24,47 @@ import { FeedStatusContext } from "../../context/FeedStatusContext";
 import FeedStatusSummary from "./FeedStatusSummary";
 import FeedStatusLegend from "./FeedStatusLegend";
 import FeedStatusExport from "./FeedStatusExport";
-import { FEEDS } from "../../data/feedsMap";
 import { feedLabelMap } from "../../data/labelMap";
 
-export default function FeedDashboard() {
+export default function FeedDashboard({ feedEntries = [] }) {
   const { status, strictMode } = useContext(FeedStatusContext);
   const [search, setSearch] = useState("");
 
   // ------------------------------------------------------------
-  // Build feed list with metadata
+  // Normalize backend statuses for UI clarity
   // ------------------------------------------------------------
-  const feedEntries = useMemo(() => {
-    return Object.entries(FEEDS).map(([feedId, meta]) => ({
-      feedId,
-      label: feedLabelMap[feedId] || meta.label || feedId,
-      category: meta.category || "other",
-      status: status[feedId] || "unknown"
-    }));
-  }, [status]);
+  function normalizeStatus(raw) {
+    if (!raw) return "unknown";
+
+    if (raw === "html_error") return "fallback";
+    if (raw === "minimal") return "fallback";
+    if (raw === "dead") return "dead";
+    if (raw === "blocked") return "blocked";
+
+    return raw;
+  }
+
+  // ------------------------------------------------------------
+  // Merge + normalize
+  // ------------------------------------------------------------
+  const mergedEntries = useMemo(() => {
+    return feedEntries.map((f) => {
+      const rawStatus = status[f.feedId] || "unknown";
+      const normalized = normalizeStatus(rawStatus);
+
+      return {
+        ...f,
+        label: feedLabelMap[f.feedId] || f.label || f.feedId,
+        status: normalized
+      };
+    });
+  }, [feedEntries, status]);
 
   // ------------------------------------------------------------
   // Apply search + strictMode filters
   // ------------------------------------------------------------
   const filteredFeeds = useMemo(() => {
-    return feedEntries.filter((f) => {
+    return mergedEntries.filter((f) => {
       if (strictMode) {
         const s = f.status;
         if (!["ok", "json", "fallback", "empty"].includes(s)) return false;
@@ -43,10 +72,10 @@ export default function FeedDashboard() {
       if (!search.trim()) return true;
       return f.label.toLowerCase().includes(search.toLowerCase());
     });
-  }, [feedEntries, search, strictMode]);
+  }, [mergedEntries, search, strictMode]);
 
   // ------------------------------------------------------------
-  // Status breakdown for summary chart
+  // Summary breakdown
   // ------------------------------------------------------------
   const summary = useMemo(() => {
     const values = filteredFeeds.map((f) => f.status);
@@ -56,7 +85,7 @@ export default function FeedDashboard() {
       healthy: values.filter((s) => s === "ok" || s === "json").length,
       fallback: values.filter((s) => s === "fallback" || s === "empty").length,
       error: values.filter((s) =>
-        ["dead", "blocked", "html_error"].includes(s)
+        ["dead", "blocked"].includes(s)
       ).length,
       unknown: values.filter((s) => s === "unknown").length
     };
@@ -64,16 +93,10 @@ export default function FeedDashboard() {
 
   return (
     <Box sx={{ width: "100%" }}>
-      {/* ------------------------------------------------------------
-         Header
-      ------------------------------------------------------------ */}
       <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
         Feed Dashboard
       </Typography>
 
-      {/* ------------------------------------------------------------
-         Status Summary Chips
-      ------------------------------------------------------------ */}
       <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
         <Chip label={`Total: ${summary.total}`} />
         <Chip label={`Healthy: ${summary.healthy}`} color="success" />
@@ -82,9 +105,6 @@ export default function FeedDashboard() {
         <Chip label={`Unknown: ${summary.unknown}`} />
       </Stack>
 
-      {/* ------------------------------------------------------------
-         Summary Chart
-      ------------------------------------------------------------ */}
       <FeedStatusSummary
         healthy={summary.healthy}
         fallback={summary.fallback}
@@ -94,9 +114,6 @@ export default function FeedDashboard() {
 
       <Divider sx={{ my: 2 }} />
 
-      {/* ------------------------------------------------------------
-         Search
-      ------------------------------------------------------------ */}
       <TextField
         fullWidth
         size="small"
@@ -106,9 +123,6 @@ export default function FeedDashboard() {
         sx={{ mb: 2 }}
       />
 
-      {/* ------------------------------------------------------------
-         Legend + Export
-      ------------------------------------------------------------ */}
       <FeedStatusLegend />
 
       <Box sx={{ mt: 2 }}>

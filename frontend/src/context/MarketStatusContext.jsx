@@ -27,7 +27,7 @@ export function MarketStatusProvider({ children }) {
 
   const fetchMarket = useCallback(async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}?mode=market_all`);
+      const res = await fetch(`${BACKEND_URL}?mode=health_markets`);
       const json = await res.json();
 
       if (!json?.results) return;

@@ -26,7 +26,7 @@ export default function AppleUser() {
   function renderContent() {
     switch (activeCard) {
       case "News Feed":
-        return nav("/home");
+        return nav("/news");
 
       case "Professional":
         return <ProfessionalCard />;

@@ -19,33 +19,57 @@ export default function HealthDashboard() {
     apiStage
   } = useContext(FeedStatusContext);
 
-  // ------------------------------------------------------------
   // Feed status breakdown
-  // ------------------------------------------------------------
-  const statusValues = Object.values(status || {});
-  const totalFeeds = statusValues.length;
+  const feedEntries = Object.values(status || {});
+  const totalFeeds = feedEntries.length;
 
-  const healthyCount = statusValues.filter((s) => s === "ok" || s === "json").length;
-  const fallbackCount = statusValues.filter((s) => s === "fallback" || s === "empty").length;
-  const errorCount = statusValues.filter((s) =>
-    ["dead", "blocked", "html_error"].includes(s)
+  const healthyCount = feedEntries.filter((entry) =>
+    ["ok", "json"].includes(entry?.status)
   ).length;
-  const unknownCount = statusValues.filter((s) => s === "unknown").length;
 
+  const fallbackCount = feedEntries.filter((entry) =>
+    ["fallback", "empty"].includes(entry?.status)
+  ).length;
+
+  const errorCount = feedEntries.filter((entry) =>
+    ["dead", "blocked", "html_error"].includes(entry?.status)
+  ).length;
+
+  const unknownCount = feedEntries.filter((entry) =>
+    entry?.status === "unknown"
+  ).length;
+
+  // ------------------------------------------------------------
+  // Market count
+  // ------------------------------------------------------------
   const marketCount = Object.keys(markets || {}).length;
 
-  const stageLabel = apiStage === "prod"
-    ? "PRODUCTION BUILD"
-    : apiStage === "test"
-    ? "TESTING ($LATEST)"
-    : "UNKNOWN STAGE";
+  // ------------------------------------------------------------
+  // Stage label
+  // ------------------------------------------------------------
+  const stageLabel =
+    apiStage === "prod"
+      ? "PRODUCTION BUILD"
+      : apiStage === "test"
+        ? "TESTING ($LATEST)"
+        : "UNKNOWN STAGE";
 
+  // ------------------------------------------------------------
+  // Timestamp label
+  // ------------------------------------------------------------
   const lastUpdatedLabel = lastUpdated
     ? lastUpdated.toLocaleString()
     : "—";
 
+
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{
+      display: "flex",
+      flexWrap: "wrap",       // ✅ allows wrapping
+      gap: 1,                 // optional spacing between items
+      alignItems: "center",   // vertical alignment
+    }}
+    >
       {/* ------------------------------------------------------------
          System Health Summary
       ------------------------------------------------------------ */}
@@ -53,7 +77,7 @@ export default function HealthDashboard() {
         System Health Summary
       </Typography>
 
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+      <Stack direction="row" flexWrap="wrap" spacing={2} sx={{ mb: 2 }}>
         <Chip label={`Total Feeds: ${totalFeeds}`} />
         <Chip label={`Healthy: ${healthyCount}`} color="success" />
         <Chip label={`Fallback: ${fallbackCount}`} color="warning" />
